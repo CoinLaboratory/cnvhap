@@ -1,0 +1,348 @@
+
+path = "./"
+library("stats")
+library("MASS")
+library("limma");
+med_thresh = -0.25;
+lessThan = TRUE;
+index = "_1";
+files = dir(path);
+files1 = c("X")
+var_thresh = 0.35;
+charLength = 700*1000;
+
+extend <- function(snps_, var, cnt, overallMedian, isleft = FALSE, lty = 1){
+	
+      len =  length(snps_[,1])
+	width = (snps_[len,1] - snps_[1,1]);
+	spacing = width/len;
+	span = charLength/width
+	noSnps = round(span*len);
+	if(width==0){
+		noSnps = 1;
+		span = 1.0;
+		spacing = 3000;
+	}
+	print(paste(noSnps,overallMedian,sqrt(var), spacing, span));
+      sample = rnorm(noSnps,overallMedian,sqrt(var));
+	x_left  = seq(snps_[1,1]-noSnps*spacing,snps_[1,1]-spacing,spacing);
+	x_right  = seq(snps_[len,1]+spacing,snps_[len,1]+noSnps*spacing,spacing);
+	left = cbind( x_left,sample);
+	right = cbind( x_right,sample);
+	snps2 =  rbind(left, as.matrix(snps_), right);
+	weights = rep(1.0, length(snps2[,1]));
+	weights[abs(snps2[,2]-overallMedian)>=0.3] = 0.0;
+      loess = loessFit(snps2[,2],snps2[,1], weights = weights, span = span );
+     # index =  abs(snps2[,2])< 1.0 & !is.nan(snps2[,2]);
+   
+	#windows();
+	#snps3  = snps2[index,];
+	#fitted = loess$fitted[index];
+	#c = 1:length(index);
+	
+       #plot(snps3[c,1], snps3[c,2]);
+	 	
+
+	
+	len1 = length(loess$fitted)-noSnps
+	res1 <- list(fitted =  loess$fitted[(noSnps+1):len1])
+	res1
+}
+
+
+
+calcVariance <- function(chr, files2){
+	avg = rep(0,length(files2));
+	median = rep(0,length(files2));
+	variance = rep(0, length(files2));
+	
+  	for(i in 1:length(files2)){
+         name = paste(path,chr,  files2[i], sep = "/");
+		snps = read.table(name, header = F, sep = "\t");
+		#avg = mean(snps[!is.na(snps[,2]),2]);
+      	median[i] = median(snps[!is.na(snps[,2]),2]);
+   		variance[i] = var(snps[!is.na(snps[,2]) ,2]);
+ 	}
+     var_ <- list(variance = variance, median = median, len = length(snps[,1]));
+     var_;
+}
+
+plotloess <-function(snps1, cnt, varia, overallMedian, lty = 1){
+	snps = snps1[,1:2];
+	snp_tmp = rbind(snps[1,], as.matrix(snps));
+	len = length(snps[,1]);
+       snp_tmp1 = rbind(as.matrix(snps),snps[len,]);
+	 diff = snp_tmp1[,1] -snp_tmp[,1]; 
+	 gap = which(diff == max(diff))
+	 len = length(snps[,1]);
+	 loess_left = extend(snps[1:gap-1,],varia, cnt,overallMedian, isleft = T, lty = lty);
+	 loess_right = extend(snps[gap:len,],varia, cnt, overallMedian, isleft = F, lty = lty);
+	 loess = rbind(as.matrix(loess_left$fitted), as.matrix(loess_right$fitted));
+		
+	
+	loess
+	
+}
+
+
+assoc <-function(snps){
+	#names(snps) = c( "logr", "gc");
+	w = rep(1,length(snps$logr));
+	w[abs(snps$logr>0.3)] = 0.0;
+	hyper.lm0 = lm(logr~gc, data = snps, weights = w);
+	sum = summary(hyper.lm0);
+	coeff = sum$coeff;
+	intercept = coeff[1,1];
+	slope = coeff[2,1];
+	
+	#sd =  fitdistr(sum$resi, "normal")$est[2]
+	pvalue = coeff[2,4]
+	result <- list(intercept = intercept, slope = slope,  pvalue = pvalue);
+	result;
+}
+last3 <- function(str){
+	len = nchar(str);
+	st = substring(str, len-2, len);
+	st == "txt";
+	
+		
+}
+
+loessGC<- function(j){
+	chr = files1[j];
+	
+	files_ =   dir(files1[1]);
+	files2_ = files_[last3(files_)];
+	files2 = files2_[grep("_Log", files2_)];
+	files2B = files2_[grep("_B", files2_)];
+
+	 var_ = calcVariance(chr, files2);
+#var_B = calcVariance(chr, files2);
+
+	overallMedian = median(var_$median);
+	 cnt =0;
+	gcl<-list();
+	 logrl<-list();
+	
+	for(i in 1:length(files2)){
+		print(i);
+	      name = paste(chr,  files2[i], sep = "/");
+		snps = read.table(name, header = F, sep = "\t");
+		if(length(snps[1,])<3) break;
+	      median= var_$median[i];
+		 variance= var_$variance[i];
+		len = length(snps[,1]);
+		 	snps[,2] = snps[,2] - (median - overallMedian);
+		write(t(as.matrix(snps)),app = F,  file = paste(name, ".out", sep = ""), ncolumns = dim(snps)[2], sep = "\t");
+		hasna = length(grep("NA1223", files2[i]))>0;
+	   	if(variance <=var_thresh & !hasna){
+			
+	      	logrl[cnt+1]<-list( snps[,2]);
+			gcl[cnt+1] <- list(snps[,3]);
+			
+			names(logrl)[cnt+1] = files2[i];
+			names(gcl)[cnt+1] = files2[i];
+
+			cnt= cnt+1;
+		}   
+
+	}
+	overall <- list("logr" = matrix(unlist(logrl), ncol = 1), "gc" = matrix(unlist(gcl), ncol = 1));
+	meangc = mean(overall$gc[abs(overall$logr)<0.3]);		
+	overall$gc = (overall$gc -meangc)/100;
+	ass = assoc(overall);
+	la = length(ass)+1;
+	ass[la]<-list("subtractedgc" = meangc/100);
+	names(ass)[la] = "subtracted_gc";
+	ass1 = unlist(ass);
+	 f =   paste(chr, "association.out", sep = "/")
+	print(f);
+	write(names(ass1), app = F,file = f, ncolumns = length(ass), sep = "\t");
+    
+	write(ass1, app = T, file = f, ncolumns = length(ass), sep = "\t");
+       
+
+
+}
+
+loess <- function(j){
+	
+	
+	chr = files1[j];
+	files_ =   dir(paste(path, files1[j], sep ="/"));
+      files2_ = files_[last3(files_)];
+	files2 = files2_[grep("_Log", files2_)];
+	files2B = files2_[grep("_B", files2_)];
+      var_ = calcVariance(chr, files2);
+       if(lessThan){
+		print_index = var_$median<med_thresh;
+	}else {
+	
+		print_index = var_$median>=med_thresh;
+	}
+	files3 = files2[print_index];
+	var_$variance = var_$variance[print_index];
+       var_$median = var_$median[print_index];
+
+	overallMedian = median(var_$median);
+	summaryF = paste(path, "/",chr, "/","summary",index,".out", sep = "");
+	
+	write(files3,app =F,  file = summaryF, ncolumns = length(var_$variance), sep = "\t");
+	write("variance", app = T, file = summaryF, ncolumns = 1, sep = "\t");
+
+	write(var_$variance,app = T,  file = summaryF, ncolumns = length(var_$variance), sep = "\t");
+	write("median", app = T, file = summaryF, ncolumns = 1, sep = "\t");
+
+
+	write(var_$median,app =T,  file = summaryF, ncolumns = length(var_$variance), sep = "\t");
+	write(paste("overall median", overallMedian), app = T, file = summaryF, ncolumns = 1, sep = "\t");
+	med_loess = rep(0, length(var_$median));
+	 cnt =0;
+	
+	loess = rep(0, var_$len);
+	chr = files1[j];
+	
+     	 for(i in 1:length(files3)){
+		
+		print(i);
+	      name = paste(path, chr,  files3[i], sep = "/");
+		snps = read.table(name, header = F, sep = "\t");
+		if(cnt==0){
+			loc = snps[,1];
+		}
+	      median= var_$median[i];
+		 variance= var_$variance[i];
+        	len = length(snps[,1]);
+		 
+		hasna = length(grep("NA1223", files3[i]))>0;
+	     if(variance <=var_thresh & !hasna){
+	      	loess_i = plotloess(snps,  cnt,variance, median);
+	
+
+			median_loess = median(loess_i[!is.na(loess_i)]);
+			med_loess[i] = median_loess;
+			loess_i = loess_i -median_loess;
+			if(cnt==0){
+		 		plot(snps[,1], loess_i,col = cnt+2, type = "l", lty = 1, ylim = c(-0.3, 0.3));
+			}else if(cnt<5){
+				 lines( snps[,1],loess_i, col=cnt+2, type = "l", lty = 1, ylim = c(-0.3, 0.3));
+			}
+			print(paste("loess ", i, loess_i[1]));
+			loess = loess+loess_i;
+			cnt= cnt+1;
+		}  
+		rm(snps); 
+	}
+      write("median_loess", app = T, file = summaryF, ncolumns = 1, sep = "\t");
+      write(med_loess,app = T,  file = summaryF, ncolumns = length(med_loess), sep = "\t");
+
+	
+      loess =loess/cnt;
+	lines( loc,loess, col=1, type = "l");
+	
+	 write(loess,app = F,  file = paste(path,"/", chr,"/", "loess", index, sep = ""), ncolumns = 1, sep = "\t");
+
+
+	}
+	
+
+
+calcLoess<-function(){
+for(j in 1:length(files1)){
+      chr = paste(path,files1[j], sep ="/");
+	print(j)
+	pdf(file = paste(pdfpath,"/",files1[j],index,".pdf", sep = ""));	
+	#windows();
+	loess(j);
+	
+	dev.off();
+}
+}
+
+
+project<-function(){
+	build35 = read.table("build35.txt", header = F, sep = "\t");
+	build35_244 = read.table("build35_244k.txt", header = F, sep = "\t");
+	for(j in 1:length(files1)){
+      	chr = files1[j];
+		chrname = paste("chr", chr, sep = "");
+		loessIn = read.table(paste(chr, "loess", sep = "/"), header = F, sep = "\t")[,1];
+		coordsIn = build35[build35[,1]==chrname,2];
+		coordsOut = build35_244[build35_244[,1]==chrname,2];
+		
+		loessOut  =  approx(x = coordsIn, y = loessIn, xout = coordsOut);
+		indexIn = coordsIn < 2e7
+		indexOut = coordsOut < 2e7;
+		plot(coordsIn[indexIn], loessIn[indexIn], type = "p");
+		lines(coordsOut[indexOut], loessOut$y[indexOut], type = "l", col =2);
+		 write(loessOut$y,app = F,  file = paste("merge_cgh",chr, "loess", sep = "/"), ncolumns = 1, sep = "\t");
+ 	}
+}
+
+calcGCContrib <- function(){
+for(j in 1:length(files1)){
+     print(j);
+	print(files1[j]);
+	loessGC(j);
+}
+}
+
+#write(t(files2),app = F,  file = "variance.txt", ncolumns = length(names), sep = ",");
+# write(t(variance),app = T,  file = "variance.txt", ncolumns = length(names), sep = ",");
+ 
+anal185k <- function(){
+	files = dir()
+	index = rep(FALSE,length(files));  
+	for(i in 1:length(files)){
+		index[i] = length(grep("txt.1", files[i]))>0;
+	}
+	files1 = files[index];
+	probes = read.table("185probes.txt", header = F, sep = "\t");
+	codes = read.table("185k_QCMetrics.txt", header = T, sep = "\t");
+	codes[,1] = as.character(codes[,1]);
+	codeindex = rep(FALSE, length(codes[,1]));
+	for(i in 1:length(codes[,1])){
+		codespl=  strsplit(codes[i,1], "_");
+		codes[i,1] = codespl[[1]][2];
+		codes[i,4] = codespl[[1]][1];
+		if(length(grep("vs", codes[i,1]))>0){
+			codeindex[i] =T;
+		}else{
+			codes[i,4] = substring(codes[i,4],1,nchar(codes[i,4])-1);		
+		}
+	}
+	codes1 = codes[!codeindex,c(1,3,4)];
+	names(probes) = c("ProbeName", "chr", "start","end");
+
+	
+	files2 = files[file.info(files)[,2]];
+	rm(codes);
+	for(i in 1:length(codes1[,1])){
+		fcode = codes1[i,3];
+		gre = grep(codes1[i,1], files1);
+		print(length(gre));
+		if(length(gre)==1){
+		
+			k = gre[1];
+			out1 = paste("1/", fcode, "_Log,R.txt", sep = "");
+			snps = read.table(files1[k], header = T, sep = "\t");
+			merged = merge( probes,snps);
+			order = order(merged$chr, merged$start);
+			merged[,5] = merged[,5]/log10(2);
+			merged = merged[order,]
+			for(j in 1:length(files2)){
+				chr = files2[j];
+				snps1 = merged[merged[,2]==chr,];
+				name = paste(chr,"/", fcode, "_Log,R.txt", sep = "");
+			 	write(t(as.matrix(snps1[,c(3,5)])),app = F,  file = name, ncolumns = 2, sep = "\t");
+
+			}
+		}else{
+				print(paste("prob with", fcode));
+		}
+	}
+
+}
+
+
+calcLoess();

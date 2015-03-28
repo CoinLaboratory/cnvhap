@@ -1,0 +1,284 @@
+<<<<<<< .mine
+package cnvtrans;
+
+import java.util.HashMap;
+import java.util.Map;
+
+import lc1.stats.Contigency;
+
+import org.apache.commons.math.analysis.polynomials.PolynomialFunction;
+import org.apache.commons.math.analysis.solvers.UnivariateRealSolver;
+import org.apache.commons.math.analysis.solvers.UnivariateRealSolverFactory;
+import org.rosuda.JRI.Rengine;
+
+import pal.statistics.ContigencyTable;
+
+public class Power {
+
+	
+
+	
+	static Rengine re = new Rengine(new String[] { "--vanilla" }, true,
+			new LoopCall());
+	public static void main(String[] args){
+		try{
+			 Power pwr = new Power(5000,0.1,  5.0);
+			 pwr.setNumDel(20);
+			 pwr.calcPv();
+			// re.end();
+			 
+			System.err.println(pwr.toString());
+		}catch(Exception exc){
+			exc.printStackTrace();
+		}
+		System.exit(0);
+	}
+	
+	int A,B,C,D,y,z,v,w;;
+	
+	
+	
+	final double OR;
+	final int size;
+	double pv;
+	 PolynomialFunction p;
+	int noDel;
+	
+	public void setNumDel(int noDel){
+		this.noDel = noDel;
+		v = noDel;
+		w = size - noDel;
+	}
+	
+	Power(int size, double diseasePen, double OR1){
+		this.size = size;
+		this.OR = 1.0/OR1;
+		y = (int) Math.round(diseasePen* (double)size);  //A +B
+		 z = size - y;
+		
+	}
+	static UnivariateRealSolver urs = UnivariateRealSolverFactory.newInstance().newNewtonSolver();
+	
+	public double solveForB() throws Exception{
+		double[] coeff = new double[] {-v*y,OR*(double)w - OR*(double)y +(double) v + (double)y, OR+1.0};
+		p = new PolynomialFunction( coeff);
+		return urs.solve(p, 0, noDel);
+	}
+	
+	Double[] resu = new Double[4]; //p_lower, p_upper, OR_lower, OR_upper;
+	
+	//double 
+	
+	public void calcPv( ) throws Exception{
+		double b_exact = solveForB();
+		setB((int) Math.floor(b_exact));
+		calcP2();
+		
+		resu[0] = this.pv;
+		resu[2] = 1.0/this.OR_out;
+//		System.err.println("lower-bound\n"+this);
+		setB((int) Math.ceil(b_exact));
+		calcP2();
+		resu[1] = this.pv;
+		resu[3] = 1.0/this.OR_out;
+		//System.err.println("upper-bound\n"+this);
+	}
+	
+	
+	
+	public void calcP(){
+		double[][] table = new double[2][2];
+		table[0][0] = A;
+		table[0][1] = B;
+		table[1][0] = C;
+		table[1][1] = D;
+		Contigency c1 = new Contigency();
+		c1.setMatrix(table);
+		c1.chisq();
+		pv = c1.getSig();//c1.chisq();
+		//ContigencyTable ct = new ContigencyTable(2000);
+		//ct.setMatrix(table);
+		//pv = ct.calcContigencyChiSquare(1);
+		
+	}
+	
+	double OR_out;
+	
+	public void setB(int B){
+		this.B = B;
+		A = y-B;
+		C = w-A;
+		D = v-B;
+	}
+	public void calcP2(){
+		re.assign("ve", new double[] {A,C,B,D} );
+		re.eval("ft = fisher.test(matrix(ve,ncol=2))");
+		this.OR_out = re.eval("ft$est").asDoubleArray()[0];
+		this.pv = re.eval("ft$p").asDouble();
+	}
+	
+	public void calcP1(){
+		int[][] table = new int[2][2];
+		table[0][0] = A;
+		table[0][1] = B;
+		table[1][0] = C;
+		table[1][1] = D;
+		
+		
+		
+	OR_out = ((double)A/(double)B) / ((double)C/(double)D);
+	ContigencyTable ct = new ContigencyTable(5000);
+		ct.setMatrix(table);
+		pv = ct.calcContigencyChiSquare(1000);
+//			ct.calcMonteCarloExactTest(1000);//ct.calcContigencyChiSquare(1);
+		
+	}
+	public String toString(){
+	//	return A+" "+B+"\t\t"+(A+B)+"\n"+C+" "+D+"\t\t"+(C+D);
+		return String.format("%4.1g\t%4.1g\t%4.2g\t%4.2g", resu).replaceAll(" ", "");
+	//	return "fisher.test(matrix(c("+A+","+C+","+B+","+D+"),ncol=2))" +"\n pvvalue = "+ pv+"\n OR = "+ (1.0/OR_out);
+	}
+}
+=======
+package cnvtrans;
+
+import java.util.HashMap;
+import java.util.Map;
+
+import lc1.stats.Contigency;
+
+import org.apache.commons.math.analysis.polynomials.PolynomialFunction;
+import org.apache.commons.math.analysis.solvers.UnivariateRealSolver;
+import org.apache.commons.math.analysis.solvers.UnivariateRealSolverFactory;
+import org.rosuda.JRI.Rengine;
+
+import pal.statistics.ContigencyTable;
+import assoc.LoopCall;
+
+public class Power {
+
+	
+
+	
+	static Rengine re = new Rengine(new String[] { "--vanilla" }, true,
+			new LoopCall());
+	public static void main(String[] args){
+		try{
+			 Power pwr = new Power(5000,0.1,  5.0);
+			 pwr.setNumDel(20);
+			 pwr.calcPv();
+			// re.end();
+			 
+			System.err.println(pwr.toString());
+		}catch(Exception exc){
+			exc.printStackTrace();
+		}
+		System.exit(0);
+	}
+	
+	int A,B,C,D,y,z,v,w;;
+	
+	
+	
+	final double OR;
+	final int size;
+	double pv;
+	 PolynomialFunction p;
+	int noDel;
+	
+	public void setNumDel(int noDel){
+		this.noDel = noDel;
+		v = noDel;
+		w = size - noDel;
+	}
+	
+	Power(int size, double diseasePen, double OR1){
+		this.size = size;
+		this.OR = 1.0/OR1;
+		y = (int) Math.round(diseasePen* (double)size);  //A +B
+		 z = size - y;
+		
+	}
+	static UnivariateRealSolver urs = UnivariateRealSolverFactory.newInstance().newNewtonSolver();
+	
+	public double solveForB() throws Exception{
+		double[] coeff = new double[] {-v*y,OR*(double)w - OR*(double)y +(double) v + (double)y, OR+1.0};
+		p = new PolynomialFunction( coeff);
+		return urs.solve(p, 0, noDel);
+	}
+	
+	Double[] resu = new Double[4]; //p_lower, p_upper, OR_lower, OR_upper;
+	
+	//double 
+	
+	public void calcPv( ) throws Exception{
+		double b_exact = solveForB();
+		setB((int) Math.floor(b_exact));
+		calcP2();
+		
+		resu[0] = this.pv;
+		resu[2] = 1.0/this.OR_out;
+//		System.err.println("lower-bound\n"+this);
+		setB((int) Math.ceil(b_exact));
+		calcP2();
+		resu[1] = this.pv;
+		resu[3] = 1.0/this.OR_out;
+		//System.err.println("upper-bound\n"+this);
+	}
+	
+	
+	
+	public void calcP(){
+		double[][] table = new double[2][2];
+		table[0][0] = A;
+		table[0][1] = B;
+		table[1][0] = C;
+		table[1][1] = D;
+		Contigency c1 = new Contigency();
+		c1.setMatrix(table);
+		c1.chisq();
+		pv = c1.getSig();//c1.chisq();
+		//ContigencyTable ct = new ContigencyTable(2000);
+		//ct.setMatrix(table);
+		//pv = ct.calcContigencyChiSquare(1);
+		
+	}
+	
+	double OR_out;
+	
+	public void setB(int B){
+		this.B = B;
+		A = y-B;
+		C = w-A;
+		D = v-B;
+	}
+	public void calcP2(){
+		re.assign("ve", new double[] {A,C,B,D} );
+		re.eval("ft = fisher.test(matrix(ve,ncol=2))");
+		this.OR_out = re.eval("ft$est").asDoubleArray()[0];
+		this.pv = re.eval("ft$p").asDouble();
+	}
+	
+	public void calcP1(){
+		int[][] table = new int[2][2];
+		table[0][0] = A;
+		table[0][1] = B;
+		table[1][0] = C;
+		table[1][1] = D;
+		
+		
+		
+	OR_out = ((double)A/(double)B) / ((double)C/(double)D);
+	ContigencyTable ct = new ContigencyTable(5000);
+		ct.setMatrix(table);
+		pv = ct.calcContigencyChiSquare(1000);
+//			ct.calcMonteCarloExactTest(1000);//ct.calcContigencyChiSquare(1);
+		
+	}
+	public String toString(){
+	//	return A+" "+B+"\t\t"+(A+B)+"\n"+C+" "+D+"\t\t"+(C+D);
+		return String.format("%4.1g\t%4.1g\t%4.2g\t%4.2g", resu).replaceAll(" ", "");
+	//	return "fisher.test(matrix(c("+A+","+C+","+B+","+D+"),ncol=2))" +"\n pvvalue = "+ pv+"\n OR = "+ (1.0/OR_out);
+	}
+}
+>>>>>>> .r259

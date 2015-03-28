@@ -1,0 +1,2 @@
+4-05-09
+There is a problem with multi-threading in the expecation step, as well as the CachedHMM update step

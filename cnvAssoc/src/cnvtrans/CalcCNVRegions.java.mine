@@ -1,0 +1,433 @@
+package cnvtrans;
+
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileFilter;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.PrintWriter;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.SortedMap;
+import java.util.SortedSet;
+import java.util.TreeMap;
+import java.util.TreeSet;
+
+
+public class CalcCNVRegions {
+  
+	static String split = "\\s+";
+	public static int length_thresh = 0; //above this threshold to even use
+	public static double cert_thresh = 0.0;
+	
+	
+	static class CNVR implements Comparable{
+		
+		//public static int length_threshold2 = 5; //above this threshold to even use
+		
+	   public CNVR(String str, int st, int en) {
+		   this.id = str;
+			this.start = st;
+			this.end = en;
+		}
+	int start, end;
+	   String id;
+	@Override
+	public int compareTo(Object arg0) {
+		CNVR cnv1 = (CNVR) arg0;
+		if(start==cnv1.start){
+		  if(end ==cnv1.end) return 0;
+		  else return end < cnv1.end ? -1 : 1;
+		}else return start < cnv1.start ? -1 : 1;
+	}
+	public int length() {
+		// TODO Auto-generated method stub
+		return end-start+1;
+	}
+	}
+	
+	public static Map<String, SortedSet<CNV>> getRegionsAll(Map<String, SortedSet<Integer>> start_end){
+		Iterator<String> it = start_end.keySet().iterator();
+		Map<String, SortedSet<CNV>> cnvm = new HashMap<String, SortedSet<CNV>>();
+		while(it.hasNext()){
+			String key = it.next();
+			cnvm.put(key, getRegions(key, start_end.get(key)));
+		}
+		return cnvm;
+	}
+	
+	public static SortedSet<CNV> getRegions(String chr,	SortedSet<Integer> start_end
+	) {
+		SortedSet<CNV> reg = new TreeSet<CNV>();
+			Iterator<Integer> it = start_end.iterator();
+		Integer[] startend = new Integer[] {  (it.next()),0};
+		//String prev = "";
+		for(int k=0; it.hasNext(); k++){
+				int position = it.next();
+				startend[1] =( (position));
+				CNV cnv = new CNV(startend[0], startend[1]);
+				reg.add(cnv);
+				startend[0] = startend[1];
+		}
+		return reg;
+	}
+	
+
+    static class DiseaseParams{
+    	Map<int[], String>[]pwr_res;
+    	double[] penetrance;
+    	double[] odds;
+    	final int len;
+    	StringBuffer header = new StringBuffer();
+    	int[] code = new int[2];
+    	
+    	public DiseaseParams(String dp, String or){
+    		String[] diseaseP = dp.length()==0 ? new String[0] : dp.split(":");
+    		String[] odds_ratio =or.length()==0 ? new String[0] :or.split(":");
+    		len = diseaseP.length *odds_ratio.length;
+    		penetrance = new double[len];
+    		odds = new double[len];
+    		pwr_res = new Map[len];
+    		for(int i=0; i<diseaseP.length; i++){
+    			int i1 = i*odds_ratio.length;
+    			for(int j=0; j<odds_ratio.length; j++){
+    				penetrance[i1+j] = Double.parseDouble(diseaseP[i]);
+    				odds[i1+j] = Double.parseDouble(odds_ratio[j]);
+    				pwr_res[i1+j] = new HashMap<int[], String>();
+    				String nme = penetrance[i1+j]+"_"+odds[i1+j];
+    				header.append(nme+"_p1\t");header.append(nme+"_p2\t");
+    				header.append(nme+"_OR1\t");header.append(nme+"_OR2\t");
+    			}
+    		}
+    	}
+
+		public  String calcPower(int total, int totalAb) throws Exception {
+			code[0] = total;
+			code[1] = totalAb;
+			StringBuffer sb = new StringBuffer();
+			for(int i=0; i<len; i++){
+				String power_st = pwr_res[i].get(code);
+				if(power_st==null){
+					Power pwr = new Power(total, penetrance[i], odds[i]);
+					pwr.setNumDel(totalAb);
+					pwr.calcPv();
+					pwr_res[i].put(code.clone(), power_st = pwr.toString());
+				}
+				sb.append(power_st+"\t");
+			}
+			return sb.toString();
+		}
+    	
+    }
+	
+	public static void main(String[]args){
+		//if(true) System.exit(0);
+		try{
+			File dir = new File(args[0]);
+			String name = dir.getName();
+		if(!dir.exists()) throw new RuntimeException("!!");
+	    File[] cnvFile = dir.listFiles(new FileFilter(){
+
+			@Override
+			public boolean accept(File arg0) {
+				// TODO Auto-generated method stub
+				return arg0.getName().startsWith("cnv") && arg0.getName().endsWith(".txt");
+			}
+	    	
+	    });
+		File snpsFile = new File(dir,"snps.txt");
+		File samplesFile = new File(dir,"samples.txt");
+	
+		String type = "all";
+		
+		Set<Integer> cnv_types_to_include = new HashSet<Integer>();
+		if(args.length==1){
+			for(int i=0; i<10; i++) cnv_types_to_include.add(i);
+		}else{
+			type = args[1].replace(':', '_');
+			String[] str = args[1].split(":");
+			for(int i=0; i<str.length; i++) cnv_types_to_include.add(Integer.parseInt(str[i]));
+		}
+		File regionsFile = new File("regions_"+type+".txt");  //optional, defines the regions.
+		
+		String[] order = args[2].split(":");
+		String delim = "\\s+";//args[3];
+		if(args.length>3){
+			String[] thresh = args[3].split(":");
+			length_thresh = Integer.parseInt(thresh[0]);
+			cert_thresh = Double.parseDouble(thresh[1]);
+		}
+		
+		DiseaseParams dp = new DiseaseParams(args.length > 4  ? args[4]:"", args.length > 5
+				? args[5] : "");
+		
+		
+		
+		File genoOut = new File(dir, "genos_"+type+".txt");
+		//the following is a map from chrom to a set of all start end positions 
+	 	SortedMap<String,SortedSet<Integer>> start_end= new TreeMap<String, SortedSet<Integer>>();
+	
+		SortedSet<Integer> cnv_types = new TreeSet<Integer>();
+		SortedMap<String, IndivCNV> m  = new TreeMap<String, IndivCNV>();
+		
+		//String[] header = br.readLine().split(split);
+		makeDataStructure(cnvFile,m,  cnv_types, cnv_types_to_include, start_end, order, delim);
+		List<String> samples = samplesFile.exists() ?  readSamplesFile(samplesFile) : new ArrayList<String>(m.keySet());
+		SortedSet<Integer> snpsset = snpsFile.exists() ? readSNPS(snpsFile) : null;
+		cnv_types.add(2);
+		int max_cnv = cnv_types.last();
+		Map<String, SortedSet<CNV>> regions_all;
+		if(!regionsFile.exists()){
+			regions_all = getRegionsAll(start_end);
+				}else{
+					System.err.println("using regions file "+regionsFile.getAbsolutePath());
+					
+			regions_all = readRegions(regionsFile);//, cnv_types_to_include);
+		}
+		System.err.println("regions "+regions_all.size());
+		
+		
+		PrintWriter pw = 	new PrintWriter(new BufferedWriter(new FileWriter(genoOut)));
+		String out_header = "Sample:Chr:FirstProbe:LastProbe:NbSnp:length_min:Type:Avg_certainty".replaceAll(":","\t");
+		pw.print(out_header+"\tregionId\t");
+		pw.print(dp.header.toString());
+		for(int i=0; i<samples.size(); i++){
+			pw.print(samples.get(i));
+			if(i<samples.size()-1) pw.print("\t");
+			else pw.print("\n");		
+		}
+		Iterator<String> it_chrom = regions_all.keySet().iterator();
+		
+		while(it_chrom.hasNext()){
+			String chr = it_chrom.next();
+			Iterator<CNV> it = regions_all.get(chr).iterator();
+			
+			int[] cnv_counts = new int[max_cnv+1];
+			Integer[] cnv_counts1 = new Integer[cnv_counts.length];
+			double[] avg_cert = new double[cnv_counts.length];
+			Double[] avg_cert1 = new Double[avg_cert.length];
+			int[] cert_count = new int[cnv_counts.length];
+			String formatString = getFormatString(cnv_counts.length,"%5d");
+			String formatString1 = getFormatString(cnv_counts.length,"%5.3g");
+			String prev_id="";
+			 List<Integer> no_snps = new ArrayList<Integer>();
+		  for(int k=0; it.hasNext(); k++){
+			CNV cnvr  = it.next();
+				int nosnps = snpsset==null ? -1 : snpsset.tailSet(cnvr.start).headSet(cnvr.end+1).size();
+				no_snps.clear();
+				Iterator<String> it1= samples.iterator();
+				int counter=0;
+				StringBuffer sb = new StringBuffer();
+				Arrays.fill(cnv_counts,0);
+				Arrays.fill(avg_cert,0);
+				Arrays.fill(cert_count, 0);
+			
+				for(counter=0;it1.hasNext();counter++){
+					String indiv = it1.next();
+					IndivCNV cnvs = m.get(indiv);
+				
+					if(cnvs==null){
+						sb.append(".");
+						cnv_counts[2]++;
+					}else{
+						CNV cnv  = cnvs.nocopies(cnvr.end-1);
+						
+						
+						if(cnv!=null){
+							if(nosnps < 0 && cnvr.start==cnv.start && cnvr.end==cnv.end){
+								if(!no_snps.contains(cnv.nosnp))no_snps.add(cnv.nosnp);
+							}
+						    cnv.type.append(sb, cnv_counts, avg_cert, cert_count);
+							
+						}else{
+							cnv_counts[2]++;
+							sb.append(".");
+						}
+						
+					}
+					if(it1.hasNext()) sb.append("\t");
+					else sb.append("\n");
+				}
+				for(int i=0; i<cert_count.length; i++){
+					avg_cert[i] = avg_cert[i]/cert_count[i];
+				}
+				int min_length = cnvr.length();
+				boolean hasCNV = regionsFile.exists();  //if regionsFile exists always prints out CNV genotypes, otherwise only if there is a cnv of the right type
+				int total = 0;
+				int totalAb =0;
+				for(int i=0; i<cnv_counts.length; i++){
+					cnv_counts1[i] = cnv_counts[i];
+					total+=cnv_counts[i];
+					if(i!=2) totalAb+=cnv_counts[i];
+					avg_cert1[i] = avg_cert[i];
+					if(cnv_counts[i]>0 && cnv_types_to_include.contains(i)){
+						hasCNV = true;
+					}
+				}
+				
+				
+				
+				if(hasCNV){
+					String id = cnvr.id("R %8.2fmb");
+					if(id.equals(prev_id)) id = cnvr.id("R %8.3fmb");
+					if(id.equals(prev_id)) id = cnvr.id("R %8.4fmb");
+					if(id.equals(prev_id)) id = cnvr.id("R %8.5fmb");
+					if(id.equals(prev_id)) id = cnvr.id(null);
+					String nosnps_ = no_snps.size()>0 && no_snps.size()<10 ? toString(no_snps) : ""+nosnps;
+					pw.print(name+"\t"+chr+"\t"+cnvr.start+"\t"+cnvr.end+"\t"+nosnps_+"\t"+min_length+"\t");
+					pw.print(String.format(formatString, cnv_counts1).replaceAll("\\s+", "")+"\t");
+					pw.print(String.format(formatString1,avg_cert1).replaceAll("\\s+", "").replaceAll("NaN","")+"\t"+id+"\t");
+					
+					if(true){
+						pw.print(dp.calcPower(total,totalAb));
+						
+					}
+					
+					pw.print(sb.toString());
+					prev_id = id;
+				}
+				if(counter<samples.size()){
+					throw new RuntimeException("!!");
+				}
+			}
+		}
+			pw.close();
+			//CompressGenos.main(genoOut);
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		System.exit(0);
+		
+    }
+
+	private static String toString(List<Integer> noSnps) {
+		String res = noSnps.toString().replaceAll("\\s+", "");
+		return res.substring(1, res.length()-1);
+	}
+
+	private static List<String> readSamplesFile(File f) throws Exception{
+		BufferedReader br = new BufferedReader(new FileReader(f));
+		List<String> res = new ArrayList<String>();
+		String st = "";
+		while((st = br.readLine())!=null){
+			String[] str =st.split(split);
+			res.add(str[0]);
+		}
+		return res;
+	}
+	
+	private static Map<String, SortedSet<CNV>> readRegions(File f) throws Exception{
+		BufferedReader br = new BufferedReader(new FileReader(f));
+		Map<String, SortedSet<CNV>> res = new HashMap<String, SortedSet<CNV>>();
+		String st = br.readLine();
+		while((st = br.readLine())!=null){
+			String[] str =st.split(split);
+			CNV cnv =  new CNV(str,  new int[] {0,1,2,3,-1,5,6,7});		
+		//	if(cnv.type.containedIn(toincl)){
+				String chr = str[1];
+				//String type = str[6];
+				SortedSet<CNV> cnvr = res.get(chr);
+				if(cnvr==null) res.put(chr, cnvr = new TreeSet<CNV>());
+				cnvr.add(cnv);
+			//}
+		}
+		return res;
+	}
+
+	private static String getFormatString(int length, String string) {
+		StringBuffer sb = new StringBuffer(string);
+		for(int i=1; i<length; i++){
+			sb.append(":"+string);
+		}
+		return sb.toString();
+	}
+
+	private static void makeDataStructure(File[] files, Map<String, IndivCNV> m, SortedSet<Integer> cnv_types,
+			Set<Integer> cnvTypesToInclude, SortedMap<String, SortedSet<Integer>> start_end, String[] order, String delim) throws Exception {
+		String st ="";
+		System.err.println("order: "+Arrays.asList(order));
+		List<String> header=null;
+		Set<String>[] sample_ids = new Set[files.length];
+		int[] order_ids = new int[order.length];
+		boolean orderIsInt = false;
+		try{
+			for(int i=0; i<order.length; i++){
+				order_ids[i] = Integer.parseInt(order[i]);
+				System.err.println(i+" "+order_ids[i]);
+			}
+			orderIsInt = true;
+		}catch(Exception exc){}
+		
+		for(int i=0; i<files.length; i++){
+			sample_ids[i] = new HashSet<String>();
+			BufferedReader br =new BufferedReader(new FileReader(files[i]));
+			if(!orderIsInt){
+				String first = br.readLine();
+				List<String> h= Arrays.asList(first.split(delim));
+				h = h.subList(0, Math.min(8,h.size()));
+				if(header!=null && !header.equals(h)) throw new RuntimeException("cnv files incomaptible\n"+header+"\n"+h);
+				header = h;
+				for(int k=0; k<order.length; k++){
+					order_ids[k] = header.indexOf(order[k]);
+				}
+			}
+			
+		while((st=br.readLine())!=null){
+			try{
+			String [] str = st.split(delim);
+			
+			if(i>0 && sample_ids[i-1].contains(str[0]) ){
+				str[0] = str[0]+"_"+files[i].getName().split("\\.")[0];
+			}
+			sample_ids[i].add(str[0]);
+			String indiv = str[0];
+			
+			CNV cnv = new CNV(str,  order_ids);	
+			//System.err.println(cnv.toString());
+			if(!cnv.type.containedIn(cnvTypesToInclude)) continue;
+			if((cnv.nosnp>=0 && cnv.nosnp< length_thresh) || !cnv.type.passCertThresh(cert_thresh)) continue;
+			cnv.type.addto(cnv_types);
+			//System.err.println("added");
+			IndivCNV cnvs = m.get(indiv);
+			if(cnvs == null){
+				cnvs = new IndivCNV(indiv,0);
+				m.put(indiv, cnvs);
+			}
+			
+			cnvs.add(cnv);
+			SortedSet<Integer> st_end = start_end.get(cnv.chrom);
+			if(st_end==null) start_end.put(cnv.chrom, st_end = new TreeSet<Integer>());
+			st_end.add(cnv.start);
+			st_end.add(cnv.end);
+		
+		}catch(Exception exc){
+			System.err.println("problem with\n "+st);
+		}
+		}
+		}
+	}
+
+	
+	
+	
+	private static SortedSet<Integer> readSNPS(File snpFile) throws Exception {
+		SortedSet<Integer> l = new TreeSet<Integer>();
+			BufferedReader br = new BufferedReader(new FileReader(snpFile));
+			String st = "";
+			while((st = br.readLine())!=null){
+				l.add(Integer.parseInt(st.split("\\s+")[1]));
+			}
+			br.close();
+		return l;
+	}
+
+	
+}

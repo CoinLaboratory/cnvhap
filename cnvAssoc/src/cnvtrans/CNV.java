@@ -1,0 +1,150 @@
+package cnvtrans;
+
+import java.util.SortedSet;
+
+public class CNV implements Comparable{
+  int start;
+  int end;
+  int nosnp;
+ CNVCounts type;
+  //double certainty;
+  
+  
+<<<<<<< .mine
+ public String id(String format){
+	
+		double mid = ((double)start+(double)end)/2.0;
+		 if(format==null) return mid+"";
+		return String.format(format, mid/(1000*1000)).replaceAll(" ", "");
+ }
+ 
+ public CNV(String[] str, int[] pos){
+	// boolean acgh =pos[0] ==0;
+	  int len = 8;
+	  chrom = str[pos[1]];
+	 // if(!reverse || acgh) chrom = chrom.substring(3);
+	  start = Integer.parseInt(str[ pos[2]]);
+	  end = Integer.parseInt(str[pos[3]]);
+	  nosnp = pos[4] < 0 ? -1 : Integer.parseInt(str[ pos[4]]);
+	  String type_str = str[pos[6]];
+	  String cert_str = pos[7] < 0 ? "1" : str[pos[7]];
+	  if(type_str.indexOf(':')<0){
+		  type = new CNVCounts.IntC(Integer.parseInt(type_str),
+				  Double.parseDouble(cert_str));
+=======
+ public String id(String format){
+	
+		double mid = ((double)start+(double)end)/2.0;
+		 if(format==null) return mid+"";
+		return String.format(format, mid/(1000*1000)).replaceAll(" ", "");
+ }
+ 
+ public CNV(String[] str, int[] pos){
+	// boolean acgh =pos[0] ==0;
+	  int len = 8;
+	  chrom = str[pos[0]];
+	 // if(!reverse || acgh) chrom = chrom.substring(3);
+	  start = Integer.parseInt(str[ pos[1]]);
+	  end = Integer.parseInt(str[pos[2]]);
+	  nosnp = Integer.parseInt(str[ pos[3]]);
+	  String type_str = str[pos[4]];
+	  String cert_str = str[pos[5]];
+	  if(type_str.indexOf(':')<0){
+		  type = new CNVCounts.IntC(Integer.parseInt(type_str), Double.parseDouble(cert_str));
+>>>>>>> .r259
+	  }
+	  else
+		  type = new CNVCounts.MultC(type_str, cert_str);
+	  
+//	if(!acgh)  type = !reverse ? new CNVCounts.IntC(.startsWith("Del") ? 1 :3): 
+	//	  	new CNVCounts.IntC(Integer.parseInt(str[len-pos[4]]));
+	//else type = new CNVCounts.IntC(str[pos[4]].equals("0") ? 3 :1);
+	//  if(type.fixedPos() > 5){
+	//	throw new RuntimeException("!!");
+	 // }
+//	  if(start==end && nosnp>1){
+//		  System.err.println("h");
+//	  }
+	//  certainty = Double.parseDouble(str[len-1]);
+  }
+  
+  
+
+
+  public CNV merge(CNV cnv_2) {
+	  CNV res = new CNV();
+	  res.start = Math.min(cnv_2.start, this.start);
+	  res.end = Math.max(cnv_2.end, this.end);
+	  res.nosnp = cnv_2.nosnp+this.nosnp;
+	  res.type = this.type;
+	  return res;
+  }
+ String chrom;
+
+public CNV() {
+	// TODO Auto-generated constructor stub
+}
+
+public CNV(CNV cnv) {
+	this.type = cnv.type;
+	this.start = cnv.start;
+	this.end = cnv.end;
+	this.chrom = cnv.chrom;
+}
+
+
+
+
+public CNV(Integer integer, Integer integer2) {
+	this.start = integer;
+	this.end = integer2;
+}
+
+public CNV(String[] str, int[] inds, boolean reverse) {
+	if(true) throw new RuntimeException("!!");
+}
+
+@Override
+public int compareTo(Object arg0) {
+	CNV cnv1 = (CNV) arg0;
+	int start1 = cnv1.start;
+	if(start1< start) return 1;
+	else if(start1>start) return -1;
+	else if(cnv1.end < end) return 1;
+	else if(cnv1.end > end) return -1;
+	else return 0;
+}
+
+public boolean contains(int position) {
+	return position <=end && position >= start;
+}
+
+public int overlaps(CNV cnv2) {
+	return Math.min(cnv2.end-start, end -cnv2.start);
+}
+
+public int length() {
+	return this.end - this.start;
+}
+  
+  public String toString(){
+	return start+","+end;  
+	  
+  }
+
+
+
+
+public int getNoSnp(SortedSet<Integer> list) {
+	int st = start-CalcOverlaps.inclSnpThresh;
+	int en = end+CalcOverlaps.inclSnpThresh;
+	if(st > list.last() || end < list.first()) return 0;
+	else{
+		SortedSet hs1 = list.tailSet(st).headSet(en);
+	
+		return hs1.size();
+	}
+}
+
+
+}
