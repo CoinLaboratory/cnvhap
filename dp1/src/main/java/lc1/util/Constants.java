@@ -212,7 +212,9 @@ public class Constants {
 			if(!row.equals(row1)){
 				for(int i=0; i<row.size(); i++){
 					int i1 = row1.indexOf(row.get(i));
-					if(i1!=i) System.err.println("problem "+i+" "+i1+" "+row.get(i));
+					if(i1!=i){
+						System.err.println("problem "+i+" "+i1+" "+row.get(i));
+					}
 				}
 				throw new RuntimeException("!! first column of each sheet included must be same !! "+sheet[0]+" vs "+sheet[k]);
 			}

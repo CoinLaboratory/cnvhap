@@ -150,8 +150,11 @@ public class IlluminaDistribution extends IlluminaRDistribution{
 
     
 public Double b(int i) {
-double refc = ((MatchedDistributionCollection)DataCollection.datC.dc).refCount(i);
-	return b/(b+refc);
+	if(DataCollection.datC.dc instanceof MatchedDistributionCollection){
+		double refc = ((MatchedDistributionCollection)DataCollection.datC.dc).refCount(i);
+		return b/(b+refc);
+	}else return b;
+	
 }
    
     /*@Override

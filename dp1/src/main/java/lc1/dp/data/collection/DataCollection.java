@@ -5044,6 +5044,7 @@ public  DataCollection (File f, short index, int no_copies, final int[][] mid,Fi
       int median_id = header_sample.indexOf("median");
       if(sample_id<0) sample_id = header_sample.indexOf("sampleID");
       if(sample_id<0) sample_id = header_sample.indexOf("sample");
+      if(sample_id<0) sample_id = header_sample.indexOf("Sample");
       File samplesFile = new File(f.getParentFile(), "Samples");
          if(samplesFile.exists()){
          indiv = ApacheCompressor.getIndiv(samplesFile, sample_id);
