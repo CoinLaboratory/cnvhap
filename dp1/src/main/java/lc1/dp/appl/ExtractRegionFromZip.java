@@ -30,6 +30,9 @@ public static void extractregion(File in, File outdir, String locs ){
 	try{
 		String[] loc = locs.split(":");
 		String outname = in.getName().split("\\.")[0];
+		if(!outdir.exists()){
+			outdir.mkdirs();
+		}
 		outname = outname +(in.getName().equals("all") ? "_"+loc[0]: "")+"_"+loc[1]+"_"+loc[2];
 		File outf = new File(outdir,outname);
 		CompressDir compress = new CompressDir(outf);
@@ -52,8 +55,9 @@ public static void extractregion(File in, File outdir, String locs ){
 			String[] str = st.split("\\s+");
 			if(str[chrid].equals(chrom) ||str[chrid].equals(chrom1) ){
 				int pos = Integer.parseInt(str[startid]);
-				compress.copy(zf, str[snpid_]);
-				if(pos<=from && pos>=from){
+			
+				if(pos<=to && pos>=from){
+					compress.copy(zf, str[snpid_]);
 					os.write(st);
 					os.write("\n");
 				}
