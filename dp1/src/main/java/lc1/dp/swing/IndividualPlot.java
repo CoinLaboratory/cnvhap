@@ -131,7 +131,7 @@ final static int type_index =0; //which type 0 is CN, 1 is B
  EmissionStateSpace emStSp1;
  final MarkovModel hmm;
 //   final int[] b_alias;
-  
+  boolean singlechrom = false;
    
     JComponent jpB;
     JComponent[] jB, jR;
@@ -272,7 +272,16 @@ public XYSeriesCollection[] getBSeriesCollection(int k){
      
        // else b_alias =null;
         this.location = loc;
-     
+        this.chrom = Constants.chrom0();
+        {
+        	int pos1 = (int)Math.floor(Constants.decode(loc.get(loc.size()-1), this.pos, false));
+        	int pos2 = (int) Math.floor(Constants.decode(loc.get(0), this.pos, false));
+        if( pos1==pos2){
+        	this.singlechrom = true;
+        	if(Constants.scaleLoc!=null) this.chrom = this.pos[0]+"";
+        	
+        }
+        }
      //   this.ca_b = new ColorAdapter[index.size()];
       //  this.ca_r = new ColorAdapter[index.size()];
         this.emStSp =Emiss.getSpaceForNoCopies(ploidy);
@@ -869,11 +878,12 @@ public XYSeriesCollection[] getBSeriesCollection(int k){
    // short[] ind_ = new short[1];
    
    XYSeriesCollection[][] rGlobal;// rGlobalProbeOnly;
+   double[] pos = new double[2];
    /** i is index of individual
      * stateDistribution has the distribution over genotypes
      *  */
     public void addedInformation(StateDistribution emissionC, int ll, int i, PseudoDistribution dist, int k, HaplotypeEmissionState sta){
-        double x = location.get(i);
+        double x = Constants.decode(location.get(i).doubleValue(), pos, this.singlechrom);
         
         short ind =  plotMerged ? 0 : dist.getDataIndex() ;
 //        	(dist instanceof CompoundDistribution) ? (short) ((CompoundDistribution)dist).getDataIndex(k):
@@ -1217,6 +1227,7 @@ public XYSeriesCollection[] getBSeriesCollection(int k){
     }
     
     Shape ellipse = new Ellipse2D.Double(1,1,1,1);
+	private String chrom;
     public static Shape getShape(Shape sh, double sz){
     //  Shape sh = //new Rectangle(1,1);
      AffineTransform at = new AffineTransform();
@@ -1326,7 +1337,7 @@ public XYSeriesCollection[] getBSeriesCollection(int k){
         final JFreeChart chart = ChartFactory.createXYLineChart(
         		title, //Constants.experiment(),
 //               b && Constants.plot!=2? "": title,
-               !b ? "": "Position on chromosome "+Constants.chrom0(), // domain axis label
+               !b ? "": "Position on chromosome "+chrom, // domain axis label
                b ?  "Proportional read depth" : "Total read depth", //"HD statistic", // range axis label
                 datas[0], // data
                 PlotOrientation.VERTICAL, Constants.includeLegend(), // include legend
@@ -1354,8 +1365,8 @@ public XYSeriesCollection[] getBSeriesCollection(int k){
             xAxis.setLabelFont(font6);
             if(location.size()>0){
 	            xAxis.setAutoRange(false);
-	            xAxis.setLowerBound(location.get(0)-1000);
-	            xAxis.setUpperBound(location.get(location.size()-1)+1000);
+	            xAxis.setLowerBound(Constants.decode(location.get(0)-1000, pos, this.singlechrom));
+	            xAxis.setUpperBound(Constants.decode(location.get(location.size()-1)+1000, pos, this.singlechrom));
             }
          
             
@@ -1431,7 +1442,7 @@ public XYSeriesCollection[] getBSeriesCollection(int k){
     		font4 = new Font("SansSerif", Font.PLAIN, 5*(int) Constants.shapeSize1());
     	}
         final JFreeChart chart = ChartFactory.createXYLineChart(
-                title+" chromosome "+Constants.chrom0()+
+                title+" chromosome "+chrom+
                 (Constants.collapseScatterInd() ? "" : 
                 (fracR==null ? "" : 
                 	String.format(" Q= %5.3g", new Object[] {-Math.log10(1-fracR)}))),
@@ -2815,14 +2826,16 @@ void addAnnotation1(ChartPanel cr, ChartPanel cr1,  int i2, int ii,int ii_prev, 
 			Map<String, Stroke> strokes_ = strokes[i2];
 			Stroke stroke_ = strokes_.get(annot.getText());
 			if(stroke_==null){
-				int order = 2;//strokes_.size();
+				//int order = 2;//strokes_.size();
 				double stroke_width = 
 					
 					Math.pow(Constants.joinStrokeWidth, Constants.decayStrokeWidth);//Math.max(0.5, 3.0*Math.pow(order, -0.8));  //power of -0.5 for slower decay
 				strokes_.put(annot.getText(),
 						stroke_ =  new BasicStroke((float)stroke_width, BasicStroke.CAP_SQUARE, BasicStroke.JOIN_MITER, 1.0f, 
 								//new float[] {5,5,5},1.0f));
-								Constants.randomFloat(5,10f), 1.0f));
+								new float[] {3,9},//21.0f, 9.0f, 3.0f, 9.0f },
+								//Constants.randomFloat(5,10f), 
+								1.0f));
 			    
 						
 			}

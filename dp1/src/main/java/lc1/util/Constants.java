@@ -396,8 +396,8 @@ public static int maxCoordDiff(){
 			return res_;
 		} else {
 			int[] mid_ = new int[2];
-			mid_[0] = convert(core[0]);
-			mid_[1] = convert(core[1]);
+			mid_[0] = convert(core[0], Constants.scaleLoc!=null);
+			mid_[1] = convert(core[1], Constants.scaleLoc!=null);
 			return mid_;
 		}
 
@@ -405,9 +405,10 @@ public static int maxCoordDiff(){
 
 	public static int[][] mid() {
 		String[][] orig = mid;
-
 		if (mid == null)
 			return null;
+		
+		
 		String[][] mid1;
 		if (mid[0].length == 1) {
 			mid1 = new String[1][mid.length];
@@ -449,8 +450,8 @@ public static int maxCoordDiff(){
 					exc.printStackTrace();
 				}
 			}
-			mid_[i][0] = convert(mid[i][1]);
-			mid_[i][1] = mid[i].length == 2 ? mid_[i][0] : convert(mid[i][2]);
+			mid_[i][0] = convert(mid[i][1], Constants.scaleLoc!=null && mid[i][0].equals("all"));
+			mid_[i][1] = mid[i].length == 2 ? mid_[i][0] : convert(mid[i][2], Constants.scaleLoc!=null && mid[i][0].equals("all"));
 		}
 		if (chrom == null) {
 			chrom = new String[mid_.length];
@@ -472,7 +473,10 @@ public static int maxCoordDiff(){
 		return res;
 	}
 
-	public static int convert(String string) {
+	public static int convert(String string, boolean all) {
+		if(all){
+			string = Constants.recode(string.split(","));
+		}
 		String st1 = string.replaceAll(",", "");
 		int gb_index = st1.indexOf("gb");
 		if (gb_index > 0) {
@@ -543,8 +547,8 @@ public static File getClusterBase(File clust){
 				String[] str = name.split("_");try{
 				if(str[str.length-3].equals(chr) ){
 					
-					int start = Constants.convert(str[str.length-2]);
-					int end = Constants.convert(str[str.length-1]);
+					int start = Constants.convert(str[str.length-2], Constants.scaleLoc!=null);
+					int end = Constants.convert(str[str.length-1], Constants.scaleLoc!=null);
 					int overl = Math.min(end - mid[0], mid[1] - start);
 					return overl>=0;
 					
@@ -2666,8 +2670,8 @@ public static void resetIndices(){
 			Constants.restrictKb[0];
 		int[] res = new int[2];
 	
-		res[0] = convert(restrictKb1[0]) ;
-		res[1] = convert(restrictKb1[1]) ;
+		res[0] = convert(restrictKb1[0], false) ;
+		res[1] = convert(restrictKb1[1], false) ;
 		return res;
 	}
 	
@@ -3373,7 +3377,7 @@ public static boolean showScatter(){
 		return distanceTo;
 	}
 
-	public static boolean calcLD = false;
+	//public static boolean calcLD = false;
 	// type 0==no_copies; type 1 noA; type 2 noB ;type==3 all states type ==4
 	// intensity type 5 = BAF; type 6 = snp (excluding cn)
 	public static  String[] ldtype = new String[]{ "0", "6"} ;
@@ -3384,7 +3388,7 @@ public static boolean showScatter(){
 
 	public static boolean calcLD() {
 		// TODO Auto-generated method stub
-		return calcLD;
+		return false;//calcLD;
 	}
 
 	public static String snpsToPlot = "all";
@@ -4571,7 +4575,7 @@ public static boolean run2 = false;
 	}
 	public static double exponentB(short data_index) {
 		
-		return exponentB==null ? 1: exponentB[data_index];
+		return exponentB==null ? 1: exponentB[Math.min(data_index, exponentB.length-1)];
 	}
 	public static boolean globalRange() {
 		// TODO Auto-generated method stub
@@ -4715,7 +4719,7 @@ public static boolean run2 = false;
 	}
 public static String[] duplicates;
 public static String duplSep="###"; //
-public static double joinStrokeWidth=0.2;
+public static double joinStrokeWidth=1;
 public static double decayStrokeWidth=1.0;
 
 	
@@ -5316,7 +5320,57 @@ public static int betaDownWeight=1;
 public static int betaDownWeight() {
 	return betaDownWeight;
 }
+public static float muteAlpha = 0.3f;
+public static float muteAlpha() {
+return muteAlpha;
+}
 
+
+	
+
+	
+	//returns single number for chrom, pos position
+	public static double recode(double[] vec){
+	
+		double  chr = vec[0];//floor(as.numeric(vec[1]))
+		double  pos1 =vec[1];// as.numeric(vec[2])
+		pos1 =  Math.round(((pos1/scaleLoc[0])+chr)*scaleLoc[1]);
+		return pos1;
+	}
+	public static String recode(String[] vec){
+		
+		double  chr = Double.parseDouble(vec[0]);//floor(as.numeric(vec[1]))
+		double pos1 =0;
+		if(vec.length==1){
+			pos1 = Math.round(((0/scaleLoc[0])+chr)*scaleLoc[1]);
+		}else{
+		double fac = 1e6;
+		String num1 = vec[1].toLowerCase().replaceAll("mb|kb", "");//vec[1].substring(0,1)+"."+vec[1].substring(1);
+		if(vec[1].toLowerCase().indexOf("mb")>=0) fac = 1e6;
+		if(vec[1].toLowerCase().indexOf("kb")>=0) fac = 1e3;
+		double  pos2 =Double.parseDouble(num1)*fac;// as.numeric(vec[2])
+		pos1 =  Math.round(((pos2/scaleLoc[0])+chr)*scaleLoc[1]);
+		}
+		return "" + ((int)Math.round(pos1));
+	}
+	//converts single number back into chrom/pos 
+	public  static double decode(double x, double[] res, boolean single){
+			if(scaleLoc==null) return x;
+	  double x1=x/scaleLoc[1];
+	  double chr = Math.floor(x1);
+	  double pos = (x1-chr)*scaleLoc[0];
+	  res[0] = chr;
+	  res[1] = pos;
+	  return single ? pos : chr+pos/1e9;
+	}
+	 public static double minNormalDepth =0;
+	public static double minNormalDepth() {
+		// TODO Auto-generated method stub
+		return minNormalDepth;
+	}
+	public static int convert(String string) {
+		return convert(string, false);
+	}
 
 	
 	

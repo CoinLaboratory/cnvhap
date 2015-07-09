@@ -137,7 +137,7 @@ public abstract class  EmissionStateSpace implements List<Comparable>, Serializa
 			    color[i] = col[Math.min(col.length-1, getCN(i))];
 			    color_muted[i] = 
 			    	new Color(color[i].getColorSpace(), color[i].getRGBComponents(compArray),
-			    			(float) 0.3);
+			    			(float) Constants.muteAlpha());
 				
 			    		
 		  }

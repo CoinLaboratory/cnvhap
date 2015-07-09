@@ -1302,7 +1302,7 @@ public String getInfo(String tag, String key, int i, boolean style) throws Excep
     }
     
    
-    private Object getAvg(PseudoDistribution pseudoDistribution,
+    private double getAvg(PseudoDistribution pseudoDistribution,
 		EmissionStateSpace emstsp, int type) {
 	Integer k = pseudoDistribution.fixedInteger();
 	if(k!=null){
@@ -4322,28 +4322,6 @@ if(!Constants.useOriginalLikelihoodAsUncertainty())  this.dataL.put(key, datL);
    
 }
 public void removeKey(String key,boolean states){
-	if(!Constants.calcLD()){
-		data.remove(key);
-		this.uncertaintyPhase.remove(key); 
-		if(!Constants.run2() && !Constants.bufferCompress) {
-			
-				dataL.put(key, null);
-			
-		}
-		else{
-			HaplotypeEmissionState st = (HaplotypeEmissionState)dataL.get(key);
-			for(int i=0; i<st.emissions.length; i++){
-				if(st.emissions[i]!=null && st.emissions[i].fixedInteger()==null){
-					double[] prob = st.emissions[i].probs();
-					int max = Constants.getMax(prob);
-					if(prob[max]>0.99){
-						st.emissions[i] = new IntegerDistribution(max, st.getEmissionStateSpace());
-					}
-				}
-			}
-		}
-	}
-	 
 	  if(states){
 	       
 	        this.viterbi.put(key,null );
@@ -5659,7 +5637,9 @@ private List<Integer> findMonomorphic() {
 	return res;
 }
 protected void setMinMaxRValues() {
-	 if(dc!=null) ((DistributionCollection)dc).setMinMax(Constants.minR(index), Constants.maxR(index),Constants.minB(index), Constants.maxB(index));
+	 if(dc!=null) {
+		 ((DistributionCollection)dc).setMinMax(Constants.minR(index), Constants.maxR(index),Constants.minB(index), Constants.maxB(index));
+	 }
 	
 }
 private void checkStatesForNull() {
