@@ -27,7 +27,8 @@ public abstract class EmissionState extends  State {
    // protected boolean changedParams = true;
     final protected SimpleDistribution lengthDistrib;
 
-    
+    public abstract void append(EmissionState emissionState);
+
    
    /* public Integer noCop(int data_index){
         return null;
@@ -337,7 +338,7 @@ public   int getBestIndex(HaplotypeEmissionState data_state,  int i, boolean sam
 public   double score(HaplotypeEmissionState data_state , int i_hmm,boolean log) {
 	  EmissionState hmm_state = this;
 	   double sc =hmm_state.calcDistribution(data_state, i_hmm,log);
-	  
+	 
     return sc;
 }
   
@@ -427,6 +428,12 @@ public final int length() {
 public final  double[] score(HaplotypeEmissionState data_state, boolean logspace, boolean isLog){
     double[] score = new double[data_state.noSnps()];
     EmissionState hmm_state = this;
+    if(data_state.getName().equals("107665_19") && hmm_state.getName().indexOf("1")>=0 || hmm_state.getName().indexOf("2")>=0){
+		Arrays.fill(score, logspace ? Double.NEGATIVE_INFINITY : 0);  
+	  }
+    else if(data_state.getName().equals("107665_9") && hmm_state.getName().indexOf("3")>=0 || hmm_state.getName().indexOf("4")>=0){
+		Arrays.fill(score, logspace ? Double.NEGATIVE_INFINITY : 0);  
+	  }else{
    // int len = this.getEmissionStateSpace().size();
    // EmissionState indi = this; 
     for(int i=0; i<score.length; i++){
@@ -438,6 +445,7 @@ public final  double[] score(HaplotypeEmissionState data_state, boolean logspace
      
         }
     }
+	  }
    
     return score;
 }
@@ -792,6 +800,11 @@ public  void fillLikelihood(Locreader mid, List<Integer> loc) {
 		
 	}
 
+
+
+
+
+	
 
 
 

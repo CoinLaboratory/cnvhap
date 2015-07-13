@@ -810,6 +810,30 @@ protected int getNumberDataTypes() {
     	//loc=  makeNew(loc,old_index)
     }
     
+    public void addCollection(DataCollection datC, int offset){
+    	int offset1 = offset + loc.get(loc.size()-1);
+    	List<Boolean> po = new ArrayList( Arrays.asList(this.probeOnly));
+    	for(int k=0; k< datC.loc.size(); k++){
+    		this.loc.add(datC.loc.get(k)+offset1);
+    		this.snpid.add(datC.snpid.get(k));
+    		if(k<datC.alleleA.size()) this.alleleA.add(datC.alleleA.get(k));
+    		if(k<datC.alleleB.size())this.alleleB.add(datC.alleleB.get(k));
+    		if(k<datC.baf.size())this.baf.add(datC.baf.get(k));
+    		if(k<datC.strand.size()) this.strand.add(datC.strand.get(k));
+    		po.add(datC.probeOnly[k]);
+    		//this.probeOnly.add(datC.probeOnly.get(k));
+    	}
+    	this.probeOnly = po.toArray(new Boolean[0]);
+    	this.length = loc.size();
+    	   for(Iterator<EmissionState> it = this.dataL.values().iterator(); it.hasNext();){
+    		   EmissionState data =  it.next();
+    	          // HaplotypeEmissionState dat = (HaplotypeEmissionState) dataL.get(data.getName());
+    	          PIGData emst = this.data.get(data.getName());
+    	       data.append(datC.dataL.get(data.getName()));
+    	       if(emst!=null) ((PhasedDataState)emst).append((PhasedDataState)datC.data.get(data.getName()));
+    	   }
+    }
+    
     /* (non-Javadoc)
      * @see lc1.dp.data.collection.DataC#noCopies(java.lang.String)
      */
@@ -1349,6 +1373,8 @@ public String getInfo(String tag, String key, int i, boolean style) throws Excep
         }
     }
    
+    
+    
     
     /* (non-Javadoc)
      * @see lc1.dp.data.collection.DataC#getSourcePositions()
@@ -5384,6 +5410,7 @@ public  DataCollection (File f, short index, int no_copies, final int[][] mid,Fi
     }
     this.indiv =sublist( indiv,dToInc);
     todrop.addAll(findLowDepth());
+    todrop.addAll(this.findLowBAF());
     {
     	 this.drop(todrop, false);
     }
@@ -5568,6 +5595,16 @@ public  DataCollection (File f, short index, int no_copies, final int[][] mid,Fi
 
 protected Collection<? extends Integer> findLowDepth() {
 	return new ArrayList<Integer>();
+}
+protected Collection<? extends Integer> findLowBAF() {
+	
+	List l = new ArrayList<Integer>();
+	for(int k=0; k<this.baf.size(); k++){
+		if(baf.get(k) < Constants.excludeBafThresh() || 1-baf.get(k) < Constants.excludeBafThresh()){
+			l.add(k);
+		}
+	}
+	return l;
 }
 private int[]  checkOrder() {
 	List<Integer> loc1 = new ArrayList<Integer>(loc);
@@ -7068,6 +7105,8 @@ public static DataCollection append(DataCollection dataCollection,
 	);
 	return mdc;
 }
+
+
 public Map<String, String>[] getRenaming() {
 	return new Map[]{this.rename};
 }

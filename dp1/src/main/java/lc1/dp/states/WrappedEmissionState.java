@@ -25,6 +25,9 @@ final EmissionStateSpaceTranslation trans;
         return inner.noSnps();
     }
    
+    public  void append(EmissionState emissionState){
+       this.inner.append(emissionState);
+        }
    /* @Override
     public void fillLikelihood(Locreader mid, List<Integer> loc) {
       //  System.err.println("class inner is "+inner.getClass());

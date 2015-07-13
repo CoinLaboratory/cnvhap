@@ -441,6 +441,7 @@ private static int[] getTransformation(Double[] doubles) {
 }
  public void print(final PrintWriter sb, List<Integer>cols, int popsize){
       super.print(sb, cols, popsize);
+   //   this.trans.print(sb, sbS, states, hittingProb)
      if(false){ StringBuffer sb1= new StringBuffer();
       Double[] u= new Double[noSnps+1];
       for(int i=0; i<this.noSnps; i++){

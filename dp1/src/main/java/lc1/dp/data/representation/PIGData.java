@@ -57,6 +57,7 @@ public interface PIGData extends CSOData, SSOData, ScorableObject{
     public abstract void applyAlias(int[] alias);
 
 
+
   //  public abstract int countNull();
 
     

@@ -47,6 +47,7 @@ public class HaplotypeEmissionState extends EmissionState {
 	}
 	
 	
+	
 	public void adjustDepth(){
 		if(emissions[0] instanceof DepthDistribution){
 		double mediand =this.getMedianDepth();
@@ -253,6 +254,18 @@ public class HaplotypeEmissionState extends EmissionState {
     
     public  PseudoDistribution[] emissions; //prob of emitting true
     
+    
+    public  void append(EmissionState emissionState){
+    	int len = emissions.length;
+    	PseudoDistribution[] ems = new PseudoDistribution[this.emissions.length+emissionState.length()];
+    	System.arraycopy(this.emissions, 0, ems, 0, len);
+    	
+    	for(int k=0 ; k<emissionState.length(); k++){
+    		ems[len+k] = 
+    		((HaplotypeEmissionState)emissionState).emissions(k);
+    	}
+    	this.emissions =ems;
+    }
     
     public final ProbabilityDistribution[][] emissionsDatatype;
   //  final boolean[] train;

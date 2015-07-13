@@ -656,7 +656,7 @@ public static void init(List<String> snpid, int len){
   	   double[] d =  PairEmissionState.pool.getObj(Emiss.getSpaceForNoCopies(sta.noCop()).genoListSize());
   	 double sumNonMix = Constants.allowComponent() ?  Sampler.getProbOverStates(dist, bwt.hmm, sta,i,d,0) : 0;
      
-    double sum = 	Sampler.getProbOverStates(dist, bwt.hmm, sta,i,d);
+    double sum = 	Sampler.getProbOverStates(dist, bwt.hmm, sta,i,d,false);
     if(!Constants.allowComponent) sumNonMix = sum;
     if(sumNonMix/sum > Constants.imputedThresh(1)){
     	 this.ac.scoreChi1(d, i, true,name);

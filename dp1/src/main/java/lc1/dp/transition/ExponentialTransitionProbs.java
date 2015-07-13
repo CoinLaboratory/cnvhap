@@ -239,7 +239,7 @@ public class ExponentialTransitionProbs extends AbstractTransitionProbs {
 
     public void print(PrintWriter pw, Double[] hittingProb, double dist) {
         exp.printExp(pw, dist, "exp");
-//        pw.print(transform(exp_rd.probs[0], dist));
+    // pw.print(transform(((Siexp., dist));
         pw.print("; ");
         alpha.printExp(pw, dist, "alpha");
       

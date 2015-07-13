@@ -18,6 +18,7 @@ import java.util.zip.ZipFile;
 
 import lc1.util.CompressDir;
 import lc1.util.Compressor;
+import lc1.util.Constants;
 
 public class ConvertAssocFileToZip {
  public static void main(String[] args){
@@ -40,7 +41,13 @@ public class ConvertAssocFileToZip {
 		dir1.mkdir();
 		String[] loc = br.readLine().split("\t");
 		OutputStreamWriter pw = 	compress.getWriter("Name",true);
-		pw.write("countAll\tstate.0\tstate.1\tstate.2\n");
+		String[] tags = Constants.writeAverages;
+		pw.write(tags[0]);
+		for(int k=1; k<tags.length; k++){
+			pw.write("\t"+tags[k]);
+		}
+		pw.write("\n");
+		//pw.write("countAll\tstate.0\tstate.1\tstate.2\n");
 		pw.write("chr\tstart\tend\tsnpid\n");
 		pw.write("sample\n");
 		compress.closeWriter(pw);

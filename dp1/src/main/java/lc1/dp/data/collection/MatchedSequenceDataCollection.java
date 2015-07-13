@@ -27,9 +27,10 @@ static double genomeLength = 1;//3.2e7;
 	static String ref_id = "ref";
 	static String refall = Constants.reference();//"HG"REFALL";
 	static int topoutlier =0;// 5;
+	static int bottomoutlier = 0;
 	//static double[] totals1 = new double[]{0,0};
 	
-	final static double min_thresh = 1;//5*Constants.cumulativeR(0);
+	//final static double min_thresh = Constants.minNormalDepth();//5*Constants.cumulativeR(0);
 	//public static boolean rescale = false; //rescaling for baf plots to be centred at 0.5
 	
 	public MatchedSequenceDataCollection(DataCollection dat) {
@@ -288,37 +289,39 @@ protected Collection<? extends Integer> findLowDepth() {
     };
     double maxt=Double.POSITIVE_INFINITY;
     double maxn=Double.POSITIVE_INFINITY;
-    if(topoutlier>0){
-	    List<Double>allt= new ArrayList<Double>();;
+    double minn = 0;
+    if(topoutlier>0 || bottomoutlier>0){
+	//    List<Double>allt= new ArrayList<Double>();;
 	    List<Double> alln = new ArrayList<Double>();
 	  
 	    for(int k=0; k<emsref.length; k++){
-	    	double r = ((IlluminaDistribution) emsref[k]).r().doubleValue();
+	    	//double r = ((IlluminaDistribution) emsref[k]).r().doubleValue();
 	    	double b = ((IlluminaDistribution) emsref[k]).b();
-	    	double t = b*r;
-	    	double n = r - t;
+	    	//double t = b*r;
+	    	//double n = r - t;
 	    	
-	    		allt.add(t);
-	        	alln.add(n);
+	    		//allt.add(t);
+	        	alln.add(b);
 	    	
 	    }
-	    Collections.sort(allt,cd);
+//	    Collections.sort(allt,cd);
 	    Collections.sort(alln,cd);
-	    maxt = allt.get(topoutlier);
+	 //   maxt = allt.get(topoutlier);
 	    maxn = alln.get(topoutlier);
-	    System.err.println(maxn+" "+maxt);
+	    minn = alln.get(alln.size()-bottomoutlier);
+	    System.err.println(minn+" "+maxn);
     }
     for(int k=0; k<emsref.length; k++){
     	if(emsref[k]!=null){
     
     	double n = ((IlluminaDistribution) emsref[k]).b();
-    	double t = n;
+    //	double t = n;
     
-    	if(t< min_thresh || n < min_thresh || t>=maxt || n>=maxn){
+    	if( (n <= minn && bottomoutlier >0) || (n>=maxn && topoutlier>0) || n <=Constants.minNormalDepth()){
     		res.add(k);
     	//	totals[0] -=t;
     //		totals[1] -=n;
-    		System.err.println("dropped "+this.snpid.get(k)+" "+t+" "+n);
+    		System.err.println("dropped "+this.snpid.get(k)+" "+" "+n);
     	}
     	}
     }
@@ -328,7 +331,7 @@ protected Collection<? extends Integer> findLowDepth() {
 	
 	 @Override
 	    public  Boolean process(String indiv, String[] header,  String[] geno, int i, int ploidy, double[] miss){
-	       
+	   //    System.err.println(i);
 	       HaplotypeEmissionState state = (HaplotypeEmissionState)this.dataL.get(indiv);
 	    	//int counta_ind = this.indexOf1(headsLowerCase,ref_id.split(":"));
 			int    countb_ind;

@@ -485,7 +485,7 @@ List<EmissionStateSpace> stateEm1 = new ArrayList<EmissionStateSpace>();
                
         };
         PhasedDataState[] samL = null; 
-        double[] certainty = null;
+        double[] certainty = null; //can I get rid of this??
         boolean updateDirect = !sample && Constants.numRep()<=1;
         if(updateDirect) { //update data directly and don't write out anything
         	samL = new PhasedDataState[] {
@@ -539,6 +539,7 @@ List<EmissionStateSpace> stateEm1 = new ArrayList<EmissionStateSpace>();
 	          else{
 	        	  Arrays.fill(prob, Double.NaN);
 	          }
+	            
 	            if(Constants.saveStates()){ 
 	            	   if(os1!=null){
 	            		   PrintWriter states = (PrintWriter)os1[1][1];
@@ -609,8 +610,11 @@ List<EmissionStateSpace> stateEm1 = new ArrayList<EmissionStateSpace>();
         	//if(Constants.saveInference()){
       // FreeHaplotypeHMM hmmin =  (FreeHaplotypeHMM)hmm.getMemberModels()[0];
    //   EmissionStateSpace stsp =  hmmin.getStateSpace();
+        if(!sample){
+        	((DataCollection)data).setData(key, sam[0], sam[0], sam[1], sam[1], certainty);
+        }else{
           	((DataCollection)data).setData(key, sam[0], samL[0], sam[1], samL[1], certainty);
-        	//}
+        }
         	//else{
         		//((DataCollection)data)
         	//}

@@ -54,7 +54,9 @@ public  class SimpleEmissionState extends EmissionState{
         return emissions.probs(obj);
     }
   
-  
+     public  void append(EmissionState emissionState){
+     throw new RuntimeException("not implemented");
+     }
  
 
     

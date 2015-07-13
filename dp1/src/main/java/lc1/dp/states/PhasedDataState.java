@@ -35,6 +35,18 @@ public class PhasedDataState extends HaplotypeEmissionState implements PIGData{
       
     }
    
+    public  void append(EmissionState emissionState){
+    	int len = emissions.length;
+    	PseudoDistribution[] ems = new PseudoDistribution[this.emissions.length+emissionState.length()];
+    	System.arraycopy(this.emissions, 0, ems, 0, len);
+    	
+    	for(int k=0 ; k<emissionState.length(); k++){
+    		ems[len+k] = 
+    		((HaplotypeEmissionState)emissionState).emissions(k);
+    	}
+    	this.emissions =ems;
+    }
+    
  public PhasedDataState(PhasedDataState state_j) {
      super(state_j);
      this.phased = new Comparable[state_j.phased.length];

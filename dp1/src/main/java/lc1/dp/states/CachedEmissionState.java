@@ -34,6 +34,18 @@ public class CachedEmissionState extends AbstractCachedEmissionState {
 	   return innerState.noCop();
    }
   
+   public  void append(EmissionState emissionState){
+   	int len = emissions.length;
+   	PseudoDistribution[] ems = new PseudoDistribution[this.emissions.length+emissionState.length()];
+   	System.arraycopy(this.emissions, 0, ems, 0, len);
+   	
+   	for(int k=0 ; k<emissionState.length(); k++){
+   		ems[len+k] = 
+   		((CachedEmissionState)emissionState).emissions(k);
+   	}
+   	this.emissions =ems;
+   }
+   
   
    public CachedEmissionState(CompoundState state,  int stateSpaceSize) {
         super(state);

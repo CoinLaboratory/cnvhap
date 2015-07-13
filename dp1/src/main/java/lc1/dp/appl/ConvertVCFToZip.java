@@ -29,7 +29,7 @@ public class ConvertVCFToZip {
 	static boolean replaceNumWithAB = false;
 static String split="\\s+";
 static int buffer =1;
-static boolean includeRef = true;
+static boolean includeRef = false; //SET TO TRUE TO ADD UP DEPTHS!!!
  static boolean useID = false;
 static  boolean noskip = true;
 //static boolean mergeNeighbourin = true;	
@@ -432,6 +432,7 @@ Boolean firstLine(){
 	}else{
 		target = "all";
 	}
+	//if(target==null) target = "all";
 	if(!target.equals("all") &&!target.equals("chrall") && !currString[chr_index].equals(target)){
 		while((currString = readLine())!=null && !currString[chr_index].equals(target)){}
 	}

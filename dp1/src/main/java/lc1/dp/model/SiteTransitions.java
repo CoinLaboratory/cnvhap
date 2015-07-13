@@ -380,7 +380,7 @@ public abstract class SiteTransitions implements Serializable,UnivariateFunction
     		             //   Logger.global.info("updating "+i+" of "+loc.size());
     		                 //  logLAll+=  probs_.transferAlpha(pseudoTrans, alpha_overall, allFree ? 2 : 0);
     		                  if(globalTrans==null){
-    		                	  logLAll+=  probs_.transferAlpha(pseudoTrans, alpha_overall, allFree ? 2 : 0);
+    		                	if(Constants.updateAlpha())  logLAll+=  probs_.transferAlpha(pseudoTrans, alpha_overall, allFree ? 2 : 0);
     		                	  logLAll+= probs_.transfer(pseudoCExp2, alpha_overall, allFree ? 2 : 0);
     		                  }else{
     		                  
@@ -725,6 +725,7 @@ public double getTransitionScoreToPaint(int from, int to, int indexOfToEmission)
 				pw.println(i+"\t"+
 						String.format("%5.2f",((FreeRateTransitionProbs)(transProbs[i])).logrelativeRate));
 			}
+			transProbs[i].print(pw, null, (double) this.loc.get(i) - (double) this.loc.get(0));
 		}
 		for(int ii=0; ii<r.length; ii++){
 			pw.println("r priors");

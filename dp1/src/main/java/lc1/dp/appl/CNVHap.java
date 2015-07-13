@@ -112,7 +112,7 @@ public class CNVHap {
 	        		sb[0]);
             	}
             }
-         String[][] mid1 = Constants.mid;
+      int[][] mid1 = Constants.mid();
             String column  = Constants.column();
             int index1 = Constants.index;
             summaryFile = Constants.out;
@@ -123,8 +123,8 @@ public class CNVHap {
             }
            File dir1 = new File(dirF);
                for(int i=0; i<mid1.length; i++){
-            	   Constants.mid = new String[][] {mid1[i]};
-            	   Constants.chrom = new String[]{mid1[i][0]};
+            //	   Constants.mid = new String[][] {mid1[i]};
+            //	   Constants.chrom = new String[]{mid1[i][0]};
                    if(false){//Constants.type.equals("simulate")){
                        simulate(dir1, null,(short) i);
                    }
@@ -418,7 +418,13 @@ public static DataCollection read(final File dir) throws Exception{
        //     EmissionState emst = res[0].dataLvalues().next();
         }
         else if(format[i].startsWith("geno")) {
+        	
             resu = new SimpleDataCollection(inp[i],(short)i, no_copies[i], mid,buildF, snpidrest);
+            if(Constants.extraChrom!=null){
+            	for(int jj=0; jj<Constants.extraChrom.length; jj++){
+        		resu.addCollection(new SimpleDataCollection(new File( Constants.inputDir(i)+"/" + Constants.extraChrom(jj) + ".zip"),(short)i, no_copies[i], mid,buildF, snpidrest),(int)1000);
+            	}
+            	}
             String[] join = Constants.toJoin(i);
             if(join!=null &&  join.length>0){
             	((SimpleDataCollection)res[kk][i]).join(join);
@@ -903,10 +909,7 @@ public static DataCollection read(final File dir) throws Exception{
     	 else RunFastPhase.run(obj, summ, new File(dir, "clusters.txt"+Constants.column()),outputDir);
      }
      
-     if(Constants.calcLD())
-     {
-    	 HLALD.calcLD(obj, outputDir, true, false);
-     }
+   
      if(Constants.calcAssoc() && Constants.sample() && Constants.run()){
     	File  pw = new File(outputDir,"assoc");
     //	int assocTest = Constants.assocTest();

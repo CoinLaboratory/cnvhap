@@ -448,7 +448,7 @@ public class SimpleDataCollection extends DataCollection {
     		int gt_ind = this.headsLowerCase.indexOf("gt");
     		if(gt_ind <0) return super.calcBaf(l);
     		else{
-    			for(int k=0; k<l.size(); k++){
+    			for(int k=0; k<Math.min(l.size(), Constants.includeFirstInBAF()); k++){
     				
     	    		String str = l.get(k).trim();//.split("\\s+")
     	    		if(str.equals(".")) continue;
@@ -467,12 +467,12 @@ public class SimpleDataCollection extends DataCollection {
     	}
     	else{
     	//double[] d = new double[3];
-    	for(int k=0; k<l.size(); k++){
+    	for(int k=0; k<Math.min(l.size(), Constants.includeFirstInBAF()); k++){
     		String str = l.get(k).trim();//.split("\\s+")
     		if(str.equals("./.") || str.equals(".")) continue;
     		else{
     		String[] st = str.split("\\s+")[gl_ind].split(",");
-    		
+    		if(st.length==1 && (st[0].equals("./.") || st[0].equals("."))) continue;
     		for(int i=0; i<st.length; i++){
     			double val =Double.parseDouble(st[i]); 
     			double d = pl ? Math.pow(10, val/-10.0): Math.pow(10, val);

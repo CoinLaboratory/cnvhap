@@ -101,7 +101,9 @@ public String toString(int i){
         return 0;
     }
 
-
+    public  void append(EmissionState emissionState){
+        throw new RuntimeException("not implemented");
+        }
     @Override
     public EmissionStateSpace getEmissionStateSpace() {
         // TODO Auto-generated method stub

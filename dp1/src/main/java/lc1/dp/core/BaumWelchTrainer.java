@@ -15,6 +15,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.logging.Logger;
 
+import lc1.dp.data.collection.DataCollection;
 import lc1.dp.emissionspace.EmissionStateSpace;
 import lc1.dp.model.CachedHMM;
 import lc1.dp.model.MarkovModel;
@@ -270,6 +271,7 @@ public class BaumWelchTrainer {
         	 dp1= dp(j1);
         	 dp1.setData(data[j1]);
                dp1.reset(true);
+              
        //  }
       //   System.err.println("doing "+j1);
        logprob[j1] =  dp1.search(true, false);

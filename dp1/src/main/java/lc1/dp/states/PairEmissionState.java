@@ -18,6 +18,12 @@ import lc1.util.Constants;
 public  class PairEmissionState extends CompoundState {
 
     private final EmissionState[] dist;
+    
+    public  void append(EmissionState emissionState){
+       for(int k=0; k<dist.length; k++){
+    	   dist[k].append(((PairEmissionState)emissionState).dist[k]);
+       }
+         }
     protected final CompoundEmissionStateSpace emStSp;
    // final public  PairMarkovModel parentModel;
     final boolean decomp;

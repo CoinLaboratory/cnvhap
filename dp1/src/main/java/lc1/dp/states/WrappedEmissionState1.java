@@ -27,6 +27,9 @@ public class WrappedEmissionState1 extends EmissionState{
     public int noSnps() {
         return inner.noSnps();
     }
+    public  void append(EmissionState emissionState){
+        this.inner.append(emissionState);
+         }
    
    /* @Override
     public void fillLikelihood(Locreader mid, List<Integer> loc) {
