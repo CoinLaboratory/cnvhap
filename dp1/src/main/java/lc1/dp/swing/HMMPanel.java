@@ -261,6 +261,7 @@ Dimension dim;
 		
 		 for(int j=0; j<this.rates.getSeriesCount(); j++){
 			 double r = Math.log10(rates.getRate(j));
+			// if(Double.isNaN(r)) throw new RuntimeException("!");
 			 if(r>upper){
 				 upper = r;
 			 }

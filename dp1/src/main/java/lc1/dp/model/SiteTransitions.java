@@ -14,6 +14,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.logging.Logger;
 
+import lc1.dp.data.collection.DataCollection;
 import lc1.dp.states.DotState;
 import lc1.dp.states.EmissionState;
 import lc1.dp.states.State;
@@ -725,7 +726,8 @@ public double getTransitionScoreToPaint(int from, int to, int indexOfToEmission)
 				pw.println(i+"\t"+
 						String.format("%5.2f",((FreeRateTransitionProbs)(transProbs[i])).logrelativeRate));
 			}
-			transProbs[i].print(pw, null, (double) this.loc.get(i) - (double) this.loc.get(0));
+			pw.println(DataCollection.datC.snpid.get(i));
+			transProbs[i].print(pw, null, (double) this.loc.get(i) - (double) this.loc.get(i-1));
 		}
 		for(int ii=0; ii<r.length; ii++){
 			pw.println("r priors");

@@ -115,10 +115,11 @@ public class DP{
     //this.hittingProb = hmm.getHittingProb(this.seqLength);
 }
    
+   
    public void setData(EmissionState emissionState) {
        this.obj = emissionState;
        this.protName = obj.getName();
-        
+      this.hmm.allowTransitions(Constants.parentObj(emissionState.getName()) == null ? true: false);
     }
    int objIndex = -1; //index keeps track of which param set we are using
    final int[] stateIndex; //index keeps track of param set
@@ -327,7 +328,7 @@ double backward(int k, int i){
     for(int k1=0; k1<out.length; k1++){
         int j1 = out[k1];
         int i1 = i+adv[j1];
-        double val = hmm.getTransitionScore(k, j1, i1);
+        double val = hmm.getTransitionScore1(k, j1, i1);
         summ+=val;
 		
 		double score;
@@ -538,7 +539,7 @@ protected void calcScoresBackward(){
 		Double[][] trans = new Double[this.modelLength][this.modelLength];
 		for(int k=0; k<trans.length; k++){
 			for(int k1=0; k1<trans.length; k1++){
-	    		trans[k][k1] = this.hmm.getTransitionScore(k, k1, i);
+	    		trans[k][k1] = this.hmm.getTransitionScore1(k, k1, i);
 	    	}
 		}
 			return trans;
@@ -614,7 +615,7 @@ double forward(int j, int i, double emissionScore)  {
 		double score;
         AbstractTerm AbstractTerm = forwardTrace.getTrace(j1,i-adv);
         if(AbstractTerm==null) score=0;
-        else score =hmm.getTransitionScore(j1, j, i)*AbstractTerm.score();
+        else score =hmm.getTransitionScore1(j1, j, i)*AbstractTerm.score();
 		if(score>max){// || (score==max && Math.random()>0.5)){
 			max = score;
 			max_j = j1;
@@ -624,7 +625,7 @@ double forward(int j, int i, double emissionScore)  {
 			
 		if(Constants.CHECK){
 			if(score<0){
-				double tr = hmm.getTransitionScore(j1, j, i);
+				double tr = hmm.getTransitionScore1(j1, j, i);
 				System.err.println("h"+tr);
 				
 			}
@@ -637,7 +638,7 @@ double forward(int j, int i, double emissionScore)  {
 				}
 			}*/
        if( (Double.isNaN(score))){
-           throw new RuntimeException("is nan "+AbstractTerm.score()+" "+j1+" "+emissionScore+" "+k1+" "+hmm.getTransitionScore(j1, j, i));
+           throw new RuntimeException("is nan "+AbstractTerm.score()+" "+j1+" "+emissionScore+" "+k1+" "+hmm.getTransitionScore1(j1, j, i));
     
        }
 		}
@@ -664,7 +665,7 @@ double forwardComplete(int j, int i, double emissionScore)  {
         int j1 = toStates[k1];
         AbstractTerm AbstractTerm = forwardTrace.getTrace(j1,i-adv);
         if(AbstractTerm==null) score[j1]=0;
-        else score[j1] =hmm.getTransitionScore(j1, j, i)*AbstractTerm.score()*emissionScore;
+        else score[j1] =hmm.getTransitionScore1(j1, j, i)*AbstractTerm.score()*emissionScore;
         if(score[j1]>max){
             max = score[j1];
             max_j = j1;
@@ -686,7 +687,7 @@ double forwardComplete(int j, int i, double emissionScore)  {
     for(int j1 =0; j1<modelLength; j1++){
         AbstractTerm term = forwardTrace.getTrace(j1,i-adv);
         if(term==null) score[j1]=0;
-        else score[j1] =hmm.getTransitionScore(j1, j, i)*term.score()*emissionScore;
+        else score[j1] =hmm.getTransitionScore1(j1, j, i)*term.score()*emissionScore;
        if(Constants.CHECK && Double.isNaN(score[j1])) throw new RuntimeException("is nan "+term.score()+" "+j1+" "+emissionScore);
         
         sum+=score[j1]; 
@@ -962,7 +963,7 @@ double viterbi(int j, int i, double emiss)  {
         int adv = this.adv[j];
         AbstractTerm term = forwardTrace.getTrace(j2,i-adv);
         if(term ==null) continue;
-                  score =Math.log(hmm.getTransitionScore(j2, j, i))+
+                  score =Math.log(hmm.getTransitionScore1(j2, j, i))+
                         +term.score();
             
                 if(score>max){

@@ -169,6 +169,14 @@ public class ExponentialTransitionProbs extends AbstractTransitionProbs {
     }
   
 
+    public double getRate(int i) {
+		// TODO Auto-generated method stub
+    	SimpleExtendedDistribution dist = exp.getExp(0);
+    	double v= dist.probs[1];
+    	//System.err.println(i+" "+dist.probs[0]+" "+dist.probs[1]);
+    	return Math.exp(v);
+		//return Double.parseDouble(AbstractTransitionProbs.transform(,1000));
+	}
   
 
     public void initialiseCounts(boolean start, boolean end) {
@@ -246,6 +254,8 @@ public class ExponentialTransitionProbs extends AbstractTransitionProbs {
         pw.println();
           
       }
+   
+
     
    
 

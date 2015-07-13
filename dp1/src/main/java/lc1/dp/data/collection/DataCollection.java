@@ -5326,7 +5326,7 @@ public  DataCollection (File f, short index, int no_copies, final int[][] mid,Fi
 	  }*/
     double[] missing = new double[4]; //first two are missing/non missing; next two are allele freqs
     Boolean cnvP = Constants.cnvP(this.index);
-    List<Integer> todrop = new ArrayList<Integer>();
+   Set<Integer> todrop = new TreeSet<Integer>();
     double missThresh = Constants.NAthresh();
     double[] lrrVals = new double[dToInc.size()];
     List<Integer> failed = new ArrayList<Integer>();
@@ -5406,13 +5406,15 @@ public  DataCollection (File f, short index, int no_copies, final int[][] mid,Fi
 //    		((IlluminaRDistribution)ems[ems.length-1]).divide(rem);
     	}
     	}
-    	todrop = new ArrayList<Integer>();
+    	todrop = new TreeSet<Integer>();
     }
     this.indiv =sublist( indiv,dToInc);
     todrop.addAll(findLowDepth());
     todrop.addAll(this.findLowBAF());
+    Constants.parentObj("");
+  //  todrop.addAll(this.findHets(Constants.parentObj.keySet().toArray()));
     {
-    	 this.drop(todrop, false);
+    	 this.drop(new ArrayList(todrop), false);
     }
     if(Constants.CHECK){
 		   checkStatesForNull();
@@ -5593,6 +5595,25 @@ public  DataCollection (File f, short index, int no_copies, final int[][] mid,Fi
    }
 }
 
+private Collection<? extends Integer> findHets(Object[] array) {
+	HaplotypeEmissionState[] hes = new HaplotypeEmissionState[array.length];
+	for(int k=0; k<hes.length; k++){
+		hes[k] = (HaplotypeEmissionState)this.dataL.get(array[k].toString());
+	}
+	List l = new ArrayList<Integer>();
+	EmissionStateSpace emstsp = hes[0].emissions[0].getEmissionStateSpace();
+	outer: for(int i=0; i<loc.size(); i++){
+		for(int k=0; k<hes.length; k++){
+			ComparableArray comp = (ComparableArray) emstsp.get(hes[k].getBestIndex(i));
+			if(comp.het()) {
+				l.add(i);
+				continue outer;
+			}
+		}
+	}
+	
+	return l;
+}
 protected Collection<? extends Integer> findLowDepth() {
 	return new ArrayList<Integer>();
 }

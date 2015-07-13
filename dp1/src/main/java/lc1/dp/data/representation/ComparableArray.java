@@ -677,5 +677,15 @@ public int numLevels() {
 	return max+1;
 }
 
+public boolean het() {
+	Comparable el = elements.get(0);
+	for(int i=1; i<this.elements.size(); i++){
+		if(el.compareTo(this.elements().get(i))!=0){
+			return true;
+		}
+	}
+	return false;
+}
+
 
 }

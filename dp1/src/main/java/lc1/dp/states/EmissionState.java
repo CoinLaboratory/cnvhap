@@ -8,7 +8,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
 
-import lc1.dp.data.collection.DataCollection;
 import lc1.dp.data.representation.Emiss;
 import lc1.dp.data.representation.PIGData;
 import lc1.dp.data.representation.SimpleScorableObject;
@@ -17,10 +16,12 @@ import lc1.dp.emissionspace.EmissionStateSpace;
 import lc1.dp.emissionspace.EmissionStateSpaceTranslation;
 import lc1.stats.ProbabilityDistribution;
 import lc1.stats.PseudoDistribution;
-import lc1.stats.PseudoMixture;
 import lc1.stats.SimpleDistribution;
 import lc1.stats.SkewNormal;
 import lc1.util.Constants;
+
+import org.json.JSONArray;
+import org.json.JSONObject;
 
 public abstract class EmissionState extends  State {
     static double round = Constants.round();
@@ -424,14 +425,21 @@ public final int length() {
  * @see lc1.dp.states.EmissState#score(lc1.dp.states.EmissionState, boolean)
  */
 
-
 public final  double[] score(HaplotypeEmissionState data_state, boolean logspace, boolean isLog){
     double[] score = new double[data_state.noSnps()];
     EmissionState hmm_state = this;
-    if(data_state.getName().equals("107665_19") && hmm_state.getName().indexOf("1")>=0 || hmm_state.getName().indexOf("2")>=0){
-		Arrays.fill(score, logspace ? Double.NEGATIVE_INFINITY : 0);  
-	  }
-    else if(data_state.getName().equals("107665_9") && hmm_state.getName().indexOf("3")>=0 || hmm_state.getName().indexOf("4")>=0){
+   // JSONArray arr1 = obj.getJSONArray("107665_19");
+   // System.err.println(obj.has("107665_19"));
+    boolean matches = false;
+    JSONArray arr = Constants.parentObj(data_state.getName());
+    if(arr!=null){
+    	for(int k=0; k<arr.length(); k++){
+    		if(hmm_state.getName().indexOf(arr.getString(k))>=0) {
+    			matches = true;
+    		}
+    	}
+    }
+		 if(matches){
 		Arrays.fill(score, logspace ? Double.NEGATIVE_INFINITY : 0);  
 	  }else{
    // int len = this.getEmissionStateSpace().size();

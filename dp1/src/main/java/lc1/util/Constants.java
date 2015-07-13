@@ -38,6 +38,8 @@ import org.apache.commons.cli.OptionBuilder;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.Parser;
 import org.apache.commons.cli.PosixParser;
+import org.json.JSONArray;
+import org.json.JSONObject;
 
 public class Constants {
 	public static double samplePermute = 0;
@@ -510,6 +512,18 @@ public static int maxCoordDiff(){
 		if(i>=build.length) return build[0];
 		return build[i];
 	}
+public static String parentobj = "{'107665_19':['1','2'],'107665_9':['3','4']}";
+public static JSONObject parentObj = null;
+public static JSONArray parentObj(String string){
+
+	if(parentobj!=null && parentObj==null){
+		parentObj = new JSONObject(parentobj);
+	}
+	 return parentObj==null || !parentObj.has(string) ? null :  parentObj.getJSONArray(string);		
+}
+
+
+	
 public static double[][] transitionMatrix = null;
 public static double[][] transitionMatrix(){
 	//if(Constants.trainGlobal) return null;

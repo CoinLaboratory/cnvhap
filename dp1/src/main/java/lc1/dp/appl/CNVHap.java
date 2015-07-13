@@ -419,11 +419,14 @@ public static DataCollection read(final File dir) throws Exception{
         }
         else if(format[i].startsWith("geno")) {
         	
-            resu = new SimpleDataCollection(inp[i],(short)i, no_copies[i], mid,buildF, snpidrest);
+            
             if(Constants.extraChrom!=null){
-            	for(int jj=0; jj<Constants.extraChrom.length; jj++){
-        		resu.addCollection(new SimpleDataCollection(new File( Constants.inputDir(i)+"/" + Constants.extraChrom(jj) + ".zip"),(short)i, no_copies[i], mid,buildF, snpidrest),(int)1000);
+            	resu = new SimpleDataCollection(new File( Constants.inputDir(i)+"/" + Constants.extraChrom(0) + ".zip"),(short)i, no_copies[i], mid,buildF, snpidrest);
+            	for(int jj=1; jj<Constants.extraChrom.length; jj++){
+        		resu.addCollection(new SimpleDataCollection(new File( Constants.inputDir(i)+"/" + Constants.extraChrom(jj) + ".zip"),(short)i, no_copies[i], mid,buildF, snpidrest),(int)10000);
             	}
+            	}else{
+            		resu = new SimpleDataCollection(inp[i],(short)i, no_copies[i], mid,buildF, snpidrest);
             	}
             String[] join = Constants.toJoin(i);
             if(join!=null &&  join.length>0){
