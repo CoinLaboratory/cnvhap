@@ -404,6 +404,14 @@ public static int maxCoordDiff(){
 	}
 
 	public static int[][] mid() {
+		if(mid.length==1 && mid[0][0].indexOf(";")>=0){
+			String[][] midn = new String[mid[0].length][];
+		for(int k=0; k<midn.length; k++){
+		
+			midn[k] = mid[0][k].split(";");
+		}
+		mid = midn;
+		}
 		String[][] orig = mid;
 		if (mid == null)
 			return null;
@@ -2335,7 +2343,10 @@ public static void resetIndices(){
 		return inputDir(i)+"/" + Constants.chrom(j) + ".zip";
 	}
 	
-	
+	public static String[] extraChrom = null;
+	public static String extraChrom(int jj){
+		return extraChrom[jj];
+	}
 
 	public static String[] inputDirLoc = null;
 	
@@ -3702,6 +3713,8 @@ public static boolean showScatter(){
 	}
 
 	public static final boolean joint = true;
+
+	public static  boolean updateAlpha = true;
 	public static String[] toInclude1 = new String[0];
 	
 	// public static boolean joint() {
@@ -5077,7 +5090,8 @@ public static boolean trainEmissions = true;
 		File karyoDir = parentFile;
 		final String buildf1 = Constants.build(0).split("\\.")[0];
 	    File karyo = null;
-		for(int i=0; i<3 && (karyo==null || karyo.length()==0) && !karyoDir.getAbsolutePath().equals("/"); i++){
+	  
+		for(int i=0; karyoDir!=null && i<3 && (karyo==null || karyo.length()==0) && !karyoDir.getAbsolutePath().equals("/"); i++){
 //		File karyoDir = f.getParentFile().getParentFile();
 		File[] karyo1 = karyoDir.listFiles(new FileFilter(){
 
@@ -5370,6 +5384,15 @@ return muteAlpha;
 	}
 	public static int convert(String string) {
 		return convert(string, false);
+	}
+	public static boolean updateAlpha() {
+		// TODO Auto-generated method stub
+		return updateAlpha;
+	}
+	public static int includeFirstInBAF = Integer.MAX_VALUE;
+	public static int includeFirstInBAF() {
+		// TODO Auto-generated method stub
+		return includeFirstInBAF;
 	}
 
 	

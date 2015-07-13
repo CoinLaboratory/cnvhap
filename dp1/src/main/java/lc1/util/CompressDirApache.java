@@ -10,14 +10,16 @@ import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.util.zip.Adler32;
 import java.util.zip.CheckedOutputStream;
-import java.util.zip.ZipEntry;
 import java.util.zip.ZipException;
-import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
 
+import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
+import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream;
+import org.apache.commons.compress.archivers.zip.ZipFile;
 
 
-public class CompressDir {
+
+public class CompressDirApache {
 	/** Class used to write compressed file 
 	* allows writing direct to zip, or to file, which is appeneded at end
 	 * */
@@ -25,21 +27,21 @@ public class CompressDir {
 		try{
 			//if(true) System.exit(0);
 			 File dir1 = new File(System.getProperties().getProperty("user.dir"));
-	        	CompressDir.compress(dir1);
+	        	CompressDirApache.compress(dir1);
 		}catch(Exception exc){
 			exc.printStackTrace();
 		}
 	}
 	
 	 FileOutputStream dest;
-	    CheckedOutputStream checksum;
-	    ZipOutputStream outS;
+	   CheckedOutputStream checksum;
+	    ZipArchiveOutputStream outS;
 	    OutputStreamWriter osw;
 	    
 	    public File inDir;
 	    int len;
 	    
-	    public CompressDir(File f1) throws Exception{
+	    public CompressDirApache(File f1) throws Exception{
 	    	//if(f1.exists()) throw new RuntimeException("!!");
 	    	String nme = f1.getName();
 	    	File f = nme.endsWith("zip") ? new File(f1.getParentFile(),nme.substring(0,nme.length()-4))  : f1;
@@ -49,7 +51,7 @@ public class CompressDir {
 	    	 dest = Compressor.getOS(new File(inDir.getParentFile(), inDir.getName()+".zip"));
 	         checksum = new   CheckedOutputStream(dest, new Adler32());
 	         outS = new 
-	         ZipOutputStream(new 
+	         ZipArchiveOutputStream(new 
 	           BufferedOutputStream(checksum));
 	         osw = new OutputStreamWriter(outS);
 	         outS.setMethod(ZipOutputStream.DEFLATED);
@@ -105,7 +107,8 @@ public class CompressDir {
 	    public void closeWriter(OutputStreamWriter osw) throws Exception{
 	    	if(osw==this.osw){
 	    	   osw.flush();
-	           outS.closeEntry();
+	           outS.closeArchiveEntry();
+	           outS.close();
 	    	}else{
 	    		osw.close();
 	    	}
@@ -114,19 +117,19 @@ public class CompressDir {
 	    public OutputStreamWriter getWriter(String entry, boolean writeDirectToZip, String comment)throws ZipException, IOException{
 	    	if(writeDirectToZip){
 	    		
-	    	ZipEntry headings = new ZipEntry(entry);
+	    	ZipArchiveEntry headings = new ZipArchiveEntry(entry);
 	    	headings.setComment(comment);
-		    outS.putNextEntry(headings);
+		    outS.putArchiveEntry(headings);
 		    return osw;
 	    	}else{
 	    		return new OutputStreamWriter((new FileOutputStream(new File(inDir, entry),true)));
 	    	}
 		        
 	    }
-	    public OutputStreamWriter getWriter(String entry, boolean writeDirectToZip)throws ZipException, IOException{
+	    public OutputStreamWriter getWriter(String entry, boolean writeDirectToZip)throws Exception{
 	    	if(writeDirectToZip){
-	    	ZipEntry headings = new ZipEntry(entry);
-		    outS.putNextEntry(headings);
+	    	ZipArchiveEntry headings = new ZipArchiveEntry(entry);
+		    outS.putArchiveEntry(headings);
 		    return osw;
 	    	}else{
 	    		return new OutputStreamWriter((new FileOutputStream(new File(inDir, entry),true)));
@@ -136,13 +139,13 @@ public class CompressDir {
 
 	    public static void compress(File dir) {
 			try{
-						(new CompressDir(dir)).run();
+						(new CompressDirApache(dir)).run();
 			}catch(Exception exc){
 				exc.printStackTrace();
 			}
 		}
 		public void copy(ZipFile zf, String name) throws Exception {
-			ZipEntry e = zf.getEntry(name);
+			ZipArchiveEntry e = zf.getEntry(name);
 			OutputStreamWriter os = this.getWriter(name, false, e.getComment());
 			BufferedReader snps = new BufferedReader(new InputStreamReader(zf.getInputStream(e)));
 			String st = "";
