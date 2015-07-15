@@ -40,7 +40,10 @@ public class SimpleExpTransProb implements ExpTransProb {
     
     public void printExp(PrintWriter pw, double dist, String pref){
         pw.print(pref+" ");
-         if(pref.startsWith("exp")) pw.print(AbstractTransitionProbs.transform(exp_rd1.probs[0], dist));
+         if(pref.startsWith("exp")) {
+        	 pw.print(String.format("%5.3g %5.3g", new Object[] {dist, exp_rd1.probs[1]}));
+        	 //pw.print(AbstractTransitionProbs.transform(exp_rd1.probs[0], dist));
+         }
           else{
               exp_rd1.printSimple(pw, "", "", 0.3);
           }

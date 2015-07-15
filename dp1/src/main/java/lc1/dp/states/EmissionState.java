@@ -430,16 +430,15 @@ public final  double[] score(HaplotypeEmissionState data_state, boolean logspace
     EmissionState hmm_state = this;
    // JSONArray arr1 = obj.getJSONArray("107665_19");
    // System.err.println(obj.has("107665_19"));
-    boolean matches = false;
-    JSONArray arr = Constants.parentObj(data_state.getName());
+    boolean matches = true;
+    String[] arr = Constants.parentObj(data_state.getName());
     if(arr!=null){
-    	for(int k=0; k<arr.length(); k++){
-    		if(hmm_state.getName().indexOf(arr.getString(k))>=0) {
-    			matches = true;
-    		}
+    	matches = false;
+    	for(int k=0; k<arr.length; k++){
+    	matches =  matches || hmm_state.getName().startsWith(arr[k]);
     	}
     }
-		 if(matches){
+		 if(!matches){
 		Arrays.fill(score, logspace ? Double.NEGATIVE_INFINITY : 0);  
 	  }else{
    // int len = this.getEmissionStateSpace().size();

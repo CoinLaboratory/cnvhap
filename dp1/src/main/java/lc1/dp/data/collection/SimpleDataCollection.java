@@ -692,7 +692,7 @@ public class SimpleDataCollection extends DataCollection {
             		String[] genos = ploidy==1 ?new String[] {"A",null,"B"}: new String[] {"A,A","A,B","B,B"};
             		//PseudoDistribution hwe = stsp.getHWEDist1(null);
             		double[] probs = new double[stsp.haplopairListSize()];
-            		PseudoDistribution dist =new SimpleExtendedDistribution(probs, Double.POSITIVE_INFINITY);
+            		SimpleExtendedDistribution dist =new SimpleExtendedDistribution(probs, Double.POSITIVE_INFINITY);
             		//	hwe.clone();
             		dist.setDataIndex(this.index);
             		for(int kk=0; kk<genos.length;kk++){
@@ -706,6 +706,10 @@ public class SimpleDataCollection extends DataCollection {
             		dist.transfer(0);
             		dist.initialise();
             		dist.setEmStSp(stsp);
+            		   double soften = Constants.softenHapMap(this.index);
+            		   if(soften>0){
+            			  dist.mix(stsp.getHWEDist1(null),Constants.softenHapMap(this.index));
+            		   }
             		dataSt.emissions[i] = dist;
             		return false;
             	}

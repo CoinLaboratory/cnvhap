@@ -174,7 +174,7 @@ public class ExponentialTransitionProbs extends AbstractTransitionProbs {
     	SimpleExtendedDistribution dist = exp.getExp(0);
     	double v= dist.probs[1];
     	//System.err.println(i+" "+dist.probs[0]+" "+dist.probs[1]);
-    	return Math.exp(v);
+    	return Math.pow(10,v);
 		//return Double.parseDouble(AbstractTransitionProbs.transform(,1000));
 	}
   

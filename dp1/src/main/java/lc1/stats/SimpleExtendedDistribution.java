@@ -286,6 +286,13 @@ public class SimpleExtendedDistribution extends PseudoDistribution implements Se
        
     }
     
+    public void mix(PseudoDistribution hweDist1, double mix) {
+    	for(int i=0; i<this.probs.length; i++){
+    		this.probs[i] = hweDist1.probs(i)*mix + this.probs[i]*(1-mix);
+    	}
+		
+	}
+    
    public SimpleExtendedDistribution(int len, double u){
        this(len);
        double[] pseudo = new double[len];
@@ -343,6 +350,8 @@ public class SimpleExtendedDistribution extends PseudoDistribution implements Se
             arraycopy(dir.sample(), 0, probs, 0, len);
         }
       }
+   
+   
    
    public SimpleExtendedDistribution(Double[] init){
        this( init.length);
@@ -1022,6 +1031,7 @@ public class SimpleExtendedDistribution extends PseudoDistribution implements Se
 	public EmissionStateSpace getEmissionStateSpace(){
 		return this.emstsp;
 	}
+	
 
 
 	

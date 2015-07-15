@@ -811,7 +811,7 @@ protected int getNumberDataTypes() {
     }
     
     public void addCollection(DataCollection datC, int offset){
-    	int offset1 = offset + loc.get(loc.size()-1);
+    	int offset1 = offset - datC.loc.get(0) + loc.get(loc.size()-1);
     	List<Boolean> po = new ArrayList( Arrays.asList(this.probeOnly));
     	for(int k=0; k< datC.loc.size(); k++){
     		this.loc.add(datC.loc.get(k)+offset1);
@@ -5411,7 +5411,7 @@ public  DataCollection (File f, short index, int no_copies, final int[][] mid,Fi
     this.indiv =sublist( indiv,dToInc);
     todrop.addAll(findLowDepth());
     todrop.addAll(this.findLowBAF());
-    Constants.parentObj("");
+    Constants.parentObj(this.indiv);
   //  todrop.addAll(this.findHets(Constants.parentObj.keySet().toArray()));
     {
     	 this.drop(new ArrayList(todrop), false);
@@ -6135,7 +6135,7 @@ public  void readBuildFile(ZipFile zf, String prefix, BufferedReader br, String 
     }*/
    outer: for(int i=0;(st = br.readLine())!=null; i++){
         String[] str = st.split("\t+");
-        if(i==0 && chr_index>=0 && ! str[chr_index].startsWith("chr")){
+        if(i==0 && chr_index>=0 && ! str[chr_index].startsWith("chr") && chrom1.toLowerCase().startsWith("chr")){
         	chrom = chrom1.substring(3);
         }
         if(snp_ids_to_restrict!=null && !snp_ids_to_restrict.contains(str[snp_index])){

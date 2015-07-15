@@ -517,6 +517,7 @@ public Iterator<int[]> equivalenceClasses(){
 	public boolean allowTransitions = true;
 	public void allowTransitions(boolean b) {
 		// TODO Auto-generated method stub
+	//	System.err.println(b);
 		this.allowTransitions = b;
 		
 	}

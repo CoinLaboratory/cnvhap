@@ -298,6 +298,7 @@ public class BaumWelchTrainer {
                return logprob[j1];
            }
        };
+       this.hmm.allowTransitions(true);
        return run;
      //  run.run();
 //       this.es.execute(run);

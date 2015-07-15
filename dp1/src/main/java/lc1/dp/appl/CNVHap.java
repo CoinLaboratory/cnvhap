@@ -423,7 +423,7 @@ public static DataCollection read(final File dir) throws Exception{
             if(Constants.extraChrom!=null){
             	resu = new SimpleDataCollection(new File( Constants.inputDir(i)+"/" + Constants.extraChrom(0) + ".zip"),(short)i, no_copies[i], mid,buildF, snpidrest);
             	for(int jj=1; jj<Constants.extraChrom.length; jj++){
-        		resu.addCollection(new SimpleDataCollection(new File( Constants.inputDir(i)+"/" + Constants.extraChrom(jj) + ".zip"),(short)i, no_copies[i], mid,buildF, snpidrest),(int)10000);
+        		resu.addCollection(new SimpleDataCollection(new File( Constants.inputDir(i)+"/" + Constants.extraChrom(jj) + ".zip"),(short)i, no_copies[i], mid,buildF, snpidrest),(int)Constants.initalSeparation());
             	}
             	}else{
             		resu = new SimpleDataCollection(inp[i],(short)i, no_copies[i], mid,buildF, snpidrest);

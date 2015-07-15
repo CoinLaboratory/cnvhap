@@ -512,14 +512,40 @@ public static int maxCoordDiff(){
 		if(i>=build.length) return build[0];
 		return build[i];
 	}
-public static String parentobj = "{'107665_19':['1','2'],'107665_9':['3','4']}";
-public static JSONObject parentObj = null;
-public static JSONArray parentObj(String string){
-
+public static String[] parentobj = null;//"{'107665_19':'1_2','107665_9':'3_4'}";
+			//"{'Trifida_D_P1_C5U9YACYY_2_242543611':'1_2','Trifida_D_P2_C5U9YACYY_2_242543612' : '3_4'}";
+public static Map<String, String[]> parentObj = null;
+public static Set<String> parentObj1 = null;
+public static String[] parentObj(String string){
+	 return parentObj==null || !parentObj.containsKey(string) ? null :  parentObj.get(string);		
+}
+public static boolean parentObjContains(String name) {
+	return parentObj1!=null && parentObj1.contains(name);
+}
+public static void parentObj(List<String> samples){
 	if(parentobj!=null && parentObj==null){
-		parentObj = new JSONObject(parentobj);
+		parentObj1 = new HashSet<String>();
+		int nocop = Constants.noCopies()[0];
+		parentObj = new HashMap<String, String[]>();//new JSONObject(parentobj);
+		for(int k=0; k<parentobj.length; k++){
+			parentObj1.add(parentobj[k]);
+			StringBuffer sb = new StringBuffer(""+(k*nocop+1));
+			for(int j=1; j<nocop; j++){
+				sb.append("_");
+				sb.append((k*nocop+1+j));
+			}
+					
+			parentObj.put(parentobj[k],new String[] {sb.toString()});
+		}
 	}
-	 return parentObj==null || !parentObj.has(string) ? null :  parentObj.getJSONArray(string);		
+	if(parentobj!=null){
+	for(int k=0; k<samples.size(); k++){
+		String str = samples.get(k);
+		if(!parentObj.containsKey(str)){
+			parentObj.put(str, new String[] {"1_3","1_4","2_3","2_4"});
+		}
+	}
+	}
 }
 
 
@@ -5408,6 +5434,11 @@ return muteAlpha;
 		// TODO Auto-generated method stub
 		return includeFirstInBAF;
 	}
+	public static int initialSeparation = 100000;
+	public static int initalSeparation() {
+		return initialSeparation;
+	}
+	
 
 	
 	

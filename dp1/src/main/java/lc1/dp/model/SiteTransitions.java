@@ -714,19 +714,20 @@ public double getTransitionScoreToPaint(int from, int to, int indexOfToEmission)
 		try{
 		PrintWriter pw = new PrintWriter(new BufferedWriter(new FileWriter(new File(fileout, "transitionModel.txt"))));
 		//pw.print("rates: ");
-		pw.println("");
-		rateDistribution.print(pw);
+		//pw.println("");
+		//rateDistribution.print(pw);
 		// TODO Auto-generated method stub
-		if(globalTrans!=null)this.globalTrans.mat.print(pw);
-		pw.println();
-		pw.println("relative rates");
+		//if(globalTrans!=null)this.globalTrans.mat.print(pw);
+		//pw.println();
+		//pw.println("relative rates");
 		for(int i=1; i<this.transProbs.length; i++){
 			if(transProbs[i] instanceof FreeRateTransitionProbs){
 				
 				pw.println(i+"\t"+
 						String.format("%5.2f",((FreeRateTransitionProbs)(transProbs[i])).logrelativeRate));
 			}
-			pw.println(DataCollection.datC.snpid.get(i));
+			pw.print(DataCollection.datC.snpid.get(i));
+			pw.print("\t");
 			transProbs[i].print(pw, null, (double) this.loc.get(i) - (double) this.loc.get(i-1));
 		}
 		for(int ii=0; ii<r.length; ii++){
