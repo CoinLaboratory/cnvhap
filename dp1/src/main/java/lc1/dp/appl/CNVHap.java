@@ -43,6 +43,7 @@ import lc1.dp.data.collection.SimpleDataCollection;
 import lc1.dp.data.collection.SimpleDataCollection1;
 import lc1.dp.data.collection.VNTRDataCollection;
 import lc1.dp.data.representation.SimpleScorableObject;
+import lc1.dp.external.Fastphase;
 import lc1.dp.illumina.DistributionCollection;
 import lc1.dp.states.EmissionState;
 import lc1.possel.HLALD;
@@ -422,8 +423,13 @@ public static DataCollection read(final File dir) throws Exception{
             
             if(Constants.extraChrom!=null){
             	resu = new SimpleDataCollection(new File( Constants.inputDir(i)+"/" + Constants.extraChrom(0) + ".zip"),(short)i, no_copies[i], mid,buildF, snpidrest);
+            	Fastphase.marks = new HashSet<Integer>();
+            	if(Constants.reverse[0]) resu.reverse();
             	for(int jj=1; jj<Constants.extraChrom.length; jj++){
-        		resu.addCollection(new SimpleDataCollection(new File( Constants.inputDir(i)+"/" + Constants.extraChrom(jj) + ".zip"),(short)i, no_copies[i], mid,buildF, snpidrest),(int)Constants.initalSeparation());
+            		Fastphase.marks.add(resu.length);
+            		DataCollection resu1 = new SimpleDataCollection(new File( Constants.inputDir(i)+"/" + Constants.extraChrom(jj) + ".zip"),(short)i, no_copies[i], mid,buildF, snpidrest);
+            		if(Constants.reverse[jj]) resu1.reverse();
+            		resu.addCollection(resu1,(int)Constants.initalSeparation());
             	}
             	}else{
             		resu = new SimpleDataCollection(inp[i],(short)i, no_copies[i], mid,buildF, snpidrest);

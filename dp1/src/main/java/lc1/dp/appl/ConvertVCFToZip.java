@@ -29,7 +29,7 @@ public class ConvertVCFToZip {
 	static boolean replaceNumWithAB = false;
 static String split="\\s+";
 static int buffer =1;
-static boolean includeRef = false; //SET TO TRUE TO ADD UP DEPTHS!!!
+static boolean includeRef = true; //SET TO TRUE TO ADD UP DEPTHS!!!
  static boolean useID = false;
 static  boolean noskip = true;
 //static boolean mergeNeighbourin = true;	
@@ -155,6 +155,12 @@ void writeSamples() throws Exception{
 		pw.write("Genotype\n");
 	}
 	pw.write("chr\tstart\tend\tsnpid");
+	for(int k=0; k<this.extra.length; k++){
+		if(this.extraind[k]>=0){
+			System.err.println(extra[k]);
+			pw.write("\t");pw.write(extra[k]);
+		}
+	}
 //		pw.write("countAll\tstate.0\tstate.1\tstate.2\n");
 	/*	for(int k=0; k<offset; k++){
 			if(k!=chr_index && k!=pos_index && k!=format_index){
@@ -171,9 +177,13 @@ void writeSamples() throws Exception{
 		compress.closeWriter(pw);
 }
  
+String[] extra = "REF     ALT     QUAL    FILTER  INFO".split("\\s+");
+final int[] extraind;
 
 ConvertVCFToZip(BufferedReader br, BufferedReader br1, File dir1, List<String> header, String buildF, String chrom, String maxcnt, String filename, int buffer) throws Exception{
 	this.br = new BufferedReader1(br, buffer);
+	
+	
 	this.br1 = br1;
 	this.chrom = chrom;
 	target = this.chrom;//==null ? "" : this.chrom;
@@ -197,7 +207,10 @@ ConvertVCFToZip(BufferedReader br, BufferedReader br1, File dir1, List<String> h
 	 chr_index = find(header,"chrom", true);
 	 pos_index = find(header,"pos",true);
 	 end_index = find(header,"end",true);
-	
+	 this.extraind = new int[extra.length];
+	 for(int k=0; k<extraind.length; k++){
+		 extraind[k] = find(header,extra[k], true);
+	 }
 
 	 if(pos_index<0) pos_index = find(header,"start",true);
 	 if(pos_index<0) pos_index = find(header,"MapInfo",true);
@@ -221,9 +234,14 @@ ConvertVCFToZip(BufferedReader br, BufferedReader br1, File dir1, List<String> h
 	 if(offset<0) offset = this.pos_index+1;
 	 this.header = header;
 	 firstLine();
+	 this.buildF = buildF;
+	 if(currString==null){
+		 throw new RuntimeException("did not find this chrom "+chrom);
+		
+	 }
 	 this.format_string = format_index>=0 ? this.currString[format_index] : "DP";
 	
-	this.buildF = buildF;
+	
 	if(offset<0) offset =  1+find(header,"endPos",true);
 	 samples = new ArrayList<String>();
 		for(int k=offset; k<header.size(); k++){
@@ -535,8 +553,15 @@ Boolean mainTranspose() throws Exception{
 				}
 				
 			snps.write(str[chr_index]+"\t"+sta+"\t"+end+"\t"+rsid);
+			
 			//System.err.println((str[chr_index]+"\t"+sta+"\t"+end+"\t"+rsid));
 			this.snps_global.write(str[chr_index]+"\t"+sta+"\t"+end+"\t"+rsid);
+			for(int k=0; k<this.extra.length; k++){
+				if(this.extraind[k]>=0){
+						snps.write("\t");snps.write(str[extraind[k]]);
+						snps_global.write("\t");snps_global.write(str[extraind[k]]);
+				}
+			}
 			for(int k=0; k<offset; k++){
 				if(k!=chr_index && k!=pos_index && k!=format_index){
 					if(k<ref_index) snps.write("\t"+str[k]);
@@ -663,8 +688,11 @@ private static  String[] process(String str, String chrom){
 }
 
 
-private static void main(File dir, File dirout, boolean remove, final String prefix,final String build, final String chrom, final String maxcnt, final String headerSt, int buffer) {
-	 try{
+private static void main(File dir, File dirout, boolean remove, final String prefix,final String build, final String chroms, final String maxcnt, final String headerSt, int buffer) {
+	String[] chroms_ = chroms.split(":");
+	for(int kkk=0; kkk<chroms_.length; kkk++){
+		String chrom = chroms_[kkk];
+	try{
 		// if(true) return;
 		//	File dir = new File(System.getProperty("user.dir")+"/"+args[0]);
 	File  avg = dir;
@@ -742,4 +770,5 @@ private static void main(File dir, File dirout, boolean remove, final String pre
 	 }
 	
  }
+}
 }

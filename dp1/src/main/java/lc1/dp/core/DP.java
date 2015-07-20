@@ -120,6 +120,7 @@ public class DP{
        this.obj = emissionState;
        this.protName = obj.getName();
       this.hmm.allowTransitions(!Constants.parentObjContains(emissionState.getName()));
+     DataCollection.datC.dc.setIndiv(protName);
     }
    int objIndex = -1; //index keeps track of which param set we are using
    final int[] stateIndex; //index keeps track of param set

@@ -91,6 +91,11 @@ public abstract class AbstractDistributionCollection implements Serializable {
 		//throw new RuntimeException("!! not implemented");
 		
 	}
-
+	int sample_index =0;
+	
+	public void setIndiv(String protName) {
+		// TODO Auto-generated method stub
+		
+	}
 	public abstract String[] getFormGlob(int ind) ;
 }

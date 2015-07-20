@@ -810,6 +810,29 @@ protected int getNumberDataTypes() {
     	//loc=  makeNew(loc,old_index)
     }
     
+    public void reverse(){
+    	   //     this.maf.reverse();
+    	        Collections.reverse(this.loc);
+    	        for(int i=0; i<loc.size(); i++){
+    	            loc.set(i,-1 *loc.get(i));
+    	        }
+    	        Collections.reverse(this.snpid);
+    	        Collections.reverse(this.strand);
+    	        Collections.reverse(this.alleleA);
+    	        Collections.reverse(this.alleleB);
+    	        Collections.reverse(this.baf);
+    	        List<Boolean> po = new ArrayList( Arrays.asList(this.probeOnly));
+    	        Collections.reverse(po);
+    	        this.probeOnly = po.toArray(new Boolean[0]);
+    	        for(Iterator<PIGData> it = this.data.values().iterator(); it.hasNext();){
+    	           PIGData nxt = it.next();
+    	           if(nxt!=null) nxt.reverse();
+    	        }
+    	        for(Iterator<EmissionState> it = this.dataL.values().iterator(); it.hasNext();){
+    	            EmissionState nxt = it.next();
+    	            nxt.reverse();
+    	        }
+    	    }
     public void addCollection(DataCollection datC, int offset){
     	int offset1 = offset - datC.loc.get(0) + loc.get(loc.size()-1);
     	List<Boolean> po = new ArrayList( Arrays.asList(this.probeOnly));
@@ -1356,22 +1379,7 @@ public String getInfo(String tag, String key, int i, boolean style) throws Excep
 	/* (non-Javadoc)
      * @see lc1.dp.data.collection.DataC#reverse()
      */
-    public void reverse(){
-   //     this.maf.reverse();
-        Collections.reverse(this.loc);
-        for(int i=0; i<loc.size(); i++){
-            loc.set(i,-1 *loc.get(i));
-        }
-        Collections.reverse(this.snpid);
-        for(Iterator<PIGData> it = this.data.values().iterator(); it.hasNext();){
-           PIGData nxt = it.next();
-            nxt.reverse();
-        }
-        for(Iterator<EmissionState> it = this.dataL.values().iterator(); it.hasNext();){
-            EmissionState nxt = it.next();
-            nxt.reverse();
-        }
-    }
+   
    
     
     
@@ -3407,8 +3415,8 @@ class PrintAberations{
 	    	        
 	    	    }
 	    	   if(DataCollection.this.dc instanceof MatchedDistributionCollection){
-					pw.println("##Estimated cellularity:"+((MatchedDistributionCollection)dc).vals[0]);
-					pw.println("##Estimated ratio:"+((MatchedDistributionCollection)dc).vals[1]);
+					pw.println("##Estimated cellularity:"+((MatchedDistributionCollection)dc).cellularity[0]);
+					pw.println("##Estimated ratio:"+((MatchedDistributionCollection)dc).ratio[0]);
 				    pw.println("##Version:"+2.0);
 				}
 	    }
@@ -5618,12 +5626,14 @@ protected Collection<? extends Integer> findLowDepth() {
 	return new ArrayList<Integer>();
 }
 protected Collection<? extends Integer> findLowBAF() {
-	
 	List l = new ArrayList<Integer>();
+	if(Constants.excludeBafThresh()>0){
+	
 	for(int k=0; k<this.baf.size(); k++){
 		if(baf.get(k) < Constants.excludeBafThresh() || 1-baf.get(k) < Constants.excludeBafThresh()){
 			l.add(k);
 		}
+	}
 	}
 	return l;
 }
@@ -5975,6 +5985,72 @@ private static void add(List l, Object o){
 		   l.add(o);
 	   }
 }
+Map<String, Double> karyo = null;
+
+public  Map<String,Double> readKaryotypes()  {
+	if(karyo!=null) return karyo;
+	karyo = new HashMap<String, Double>();
+	double[] pos = new double[2];
+	int pos1 = (int)Math.floor(Constants.decode(loc.get(loc.size()-1), pos, false));
+	int pos2 = (int) Math.floor(Constants.decode(loc.get(0), pos, false));
+	boolean singlechrom  =false;
+	if( pos1==pos2){
+		singlechrom = true;
+	
+	}
+	try{
+	{
+	File dirp = new File(Constants.baseDir);
+	File[] karyofiles = dirp.listFiles(new FileFilter(){
+
+		@Override
+		public boolean accept(File pathname) {
+			return pathname.getName().indexOf("karyo")>=0 && pathname.getName().indexOf(Constants.build(0).split("\\.")[0])>0;
+		}
+		
+	});
+	if(singlechrom && Constants.annotateMB()>0){
+		for(int k=0; k<300; k+=Constants.annotateMB()){
+			karyo.put(k+"", Constants.recode(new double[] {pos1, (k*1e6)}));
+		}
+	}
+	else if(karyofiles.length>0){
+		
+	BufferedReader br = new BufferedReader(new FileReader(karyofiles[0]));
+	String st = "";
+	while((st = br.readLine())!=null){
+		String[] str = st.split("\t");
+		String txt = str[0];
+		int chrind = Integer.parseInt(str[0].toLowerCase().replaceAll("x", "23").replaceAll("y", "24").replaceAll("mt", "24"));
+		
+		if(!singlechrom || str.length==2){
+			int posi = Integer.parseInt(str[1]);
+			double v = Constants.scaleLoc==null ?posi : Constants.recode(new double[] {chrind,posi});
+			karyo.put(txt, v);
+		}else{
+		String[] strs = str[2].substring(1,str[2].length()-1).split(",");
+		for(int k=0;k<strs.length; k++){
+			String[] strs1 = strs[k].split("=");
+			String band = txt+strs1[0];
+			String[] stend = strs1[1].split("-");
+			double mid = (Double.parseDouble(stend[0])+Double.parseDouble(stend[1]))/2.0;
+			double v1= Constants.scaleLoc==null ? mid : Constants.recode(new double[] {chrind,mid});
+
+			karyo.put(band,v1);
+		}
+		}
+	}
+	br.close();
+	}
+	}
+	}catch(Exception exc){
+		exc.printStackTrace();
+	}
+
+return karyo;
+}
+
+
 public static File getKaryoFile(File f, int pos)  throws Exception{
 	String buildf = Constants.build(0);
 	Pattern p  = Pattern.compile("[0-9]");
@@ -6146,6 +6222,11 @@ public  void readBuildFile(ZipFile zf, String prefix, BufferedReader br, String 
     		   if(snp_index>=0 && str[snp_index].startsWith(todrop[k])){
     			   continue outer;
     		   }
+    	   }
+       }
+       if(maf_index[1]>=0){
+    	   if(str[maf_index[1]].indexOf(",")>=0){
+    		   continue outer;
     	   }
        }
        String id = str[snp_index];
@@ -7160,5 +7241,6 @@ public double baf(int i) {
 	if(this.probeOnly[i]!=null && probeOnly[i]) return 0.0;
 	return this.baf.get(i);
 }
+
    
 }

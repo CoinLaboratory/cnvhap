@@ -519,6 +519,10 @@ public static Set<String> parentObj1 = null;
 public static String[] parentObj(String string){
 	 return parentObj==null || !parentObj.containsKey(string) ? null :  parentObj.get(string);		
 }
+public static boolean limitTransByParent() {
+	// TODO Auto-generated method stub
+	return parentobj!=null;
+}
 public static boolean parentObjContains(String name) {
 	return parentObj1!=null && parentObj1.contains(name);
 }
@@ -2739,10 +2743,10 @@ public static void resetIndices(){
 		return res;
 	}
 
-	public static boolean reverse = false;
+	public static boolean[] reverse = new boolean[] {false};
 
 	public static boolean reverse() {
-		return reverse;
+		return reverse[0];
 	}
 
 	public static boolean drop = false;
@@ -5187,7 +5191,7 @@ public static boolean trainEmissions = true;
 	}
 	public static boolean removeIndels = false;
 
-	public static double excludeBafThresh=0.1;
+	public static double excludeBafThresh=0.0;
 	public static boolean removeIndels() {
 		// TODO Auto-generated method stub
 		return removeIndels;
@@ -5409,7 +5413,7 @@ return muteAlpha;
 	}
 	//converts single number back into chrom/pos 
 	public  static double decode(double x, double[] res, boolean single){
-			if(scaleLoc==null) return x;
+			if(scaleLoc==null ) return x;
 	  double x1=x/scaleLoc[1];
 	  double chr = Math.floor(x1);
 	  double pos = (x1-chr)*scaleLoc[0];
@@ -5438,6 +5442,22 @@ return muteAlpha;
 	public static int initalSeparation() {
 		return initialSeparation;
 	}
+	//public static boolean hideAxis = false;
+	public static boolean hideAxis() {
+		// TODO Auto-generated method stub
+		return scaleLoc!=null;
+	}
+	public static boolean plasma = false;
+	public static boolean plasma() {
+		// TODO Auto-generated method stub
+		return plasma;
+	}
+	public static int annotateMB = 0;
+	public static int annotateMB() {
+		// TODO Auto-generated method stub
+		return annotateMB;
+	}
+	
 	
 
 	

@@ -39,7 +39,6 @@ import lc1.dp.data.collection.DataCollection;
 import lc1.dp.data.collection.HWECalculator;
 import lc1.dp.data.collection.IlluminaRDataCollection;
 import lc1.dp.data.collection.LinearRegressionCalculator;
-import lc1.dp.data.collection.MergedDataCollection;
 import lc1.dp.data.representation.ComparableArray;
 import lc1.dp.data.representation.Emiss;
 import lc1.dp.emissionspace.CompoundEmissionStateSpace;
@@ -492,6 +491,7 @@ final int noSites;
         //  outp.close();
        }*/
     static int pseudoCount = 0;
+public static Set<Integer> marks =null;
        /** class for training a single hmm */
       public class TrainingElement{
            public MarkovModel hapHMM ;
@@ -1221,8 +1221,14 @@ CNVHap.cnvf.setTab(s);
           
               logger.info("log prob is "+lp+" at "+i+" with "+(this.hapHMM.modelLength()-1)+" states "+(t1-time)+" at "+Constants.print(pseudo));
               logger.info("log prob is "+lp+" at "+i+" with "+(this.hapHMM.modelLength()-1)+" states "+(t1-time)+" at "+Constants.print(pseudoG));
-              
-              time = t1;
+           //   this.hapHMM.
+              if(marks!=null){
+              for(Iterator<Integer> it = marks.iterator(); it.hasNext();){
+            	  double rate = (((FreeHaplotypeHMM)this.hapHMM).trans.getRate(it.next()));
+            	   logger.info("rate "+"\t "+String.format("%5.3g\t%5.3g mb", new Object[] {rate,(-1*Math.log(1-rate)/Constants.probCrossOverBetweenBP)/1e6}));
+              }
+              }
+            //  time = t1;
             if(lp+1 < logProb && Constants.CHECK) {
                 logger.info("warning: log prob should always be increasing ".toUpperCase()+lp +" should be > "+logProb);
             }

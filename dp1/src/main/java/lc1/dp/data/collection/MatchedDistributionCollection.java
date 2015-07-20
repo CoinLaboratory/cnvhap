@@ -1,39 +1,49 @@
 	package lc1.dp.data.collection;
 	
 	import java.io.File;
-	import java.io.PrintWriter;
-	import java.util.ArrayList;
-	import java.util.Arrays;
-	import java.util.List;
-	
-	import lc1.dp.data.representation.Emiss;
-	import lc1.dp.emissionspace.EmissionStateSpace;
-	import lc1.dp.illumina.AbstractDistributionCollection;
-	import lc1.dp.states.HaplotypeEmissionState;
-	import lc1.stats.IlluminaDistribution;
-	import lc1.stats.IlluminaRDistribution;
-	import lc1.stats.ProbabilityDistribution;
-	import lc1.stats.ProbabilityDistribution2;
-	import lc1.stats.PseudoDistribution;
-	import lc1.stats.SimpleExtendedDistribution1;
-	import lc1.util.Constants;
-	
-	import org.apache.commons.math.special.Gamma;
-	
-	import pal.math.MultivariateFunction;
-	import pal.math.MultivariateMinimum;
-	import pal.math.OrthogonalHints;
-	import pal.math.OrthogonalSearch;
-	import pal.math.UnivariateFunction;
-	import pal.math.UnivariateMinimum;
-	import cern.colt.matrix.DoubleMatrix2D;
-	import cern.jet.random.Beta;
-	import cern.jet.random.engine.DRand;
+import java.io.PrintWriter;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
+import lc1.dp.data.representation.Emiss;
+import lc1.dp.emissionspace.EmissionStateSpace;
+import lc1.dp.illumina.AbstractDistributionCollection;
+import lc1.dp.states.HaplotypeEmissionState;
+import lc1.stats.IlluminaDistribution;
+import lc1.stats.IlluminaRDistribution;
+import lc1.stats.Multdimfunct;
+import lc1.stats.Multidimmax;
+import lc1.stats.ProbabilityDistribution;
+import lc1.stats.ProbabilityDistribution2;
+import lc1.stats.PseudoDistribution;
+import lc1.stats.SimpleExtendedDistribution1;
+import lc1.util.Constants;
+
+import org.apache.commons.math.special.Gamma;
+
+import pal.math.MultivariateMinimum;
+import pal.math.OrthogonalHints;
+import pal.math.OrthogonalSearch;
+import pal.math.UnivariateMinimum;
+import cern.colt.matrix.DoubleMatrix2D;
+import cern.jet.random.Beta;
+import cern.jet.random.engine.DRand;
 	
 	
 	public class MatchedDistributionCollection extends
-			AbstractDistributionCollection implements UnivariateFunction, MultivariateFunction{
+			AbstractDistributionCollection {
 	
+		
+		final Multidimmax mdf;
+		
+		int sample_index =0;
+		@Override
+		public void setIndiv(String protName) {
+			this.sample_index = this.indiv.indexOf(protName);
+			// TODO Auto-generated method stub
+			
+		}
 		
 		static class BetaBinom {
 			 double alpha, beta, trials;
@@ -64,13 +74,11 @@
 		static final int trainCellularity = Constants.trainCellularity();
 		static final double mix = 0.5; //essentially controls the starting bands for the ratios.  This is effectively the minimunm value
 		
-		double[] vals; // cellularity, ratio
+//		double[] vals; // cellularity, ratio
 		
-		final double[] ratios;
-		  double[] initial =Constants.initialCellularity();
-		 double[] upper = new double[] {initial[0],trainCellularity <2 ? initial[1] : 3.0};
-		double[] lower = new double[] {trainCellularity <1 ?  initial[0]: 0.0, trainCellularity<2  ? initial[1] : 0.5};
-	  
+		final double[] cellularity, ratio, ratios;
+
+		
 		
 		private double totnormal;
 		//private double prop = 1;
@@ -92,76 +100,52 @@
 		public double refCount(int i){
 			return refCount[i];
 		}
-		public double ratio(int i){
-			double ratio = this.vals[1];
-			if(ratioAsLevels) ratio = ratios[backCNall[i]]*ratio;
-			return ratio;
-			//return ratios[backCNall[i]];
+		public double backCN(int i){
+			return backCNall[i];
 		}
-		public double cell(int i){
-			double cellularity = vals[0]; 
-			
-			if(cellAsLevels){
-					cellularity = Math.min(1.0, ratios[backCNall[i]]*cellularity);
-					//if(cellularity>1) cellularity = 1.0/cellularity;
-			}
-		  
 		
-		  return cellularity;
 		
-		}
 		final short index;
 		
-		void updateBounds(){
-		   
-			
-			for(int k=0; k<ratios.length; k++){
-				if(k==Constants.maxPloidy1()){
-					lower[2+k]=1.0;
-					upper[2+k]=1.0;
-				}else{
-					  lower[2+k] = k==0 ? 0.001: ratios[k-1]+0.0001;
-					  upper[2+k] = k<ratios.length-1 ? ratios[k+1]-0.0001 : ratios[k]+0.5;
-					  if(k<Constants.maxPloidy1()){
-						  lower[2+k] = Math.min(lower[2+k], 0.99999999);
-						  upper[2+k] = Math.min(upper[2+k], 0.99999999);
-					  }
-					  else if(k>Constants.maxPloidy1()){
-						  lower[2+k] = Math.max(lower[2+k], 1.0000001);
-						  upper[2+k] = Math.max(upper[2+k], 1.0000001);
-					  }
-				  if(Math.signum(lower[2+k]-1) != Math.signum(upper[2+k]-1)){
-					  throw new RuntimeException("!!");
-				  }
-				}
-			}
-			
-		}
+	
+		List<String> indiv;// = new ArrayList<String>();
+		final int numsamples;
+		final int maxCN;		
+		
 	  //  List<BinomialDistr1> dist = new ArrayList<BinomialDistr1>();
 		public MatchedDistributionCollection(int index, 
-			 double cellularity, File dir, int maxCN,int maxCN1, int noprobes,HaplotypeEmissionState ref, Double[] ratiosL) {
+			 double cellularity, File dir, int maxCN,int maxCN1, int noprobes,HaplotypeEmissionState ref, Double[] ratiosL, List<String> indiv) {
 			// TODO Auto-generated constructor stub
 			this.index = (short)index;
-			this.refCount = new double[ref.length()];
-			this.ratios = new double[maxCN1+1];
-			if(trainPool){
-			//	lower[1] = 1.0;
-			//	upper[1] = 1.0;
-				double[] lower1 = new double[lower.length+ratios.length];
-				double[] upper1 = new double[lower.length+ratios.length];
-				double[] initial1 =new double[lower.length+ratios.length];
-				System.arraycopy(lower, 0, lower1, 0, lower.length);
-				System.arraycopy(upper, 0, upper1, 0, upper.length);
-				System.arraycopy(initial, 0, initial1, 0, initial.length);
-				lower = lower1;
-				upper = upper1;
-				initial = initial1;
+			mdf = new Multidimmax(this);
+			
+			this.indiv = new ArrayList<String>(indiv);
+			this.indiv.remove("pool");
+			this.indiv.remove(Constants.reference());
+			this.numsamples = this.indiv.size();
+			System.err.println("indiv: "+Arrays.asList(this.indiv));
+			this.cellularity = mdf.add("cellularity", Constants.initialCellularity[0], 0.001, 1.0, numsamples, trainCellularity>=1);
+			if(Constants.plasma()){
+				this.ratio = mdf.add("ratio", Constants.initialCellularity[1], 0.01, 1.0, 1, true);
+			}else{
+			this.ratio = mdf.add("ratio", Constants.initialCellularity[1], 0.5, 3.0, numsamples, trainCellularity>=2 && Constants.useAvgDepth());
+			
 			}
+			
+					  
+			
+			this.refCount = new double[ref.length()];
+			
+			this.maxCN = maxCN;
+			this.ratios = new double[maxCN1+1];
 			ratios[0] = 0.001;
 			for(int i=0; i<ratios.length; i++){
 				ratios[i]=(1-mix)*((double)i/(double)Constants.maxPloidy1())+(mix) ;
 			}
-			if(trainPool) System.arraycopy(ratios,0,initial,2,ratios.length);
+			if(trainPool && !Constants.plasma()){
+				
+				mdf.add("ratios", ratios, ratios.clone(), ratios.clone());
+			}
 			this.pool = new HaplotypeEmissionState("pool", ref.length(), Emiss.getSpaceForNoCopies(Constants.maxPloidy1()),(short)ref.dataIndex());
 			pool.setNoCop(Constants.maxPloidy1());
 			this.backCNall =new int[ref.length()];
@@ -189,20 +173,14 @@
 			else{
 				Arrays.fill(this.backCNall, Constants.maxPloidy1());
 			}
-			if(trainPool)updateBounds();
+			if(trainPool)mdf.updateBounds();
 			for(int i =0; i<refCount.length;i++){
 				refCount[i] = ((IlluminaDistribution)ref.emissions[i]).b().doubleValue();
-				pool.emissions[i] = new BackgroundDistribution(maxCN, refCount[i],backCNall[i], pool.getEmissionStateSpace());
+				pool.emissions[i] = new BackgroundDistribution(maxCN, refCount[i],backCNall[i], pool.getEmissionStateSpace(), indiv.size());
 			}
 			this.noprobes = noprobes;
-			this.vals = new double[] {cellularity,initial[1]};
-			//this.vals = new double[][] {this.
-			//this.ratio =1.0;
-			//this.tottumour = tottumour;
 			this.totnormal =((IlluminaRDistribution)ref.emissions[0]).r().doubleValue();
-			//double pr = tottumour/(totnormal+tottumour);
-			//this.cellularity = cellularity;
-			print();
+			mdf.print();
 			
 		}
 		
@@ -271,78 +249,36 @@
 				int i) {
 			return null;
 		}
-	
+	int max_index=0;
 		@Override
 		public void maximisationStep(int i, double[] pseudo, double[] pseudoGlobal,
 				List tasks) {
-			if(false){
-				UnivariateMinimum uvm = new UnivariateMinimum();
-				double cell = Constants.updateCellularity()? uvm.findMinimum(vals[0], this, 3) : vals[0];
-				//vals[1] = Math.min( Math.max(noprobes/countProbesTumour,0.5),2.0);
-				
-				vals[0]= cell;
-			}else{
-				
-				
-				
+		{
 				BackgroundDistribution bd = ((BackgroundDistribution)this.pool.emissions[0]);
 				if(bd.cnt>0 && trainPool){
-				
 					for(int k=0; k<this.backCNall.length; k++){
 						 bd = ((BackgroundDistribution)this.pool.emissions[k]);
 						 bd.transfer(0);
-						this.backCNall[k] = bd.ratio1_count/bd.cnt;
+						 this.backCNall[k] = bd.ratio1_count/bd.cnt;
 					}
 				}
-				{
+				if(max_index>0){
 				   MultivariateMinimum mvm =new OrthogonalSearch(); // new ConjugateGradientSearch();//n
-				double[] vals1 = new double[this.getNumArguments()];
-				System.arraycopy(vals,0,vals1,0,vals.length);
 				if(trainPool){
-					System.arraycopy(ratios,0,vals1,2,ratios.length);
-					 this.updateBounds();
-				}else{
-				if(!Constants.useAvgDepth()){
-					double r = (this.average/this.average_count)/Constants.backgroundCount((int)this.index);
-			  this.lower[1] = r;
-				  this.upper[1] = r;
-				  vals1[1] = r;
+					mdf.updateBounds();
 				}
-				}
-				   mvm.findMinimum(this, vals1, 1, 3);
-				   System.arraycopy(vals1,0,vals,0,vals.length);
-					if(trainPool)System.arraycopy(vals1,2,ratios,0,ratios.length);
-			//	this.pool.initialiseCounts();
 				
+				   mvm.findMinimum(this.mdf, mdf.vals(), 1, 3);
 				}
-				//this.cellularity = vals[0];
-				//this.ratio = vals[1];
+			
 				
 			}
-			//System.err.println(Arrays.asList(ratio));
-		
-			//System.err.println("avg r " +r);
-			print();
+		max_index++;
+			mdf.print();
 		}
 	
 		
-		public void print(){
-			System.err.println("new val "+vals[0]+" "+vals[1]);
-			StringBuffer  sb = new StringBuffer("initial:  ");
-			for(int k=0; k<this.initial.length; k++) sb.append(" "+initial[k]);
-			System.err.println(sb.toString());
-			sb = new StringBuffer("lower: ");
-			for(int k=0; k<this.lower.length; k++) sb.append(" "+lower[k]);
-			System.err.println(sb);
-			sb = new StringBuffer("upper: ");
-			for(int k=0; k<this.upper.length; k++) sb.append(" "+upper[k]);
-			System.err.println(sb);
-			sb = new StringBuffer("vals:  "+vals[0]+" "+vals[1]);
-			for(int k=0; k<this.ratios.length; k++) sb.append(" "+ratios[k]);
-			System.err.println(sb);
-			
-			
-		}
+		
 		@Override
 		public void print(File pw) {
 			// TODO Auto-generated method stub
@@ -401,6 +337,37 @@
 	
 		}
 		
+		public double inverseMult(double mult, int i, String name){
+			//if(true) return mult;
+			int sample_index = indiv.indexOf(name);
+			double cellularity = this.cellularity[sample_index]; double ratio = Constants.plasma() ? this.ratio[0] : this.ratio[sample_index]; int backCN = this.backCNall[i];
+
+			 if(Constants.plasma()){
+					double rcn1 = ((double) backCN/(double)Constants.maxPloidy1);
+				 return (mult*(rcn1*ratio + (1-ratio)) - (1-cellularity))/cellularity;
+			 }else{
+			if(ratioAsLevels) ratio = ratios[backCN]*ratio;
+			else if(cellAsLevels){
+					cellularity =ratios[backCN]*cellularity;
+			}
+			return mult * (ratio/cellularity) - (1-cellularity) * (ratio/cellularity);
+			 }
+		}
+		
+		public double getMult(double cellularity, double ratio, double rcn, int backCN){
+			  if(Constants.plasma()){
+				//	ratio = vals[1];
+					double rcn1 = ((double) backCN/(double)Constants.maxPloidy1);
+			    	return ((rcn*cellularity) + (1-cellularity))/(rcn1*ratio + (1-ratio));
+				}else{
+					if(ratioAsLevels) ratio = ratios[backCN]*ratio;
+					else if(cellAsLevels){
+							cellularity = Math.min(1.0, ratios[backCN]*cellularity);
+							//if(cellularity>1) cellularity = 1.0/cellularity;
+					}
+					 return 	((rcn/ratio)*cellularity) + (1-cellularity);//
+				}
+		}
 		
 		
 		class BinomialDistr1 implements ProbabilityDistribution2 {
@@ -409,7 +376,7 @@
 		    double[]logprobs = new double[numIt];
 			final double rcn;
 			final int cn;
-			 BetaBinom bb = new BetaBinom();
+			BetaBinom bb = new BetaBinom();
 			List<Double> countRk = new ArrayList<Double>();
 			List<Double> countRki = new ArrayList<Double>();
 			//List<Double> val = new ArrayList<Double>();  //maintains the probabilities
@@ -459,15 +426,11 @@
 			
 			
 			public double probability(double lrr, double baf) {
-				double cellularity = vals[0]; 
-				double ratio = vals[1];
-				if(ratioAsLevels) ratio = ratios[backCN]*ratio;
-				else if(cellAsLevels){
-						cellularity = Math.min(1.0, ratios[backCN]*cellularity);
-						//if(cellularity>1) cellularity = 1.0/cellularity;
-				}
-			    double 	mult = ((rcn/ratio)*cellularity) + (1-cellularity);
-			
+				//double cellularity = 
+				//double ratio = vals[1];
+				double mult = getMult(cellularity[sample_index], Constants.plasma() ? ratio[0] : ratio[sample_index], rcn, backCN);
+			 // double 	mult = ((rcn/ratio)*cellularity) + (1-cellularity);// this wa sold one
+				
 	//			double baf;
 	/*			if(MatchedSequenceDataCollection.rescale){
 					double modf = (totnormal+tottumour)/(2*tottumour);
@@ -677,11 +640,13 @@
 			
 		}
 	
+		
+		
 		//@Override
 		public ProbabilityDistribution2 getDistributionRB(short data_index, int n,
 				int noB, int i) {
 			// TODO Auto-generated method stub
-		      BinomialDistr1 dist = ((BackgroundDistribution)this.pool.emissions[i]).bin[n];//.get(n);
+		      BinomialDistr1 dist = ((BackgroundDistribution)this.pool.emissions[i]).bin[sample_index][n];//.get(n);
 		   //   dist.setRefCount(refCount[i],ratio[i]);
 		    //  dist.tumourCount=tumour[i];
 		      return dist;
@@ -725,7 +690,7 @@
 			//	System.err.println("adding "+noCop+" "+r+" "+b+" "+val);\
 			//this.countProbesTumour+=((double)noCop/2.0)*val; 
 			
-			 BinomialDistr1 dist = ((BackgroundDistribution)this.pool.emissions[i]).bin[noCop]; //this.pool[i].bin[noCop];
+			 BinomialDistr1 dist = ((BackgroundDistribution)this.pool.emissions[i]).bin[sample_index][noCop]; //this.pool[i].bin[noCop];
 		   //   dist.setRefCount(refCount[i], this.ratio[i]);
 			 dist.addCount(r,b, val);
 			//}
@@ -743,34 +708,26 @@
 			return null;
 		}
 	
-		@Override
-		public double evaluate(double arg0) {
+		
+		public double evaluate() {
 			//double lp=-Math.abs(arg0)*priorWeight;
 			double lp =0;
-			vals[0] = arg0;
 			for(int k=0; k<this.pool.length(); k++){
 				BackgroundDistribution dists = ((BackgroundDistribution)this.pool.emissions[k]);
-				for(int j=0; j <dists.bin.length; j++){
-					lp+=dists.bin[j].eval();// dist.get(k).eval();
+				for(int j=0; j <numsamples; j++){//numsamples
+					this.sample_index = j;
+					for(int kk=0; kk<=maxCN; kk++){//noCN
+						lp+=dists.bin[j][kk].eval();// dist.get(k).eval();
+					}
 				}
 			}
 			//System.err.println(arg0+" "+lp);
 			return -lp;
 		}
 	
-		@Override
-		public double getLowerBound() {
-			// TODO Auto-generated method stub
-			return 0;
-		}
 	
-		@Override
-		public double getUpperBound() {
-			// TODO Auto-generated method stub
-			return 1;
-		}
 	
-		@Override
+		/*
 		public double evaluate(double[] arg0) {
 			// TODO Auto-generated method stub
 			double lp =0;
@@ -782,41 +739,19 @@
 			if(trainPool)System.arraycopy(arg0, 2, this.ratios, 0, ratios.length);
 			for(int k=0; k<this.pool.length(); k++){
 				BackgroundDistribution dists = ((BackgroundDistribution)this.pool.emissions[k]);
-				for(int j=0; j <dists.bin.length; j++){
-					lp+=dists.bin[j].eval();// dist.get(k).eval();
+				for(int j=0; j <numsamples; j++){
+					for(int kk=0; kk<=maxCN; kk++){
+					lp+=dists.bin[j][kk].eval();// dist.get(k).eval();
+					}
 				}
 			}
 		
 		//	System.err.println(arg0[0]+" "+arg0[1]+" "+lp);
 			return -lp;
-		}
+		}*/
 	
 		
-		@Override
-		public double getLowerBound(int arg0) {
-			// TODO Auto-generated method stub
-		 return lower[arg0];
-			
-		}
-	
-		@Override
-		public int getNumArguments() {
-			// TODO Auto-generated method stub
-			return this.vals.length+(trainPool ? ratios.length :0);
-		}
-	
-		@Override
-		public OrthogonalHints getOrthogonalHints() {
-			// TODO Auto-generated method stub
-			return null;
-		}
 		
-		@Override
-		public double getUpperBound(int arg0) {
-			// TODO Auto-generated method stub
-			return upper[arg0];
-		}
-	
 		public double totnormal() {
 			return this.totnormal;
 		}
@@ -824,27 +759,30 @@
 		public class BackgroundDistribution extends PseudoDistribution{
 			private int ratio1_count=0;
 			private int cnt=0;
+			private double refcount;
 			
-			
-			BinomialDistr1[] bin;
+			BinomialDistr1[][] bin; //first is by sample, second is by CN.  All should have same backCN
 			
 			
 			
 			public Number b1() {
-				return ratios[bin[0].backCN];
+				if(Constants.plasma()) return (double) bin[0][0].backCN/(double) Constants.maxPloidy1;
+				return ratios[bin[0][0].backCN];
 			}
 			/*public Number r1(int cn){
 				bin[cn].
 			}*/
 			
 			//EmissionStateSpace emStp;
-			public BackgroundDistribution(int maxCN, double refCount, int backCN, EmissionStateSpace emstsp) {
-				bin = new BinomialDistr1[maxCN+1];
+			public BackgroundDistribution(int maxCN, double refCount, int backCN, EmissionStateSpace emstsp, int numsamp) {
+				bin = new BinomialDistr1[numsamp][maxCN+1];
+				this.refcount = refCount;
 				//this.emstsp = emstsp;
 				// TODO Auto-generated constructor stub
+				for(int j=0; j<numsamp; j++){
 				for(int i = 0; i<=maxCN; i++){
-					bin[i] =new BinomialDistr1(i, refCount, backCN);
-					
+					bin[j][i] =new BinomialDistr1(i, refCount, backCN);
+				}
 				}
 			}
 			@Override
@@ -891,7 +829,7 @@
 				int ratio1 = this.ratio1_count/this.cnt;
 				//System.err.println("hh "+ratio1_count+" "+cnt);
 			    for(int k=0; k<bin.length; k++){
-			    	bin[k].setRefCount(ratio1);
+			    	bin[sample_index][k].setRefCount(ratio1);
 			    }
 				
 			}
@@ -908,7 +846,9 @@
 				this.cnt=0;
 					
 				for(int k=0; k<this.bin.length; k++){
-				bin[k].initialise();
+					for(int j=0; j<this.bin[k].length; j++){
+				bin[k][j].initialise();
+					}
 				}
 				// TODO Auto-generated method stub
 				
@@ -1029,10 +969,13 @@
 				int noCop = emStSp.getCN(j);
 			//	System.err.println(noCop);
 				double lp =0;
-				for(int k=0; k<this.bin.length; k++){
-					bin[k].setRefCount(noCop);
+				for(int k=0; k<numsamples; k++){
+					sample_index =k ;
+					for(int jj=0; jj<=maxCN; jj++){
+					bin[k][jj].setRefCount(noCop);
 					
-					lp+=bin[k].eval();
+					lp+=bin[k][jj].eval();
+					}
 				}
 				return lp;
 			}

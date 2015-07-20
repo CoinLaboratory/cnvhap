@@ -53,6 +53,8 @@ List<State> states;
     }
     int[][] groupToState;
     
+   
+	
     
     @Override
     protected double transferState(SimpleExtendedDistribution dist1, DoubleMatrix2D nullspace, double pseudo) {

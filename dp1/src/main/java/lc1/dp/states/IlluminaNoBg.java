@@ -21,7 +21,7 @@ public class IlluminaNoBg extends  HaplotypeEmissionState{
 //  IlluminaProbR probR;
  // IlluminaProbB probB;
  // int[] cn;
-   public IlluminaNoBg(String name,
+   public IlluminaNoBg(final String name,
            EmissionStateSpace emStSp, 
        //    IlluminaProbR r, IlluminaProbB b ,
          List<String> snpid, int cumul, short index
@@ -40,15 +40,12 @@ public class IlluminaNoBg extends  HaplotypeEmissionState{
     			  
     			  public Double b(int i) {
     				  MatchedDistributionCollection mdc = ((MatchedDistributionCollection)DataCollection.datC.dc);
-    					double ratio = mdc.ratio(i);
-    					double cellularity = mdc.cell(i);
-    					  //double 	mult = ((rcn/ratio)*cellularity) + (1-cellularity);
-    				 // double refc = mdc.refCount(i);
+    				
     				  double p = b()/r().doubleValue();
     				  double p1 = mdc.refCount(i)/mdc.totnormal();
     				  double mult = p/p1;
     				  
-    				 return mult * (ratio/cellularity) - (1-cellularity) * (ratio/cellularity);//(mult - (1-cellularity))* (ratio/cellularity);
+    				 return mdc.inverseMult(mult, i,name);//(mult - (1-cellularity))* (ratio/cellularity);
     						 //Constants.ratioAsLevels()!=null && Constants.ratioAsLevels() ? p/p1 : (p/p1)*ratio; //CHANGED 01/12/2014
     			  }
     			  @Override

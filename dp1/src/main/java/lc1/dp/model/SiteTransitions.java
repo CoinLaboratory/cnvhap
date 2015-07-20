@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.logging.Logger;
 
 import lc1.dp.data.collection.DataCollection;
+import lc1.dp.external.Fastphase;
 import lc1.dp.states.DotState;
 import lc1.dp.states.EmissionState;
 import lc1.dp.states.State;
@@ -382,7 +383,9 @@ public abstract class SiteTransitions implements Serializable,UnivariateFunction
     		                 //  logLAll+=  probs_.transferAlpha(pseudoTrans, alpha_overall, allFree ? 2 : 0);
     		                  if(globalTrans==null){
     		                	if(Constants.updateAlpha())  logLAll+=  probs_.transferAlpha(pseudoTrans, alpha_overall, allFree ? 2 : 0);
-    		                	  logLAll+= probs_.transfer(pseudoCExp2, alpha_overall, allFree ? 2 : 0);
+    		                	if(Fastphase.marks==null || Fastphase.marks.contains(i)){
+    		                		logLAll+= probs_.transfer(pseudoCExp2, alpha_overall, allFree ? 2 : 0);
+    		                	}
     		                  }else{
     		                  
     		                   logLAll+= probs_.transferQ(pseudoCExp2, 1e10, 0, this.globalTrans.mat, allFree ? 2: 0,d,index);
@@ -772,6 +775,10 @@ public double getTransitionScoreToPaint(int from, int to, int indexOfToEmission)
 		// TODO Auto-generated method stub
 		this.globalTrans.updateRates(mat, pi);
 		return this.globalTrans.mat.currentRate;
+	}
+	public  double getRate(int k) {
+		return Math.log10(this.transProbs[k].getRate(0));
+//		return String.format("%5.3g", this.transProbs[k].getRate(0));
 	}
 	
 	 

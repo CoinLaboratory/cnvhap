@@ -148,6 +148,8 @@ final static int type_index =0; //which type 0 is CN, 1 is B
     public static  Font font16 = new Font("SansSerif", Font.PLAIN, (int) Math.round(4* Constants.shapeSize1()));
     public static  Font font20 = new Font("SansSerif", Font.BOLD, (int) Math.round(4*Constants.shapeSize1()));
     public static  Font font10 = new Font("SansSerif", Font.PLAIN,(int) Math.round(4*Constants.shapeSize1()));
+    public static  Font font101 = new Font("SansSerif", Font.PLAIN,(int) Math.round(3*Constants.shapeSize1()));
+
     public static  Font font4 = new Font("SansSerif", Font.PLAIN, (int) Math.round(4*Constants.shapeSize1()));
     final int noSnps;
     BaumWelchTrainer bwt;
@@ -883,7 +885,8 @@ public XYSeriesCollection[] getBSeriesCollection(int k){
      * stateDistribution has the distribution over genotypes
      *  */
     public void addedInformation(StateDistribution emissionC, int ll, int i, PseudoDistribution dist, int k, HaplotypeEmissionState sta){
-        double x = Constants.decode(location.get(i).doubleValue(), pos, this.singlechrom);
+        double x =location.get(i).doubleValue();
+        //x = Constants.decode(x, pos, this.singlechrom);
         
         short ind =  plotMerged ? 0 : dist.getDataIndex() ;
 //        	(dist instanceof CompoundDistribution) ? (short) ((CompoundDistribution)dist).getDataIndex(k):
@@ -1365,8 +1368,8 @@ public XYSeriesCollection[] getBSeriesCollection(int k){
             xAxis.setLabelFont(font6);
             if(location.size()>0){
 	            xAxis.setAutoRange(false);
-	            xAxis.setLowerBound(Constants.decode(location.get(0)-1000, pos, this.singlechrom));
-	            xAxis.setUpperBound(Constants.decode(location.get(location.size()-1)+1000, pos, this.singlechrom));
+	           xAxis.setLowerBound(location.get(0)-1000);//, pos, this.singlechrom));
+	            xAxis.setUpperBound(location.get(location.size()-1)+1000);//, pos, this.singlechrom));
             }
          
             
@@ -2686,6 +2689,7 @@ ChartPanel plotR(String datname, String st, final  Integer l) {
   cp.getChart().getXYPlot().setRangeAxis(axis2);
   }
   cp.getChart().getXYPlot().getRangeAxis().setTickLabelInsets(new RectangleInsets(5,5,5,5));
+	//cp.getChart().getXYPlot().getDomainAxis()
   if(Constants.plot>1){
   	cp.getChart().getXYPlot().getDomainAxis().addChangeListener(new AxisChangeListener(){
 		
@@ -2763,6 +2767,34 @@ public ChartPanel plotB(String datname, String st, final int l, int ik) {
   	    }
    // });
     chart.getXYPlot().getRangeAxis().setAutoTickUnitSelection(false);*/
+    if(Constants.hideAxis()){
+    	
+    	   XYPlot plot= cp.getChart().getXYPlot();
+    	    ValueAxis domaxis = plot.getDomainAxis(0);
+    	    ValueAxis raxis = plot.getRangeAxis(0);
+    	   Range r=  raxis.getRange();
+    	  // double pos2 = r.getUpperBound()-0.2*(r.getUpperBound()-r.getLowerBound();
+    	   double pos1 = r.getUpperBound()+0.05;
+    	   raxis.setRange(r.getLowerBound(), r.getUpperBound()+0.2*(r.getUpperBound()-r.getLowerBound()));
+
+       	Map<String,Double> karyo = DataCollection.datC.readKaryotypes();
+    	   double u = r.getUpperBound();
+    	for(Iterator<String> it = karyo.keySet().iterator(); it.hasNext();){
+    		String nxt = it.next();
+    		
+    		XYTextAnnotation annot = new XYTextAnnotation(nxt, karyo.get(nxt),pos1);
+    		if(!this.singlechrom) annot.setFont(this.font101);
+    		//annot.setPaint(Color.GRAY);
+    		plot.addAnnotation(annot);
+   //plot.getDomainAxis(0).setLabelPaint(Color.WHITE);
+   
+   domaxis.setTickLabelPaint(Color.white);
+    	}
+    }
+  // plot.getDomainAxis().
+  //  plot.setDomainAxis(1, xAxis2);
+  //  plot.mapDatasetToDomainAxis(2, 1);
+//    cp.getChart().getXYPlot()plot.setDomainAxis(1, xAxis2 );
     
     if(Constants.plot>1){
       	cp.getChart().getXYPlot().getDomainAxis().addChangeListener(new AxisChangeListener(){

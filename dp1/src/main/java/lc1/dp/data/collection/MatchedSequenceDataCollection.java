@@ -129,7 +129,7 @@ public final void makeDistributions(int index) {
 			}
 		}
 
-		this.dc = new MatchedDistributionCollection(index, cellularity,this.dir, maxCN, maxCN1,this.loc.size(), ref, ratio);
+		this.dc = new MatchedDistributionCollection(index, cellularity,this.dir, maxCN, maxCN1,this.loc.size(), ref, ratio, this.indiv);
 		
 	/*	int len = this.indiv().size();
 		Boolean[] probeOnly1 = new Boolean[len];
@@ -321,7 +321,7 @@ protected Collection<? extends Integer> findLowDepth() {
     		res.add(k);
     	//	totals[0] -=t;
     //		totals[1] -=n;
-    		System.err.println("dropped "+this.snpid.get(k)+" "+" "+n);
+    		System.err.println("dropped "+k+" "+this.snpid.get(k)+" "+" "+n);
     	}
     	}
     }
