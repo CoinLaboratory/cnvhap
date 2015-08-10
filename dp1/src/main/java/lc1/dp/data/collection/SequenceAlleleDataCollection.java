@@ -119,6 +119,7 @@ public class SequenceAlleleDataCollection extends SequenceDataCollection {
 			 else if(hk.indexOf("countb")>=0){
 					bCount = Integer.parseInt(geno[k]);
 			 }else if(hk.equals("ad")){
+				 if(geno[k].equals(".")) geno[k] = "0,0";
 				 String[] str = geno[k].split(",");
 				 aCount = Integer.parseInt(str[0]);
 				 bCount = Integer.parseInt(str[1]);
@@ -133,7 +134,7 @@ public class SequenceAlleleDataCollection extends SequenceDataCollection {
 			
 			 lrr = totDepth;
 			 baf = bCount;
-			 
+			// System.err.println(lrr+" "+baf);
 			 if(lrr <minR.get(i)) minR.set(i, lrr);
 			 if(lrr> maxR.get(i)) maxR.set(i,lrr);
 		 } 

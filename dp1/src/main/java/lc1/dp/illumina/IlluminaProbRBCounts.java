@@ -6,6 +6,7 @@ import java.io.PrintWriter;
 import lc1.dp.emissionspace.EmissionStateSpace;
 import lc1.stats.OrthogonalProbabilityDistribution;
 import lc1.stats.ProbabilityDistribution2;
+import lc1.stats.SimpleExtendedDistribution1;
 import lc1.stats.TrainableBinomialDistr;
 import lc1.stats.UniformDistribution;
 import lc1.util.Constants;
@@ -16,6 +17,19 @@ public class IlluminaProbRBCounts extends IlluminaProbRB{
 
 	public double[][] errors;
 
+	
+	public void addCollection(IlluminaProbR probRB) {
+		super.addCollection(probRB);
+		errors = (double[][]) Constants.join(errors, ((IlluminaProbRBCounts)probRB).errors).toArray(new double[0][]);
+	}
+	
+	
+	public void reverse(){
+		super.reverse();
+		Constants.reverse(errors);
+		
+	}
+	
 	public IlluminaProbRBCounts(EmissionStateSpace emstsp, boolean train,
 			int ik, int noSNPS, File clusterFile) {
 		super(emstsp, train, ik, noSNPS, clusterFile);
@@ -33,8 +47,9 @@ public class IlluminaProbRBCounts extends IlluminaProbRB{
  		   pw.println(errors[i][0]+" "+errors[i][1]);
  	   }
 	 }
-static double A2B = 0.02;
-static double B2A = 0.02;
+static double A2B = Constants.A2B();
+static double B2A = Constants.A2B();
+
 	@Override
 	protected ProbabilityDistribution2 getInnerDistribution(int ind
 		 	  ) {

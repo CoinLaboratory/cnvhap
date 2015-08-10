@@ -886,7 +886,7 @@ public XYSeriesCollection[] getBSeriesCollection(int k){
      *  */
     public void addedInformation(StateDistribution emissionC, int ll, int i, PseudoDistribution dist, int k, HaplotypeEmissionState sta){
         double x =location.get(i).doubleValue();
-        //x = Constants.decode(x, pos, this.singlechrom);
+        if(singlechrom) x = Constants.decode(x, pos, this.singlechrom)/1e6;
         
         short ind =  plotMerged ? 0 : dist.getDataIndex() ;
 //        	(dist instanceof CompoundDistribution) ? (short) ((CompoundDistribution)dist).getDataIndex(k):
@@ -1282,9 +1282,9 @@ public XYSeriesCollection[] getBSeriesCollection(int k){
     public static  Font font5 = new Font("SansSerif", Font.PLAIN, 30);
     public static  Font font6 = new Font("SansSerif", Font.PLAIN, 24);
 =======*/
-    public static  Font font8 = new Font("SansSerif", Font.PLAIN, 8*(int) Constants.shapeSize());
-    public static  Font font5 = new Font("SansSerif", Font.PLAIN, 8*(int) Constants.shapeSize());
-    public static  Font font6 = new Font("SansSerif", Font.PLAIN, 8*(int) Constants.shapeSize());
+    public static  Font font8 = new Font("SansSerif", Font.PLAIN, Constants.shapeMult()*(int) Constants.shapeSize());
+    public static  Font font5 = new Font("SansSerif", Font.PLAIN, Constants.shapeMult()*(int) Constants.shapeSize());
+    public static  Font font6 = new Font("SansSerif", Font.PLAIN, Constants.shapeMult()*(int) Constants.shapeSize());
 //>>>>>>> .r286
     public  JFreeChart graph(XYSeriesCollection[] datas,  String title, Color[] ca, Shape[]sha, boolean b ) {
     	AbstractXYItemRenderer[] renderer = new AbstractXYItemRenderer[datas.length];
@@ -1340,7 +1340,7 @@ public XYSeriesCollection[] getBSeriesCollection(int k){
         final JFreeChart chart = ChartFactory.createXYLineChart(
         		title, //Constants.experiment(),
 //               b && Constants.plot!=2? "": title,
-               !b ? "": "Position on chromosome "+chrom, // domain axis label
+               !b ? "": "Position on chromosome "+chrom + (singlechrom ? " (mb)" :""), // domain axis label
                b ?  "Proportional read depth" : "Total read depth", //"HD statistic", // range axis label
                 datas[0], // data
                 PlotOrientation.VERTICAL, Constants.includeLegend(), // include legend
@@ -1366,7 +1366,7 @@ public XYSeriesCollection[] getBSeriesCollection(int k){
             yAxis.setLabelFont(font6);
             xAxis.setTickLabelFont(font6);
             xAxis.setLabelFont(font6);
-            if(location.size()>0){
+            if(location.size()>0 && false){
 	            xAxis.setAutoRange(false);
 	           xAxis.setLowerBound(location.get(0)-1000);//, pos, this.singlechrom));
 	            xAxis.setUpperBound(location.get(location.size()-1)+1000);//, pos, this.singlechrom));
@@ -1440,17 +1440,17 @@ public XYSeriesCollection[] getBSeriesCollection(int k){
       //  this.shapeList.setShape(index, shape)
 	  XYSeriesCollection datas = this.useVals ? getDistr(datas_,true) : datas_;
     	if(Constants.scatterWidth<300){
-    		font8 = new Font("SansSerif", Font.PLAIN, 6*(int) Constants.shapeSize1());
-    		font6 = new Font("SansSerif", Font.PLAIN, 6*(int) Constants.shapeSize1());
-    		font4 = new Font("SansSerif", Font.PLAIN, 5*(int) Constants.shapeSize1());
+    		font8 = new Font("SansSerif", Font.PLAIN, 1*(int) Constants.shapeSize1());
+    		font6 = new Font("SansSerif", Font.PLAIN, 1*(int) Constants.shapeSize1());
+    		font4 = new Font("SansSerif", Font.PLAIN, 1*(int) Constants.shapeSize1());
     	}
         final JFreeChart chart = ChartFactory.createXYLineChart(
                 title+" chromosome "+chrom+
                 (Constants.collapseScatterInd() ? "" : 
                 (fracR==null ? "" : 
                 	String.format(" Q= %5.3g", new Object[] {-Math.log10(1-fracR)}))),
-                "LRR ", // domain axis label
-                "BAF ", // range axis label
+                useVals? "Phenotype quantile" : "LRR ", // domain axis label
+                useVals? "Cumulative distribution within CN band" : "BAF ", // range axis label
                 datas, // data
                 PlotOrientation.VERTICAL, Constants.includeLegend(), // include legend
                 true, // tooltips?
@@ -2309,7 +2309,7 @@ lowIndex, true, jG.getSize().width)[0];
 	    				}
             		
             		xrange = new Range(minx, maxx);
-            		yrange = new Range(miny, maxy);
+            		yrange = new Range(miny - (0.1*(maxy-miny)), maxy);
             		if(form!=null){
             		xyp.getDomainAxis().setLabel(form[0]+"\t"+form[1]);
             	//	xyp.getDomainAxis(1).setLabel(form[1]);
@@ -2424,7 +2424,7 @@ lowIndex, true, jG.getSize().width)[0];
             //	 DataCollection.datC.getBGCount(i2, snp_alias[i2][ii]);
             	 Double fracR = DistributionCollection.getFracS(i2,snp_alias[ii], true);
             	 Double fracB = DistributionCollection.getFracS(i2,snp_alias[ii], false);
-            	 String[] form = DistributionCollection.getFormS(i2,snp_alias[ii]);
+            	 String[] form = useVals ? null : DistributionCollection.getFormS(i2,snp_alias[ii]);
             	// String formB = DistributionCollection.getFormS(i2,snp_alias[ii], true);
             //	 System.err.println("frac "+frac);
             //	 if(current_r.getI)
@@ -2767,7 +2767,7 @@ public ChartPanel plotB(String datname, String st, final int l, int ik) {
   	    }
    // });
     chart.getXYPlot().getRangeAxis().setAutoTickUnitSelection(false);*/
-    if(Constants.hideAxis()){
+    if(Constants.hideAxis() && !singlechrom){
     	
     	   XYPlot plot= cp.getChart().getXYPlot();
     	    ValueAxis domaxis = plot.getDomainAxis(0);
@@ -2920,7 +2920,7 @@ void addAnnotation(XYPlot xyp, int i2, int ii, boolean global, Stroke stroke, Co
 				ProbabilityDistribution2 dist2 = dist_ instanceof Mixture2 ? ((Mixture2)dist_).dist[0] : dist_;
 				 getAnnotation1(dist2, annot, col[j], stroke);
 				for(int i=0; i<annot.length; i++){
-					xyp.addAnnotation(annot[i]);
+					if(annot[i]!=null) xyp.addAnnotation(annot[i]);
 				}
 				if(Constants.showNaN() && series_.nan_x>0){
 					double c = Math.log10(20*((double)series_.nan_x/DataCollection.datC.indiv().size()));
@@ -2974,7 +2974,7 @@ private void getAnnotation1(ProbabilityDistribution2 dist2,
 				res_inR[1], res_inB[0] , res_inR[1],res_inB[2],
 				stroke,col);
 	}
-	else{
+	else if(false){
 		if(true) throw new RuntimeException("!!");
 		dist2.getInterval(annot_inter, this.matr, mean);
 		EigenvalueDecomposition evd = new EigenvalueDecomposition(matr);

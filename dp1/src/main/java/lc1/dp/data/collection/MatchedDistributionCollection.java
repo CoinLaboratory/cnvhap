@@ -12,7 +12,6 @@ import lc1.dp.illumina.AbstractDistributionCollection;
 import lc1.dp.states.HaplotypeEmissionState;
 import lc1.stats.IlluminaDistribution;
 import lc1.stats.IlluminaRDistribution;
-import lc1.stats.Multdimfunct;
 import lc1.stats.Multidimmax;
 import lc1.stats.ProbabilityDistribution;
 import lc1.stats.ProbabilityDistribution2;
@@ -23,9 +22,7 @@ import lc1.util.Constants;
 import org.apache.commons.math.special.Gamma;
 
 import pal.math.MultivariateMinimum;
-import pal.math.OrthogonalHints;
 import pal.math.OrthogonalSearch;
-import pal.math.UnivariateMinimum;
 import cern.colt.matrix.DoubleMatrix2D;
 import cern.jet.random.Beta;
 import cern.jet.random.engine.DRand;
@@ -76,9 +73,13 @@ import cern.jet.random.engine.DRand;
 		
 //		double[] vals; // cellularity, ratio
 		
-		final double[] cellularity, ratio, ratios;
+		final double[] cellularity, ratio, ratiosLe, ratiosR;
 
-		
+		public double ratios(int back) {
+			if(back==Constants.maxPloidy1) return 1;
+			if(back<Constants.maxPloidy1) return ratiosLe[back];
+			else return ratiosR[back-Constants.maxPloidy1-1];
+		}
 		
 		private double totnormal;
 		//private double prop = 1;
@@ -137,20 +138,27 @@ import cern.jet.random.engine.DRand;
 			this.refCount = new double[ref.length()];
 			
 			this.maxCN = maxCN;
-			this.ratios = new double[maxCN1+1];
-			ratios[0] = 0.001;
-			for(int i=0; i<ratios.length; i++){
-				ratios[i]=(1-mix)*((double)i/(double)Constants.maxPloidy1())+(mix) ;
+			this.ratiosR = new double[maxCN1-Constants.maxPloidy1];
+			this.ratiosLe = new double[Constants.maxPloidy1];
+			this.ratiosLe[0] = 0.001;
+			for(int i=0; i<ratiosLe.length; i++){
+				if(Constants.plasma) ratiosLe[i] = (double) i/ (double) Constants.maxPloidy1();
+				else ratiosLe[i]=(1-mix)*((double)i/(double)Constants.maxPloidy1())+(mix) ;
 			}
-			if(trainPool && !Constants.plasma()){
-				
-				mdf.add("ratios", ratios, ratios.clone(), ratios.clone());
+			for(int i=Constants.maxPloidy1+1; i<=maxCN1; i++){
+				if(Constants.plasma) ratiosR[i-(Constants.maxPloidy1+1)] = (double) i/ (double) Constants.maxPloidy1();
+				else ratiosR[i-(Constants.maxPloidy1+1)]=(1-mix)*((double)i/(double)Constants.maxPloidy1())+(mix) ;
+			}
+			if(trainPool  && ! Constants.plasma()){
+				mdf.add("ratiosL", ratiosLe, ratiosLe.clone(), ratiosLe.clone());
+				mdf.add("ratiosR", ratiosR, ratiosR.clone(), ratiosR.clone());
 			}
 			this.pool = new HaplotypeEmissionState("pool", ref.length(), Emiss.getSpaceForNoCopies(Constants.maxPloidy1()),(short)ref.dataIndex());
 			pool.setNoCop(Constants.maxPloidy1());
 			this.backCNall =new int[ref.length()];
 			if(ratiosL!=null){
-			for(int k=0; k<ratiosL.length; k++){
+				throw new RuntimeException("!!");
+				/*for(int k=0; k<ratiosL.length; k++){
 				backCNall[k] = find(ratios, ratiosL[k]);
 			}
 		
@@ -168,7 +176,7 @@ import cern.jet.random.engine.DRand;
 					else if(k<Constants.maxPloidy1()) ratios[k] = Math.min(ratios[k], 0.99);
 					else if(k>Constants.maxPloidy1()) ratios[k] = Math.max(ratios[k], 1.01);
 				}
-			}
+			}*/
 			}
 			else{
 				Arrays.fill(this.backCNall, Constants.maxPloidy1());
@@ -343,12 +351,12 @@ import cern.jet.random.engine.DRand;
 			double cellularity = this.cellularity[sample_index]; double ratio = Constants.plasma() ? this.ratio[0] : this.ratio[sample_index]; int backCN = this.backCNall[i];
 
 			 if(Constants.plasma()){
-					double rcn1 = ((double) backCN/(double)Constants.maxPloidy1);
+					double rcn1 = ratios(backCN);
 				 return (mult*(rcn1*ratio + (1-ratio)) - (1-cellularity))/cellularity;
 			 }else{
-			if(ratioAsLevels) ratio = ratios[backCN]*ratio;
+			if(ratioAsLevels) ratio = ratios(backCN)*ratio;
 			else if(cellAsLevels){
-					cellularity =ratios[backCN]*cellularity;
+					cellularity =ratios(backCN)*cellularity;
 			}
 			return mult * (ratio/cellularity) - (1-cellularity) * (ratio/cellularity);
 			 }
@@ -357,12 +365,12 @@ import cern.jet.random.engine.DRand;
 		public double getMult(double cellularity, double ratio, double rcn, int backCN){
 			  if(Constants.plasma()){
 				//	ratio = vals[1];
-					double rcn1 = ((double) backCN/(double)Constants.maxPloidy1);
+					double rcn1 = ratios(backCN);
 			    	return ((rcn*cellularity) + (1-cellularity))/(rcn1*ratio + (1-ratio));
 				}else{
-					if(ratioAsLevels) ratio = ratios[backCN]*ratio;
+					if(ratioAsLevels) ratio = ratios(backCN)*ratio;
 					else if(cellAsLevels){
-							cellularity = Math.min(1.0, ratios[backCN]*cellularity);
+							cellularity = Math.min(1.0, ratios(backCN)*cellularity);
 							//if(cellularity>1) cellularity = 1.0/cellularity;
 					}
 					 return 	((rcn/ratio)*cellularity) + (1-cellularity);//
@@ -690,9 +698,10 @@ import cern.jet.random.engine.DRand;
 			//	System.err.println("adding "+noCop+" "+r+" "+b+" "+val);\
 			//this.countProbesTumour+=((double)noCop/2.0)*val; 
 			
-			 BinomialDistr1 dist = ((BackgroundDistribution)this.pool.emissions[i]).bin[sample_index][noCop]; //this.pool[i].bin[noCop];
+			 BackgroundDistribution dist = ((BackgroundDistribution)this.pool.emissions[i]);
+		
 		   //   dist.setRefCount(refCount[i], this.ratio[i]);
-			 dist.addCount(r,b, val);
+			 dist.addCount(r,b, val,noCop);
 			//}
 		}
 	
@@ -759,15 +768,30 @@ import cern.jet.random.engine.DRand;
 		public class BackgroundDistribution extends PseudoDistribution{
 			private int ratio1_count=0;
 			private int cnt=0;
-			private double refcount;
+			
 			
 			BinomialDistr1[][] bin; //first is by sample, second is by CN.  All should have same backCN
 			
-			
+			//following just for plotting
+			private double refcount;
+			double allr = 0;//new ArrayList<Double>(); //just for plotting
+			double allb = 0;//new ArrayList<Double>(); //just for plotting
 			
 			public Number b1() {
-				if(Constants.plasma()) return (double) bin[0][0].backCN/(double) Constants.maxPloidy1;
-				return ratios[bin[0][0].backCN];
+				  MatchedDistributionCollection mdc = ((MatchedDistributionCollection)DataCollection.datC.dc);
+				  double p = allb/allr;
+				  double p1 = refcount/totnormal();
+				  double mult = p/p1;
+				  
+				 return mult;//mdc.inverseMult(mult, i,name);
+				
+				//return ratios(bin[0][0].backCN);
+			}
+			public void addCount(Double r, Double b, double val,int noCop) {
+				 bin[sample_index][noCop].addCount(r, b, val); //this.pool[i].bin[noCop];
+				 allr+=r;
+				 allb+=b;
+//				this.allr.add(r); this.allb.add(r);
 			}
 			/*public Number r1(int cn){
 				bin[cn].
@@ -844,7 +868,9 @@ import cern.jet.random.engine.DRand;
 			public void initialise() {
 				this.ratio1_count =0;
 				this.cnt=0;
-					
+				allr =0;
+				allb =0;
+//					allb.clear();
 				for(int k=0; k<this.bin.length; k++){
 					for(int j=0; j<this.bin[k].length; j++){
 				bin[k][j].initialise();
@@ -981,6 +1007,10 @@ import cern.jet.random.engine.DRand;
 			}
 			
 		}
+
+
+
+		
 		
 		
 	}

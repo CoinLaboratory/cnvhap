@@ -141,7 +141,8 @@ public TrainableNormal2(String name, double meanx, double stddevx, double stddev
 this.sigma_x = stddevx;
 this.sigma_y = stddevy;
 if(Double.isNaN(sigma_y) || Double.isNaN(sigma_x)){
-	  throw new RuntimeException("!!");
+	System.err.println("warning variance 0 form sigma x or sigma y");
+//	throw new RuntimeException("!!");
 }
 this.meanx = meanx;
 this.meany = meany;

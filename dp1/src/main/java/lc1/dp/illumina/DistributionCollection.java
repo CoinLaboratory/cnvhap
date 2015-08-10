@@ -96,8 +96,18 @@ public  void setIndex(short i){
 }
 
 
+public void reverse(){
+	super.reverse();
+	this.probRB.reverse();
+}
 
-
+public  void addCollection(AbstractDistributionCollection dc){
+	
+	if(Constants.allowLocalDist()){
+		super.addCollection(dc);
+		this.probRB.addCollection(((DistributionCollection)dc).probRB);
+	}
+}
 
 
 public DistributionCollection(

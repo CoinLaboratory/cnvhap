@@ -254,7 +254,9 @@ public class MultipleDataRegression{
 		 
 		   int numObs=startPos;
 		 
-		   if(numObs!=numObsT) throw new RuntimeException("!!!");
+		   if(numObs!=numObsT) {
+			   throw new RuntimeException("!!!");
+		   }
 		   DoubleMatrix2D res = regr.regress(startPos, this, Y,rows);
 		 if(Constants.CHECK)  check(regr, this.rows);
 		   return res;
@@ -856,6 +858,7 @@ public class MultipleDataRegression{
 
 	   
 	   private void maximise(final ProbabilityDistribution2[] prob22, double[] initialValue) {
+		//   if(true) throw new RuntimeException("!!");
 		final double[] noB = new double[prob22.length];
 		/*double[] errorA2B = new double[prob22.length];
 		double[] errorB2A = new double[prob22.length];*/

@@ -462,4 +462,23 @@ public class MergedDistributionCollection extends AbstractDistributionCollection
 		else return this.dc[data_index].getFormGlob(0);
 	}
 
+
+	@Override
+	public void addCollection(AbstractDistributionCollection dc) {
+		MergedDistributionCollection mdc = (MergedDistributionCollection)dc;
+		for(int i=0; i<this.dc.length; i++){
+			this.dc[i].addCollection(mdc.dc[i]);
+		}
+		
+	}
+
+
+	@Override
+	public void reverse() {
+		for(int i=0; i<this.dc.length; i++){
+			dc[i].reverse();
+		}
+		
+	}
+
 }

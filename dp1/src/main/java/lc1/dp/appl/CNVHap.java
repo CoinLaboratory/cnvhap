@@ -38,6 +38,7 @@ import lc1.dp.data.collection.LikelihoodDataCollection;
 import lc1.dp.data.collection.MatchedSequenceDataCollection;
 import lc1.dp.data.collection.MergedDataCollection;
 import lc1.dp.data.collection.MergedDistributionCollection;
+import lc1.dp.data.collection.SequenceAlleleDataCollection;
 import lc1.dp.data.collection.SequenceDataCollection;
 import lc1.dp.data.collection.SimpleDataCollection;
 import lc1.dp.data.collection.SimpleDataCollection1;
@@ -46,7 +47,6 @@ import lc1.dp.data.representation.SimpleScorableObject;
 import lc1.dp.external.Fastphase;
 import lc1.dp.illumina.DistributionCollection;
 import lc1.dp.states.EmissionState;
-import lc1.possel.HLALD;
 import lc1.sequenced.Convert;
 import lc1.util.Constants;
 import lc1.util.Executor;
@@ -441,7 +441,19 @@ public static DataCollection read(final File dir) throws Exception{
             //     EmissionState emst = res[0].dataLvalues().next();
         }
         else if(format[i].startsWith("alleleCount")) {
-            resu = new lc1.dp.data.collection.SequenceAlleleDataCollection(inp[i],(short)i, no_copies[i], mid,buildF, snpidrest);
+        	 if(Constants.extraChrom!=null){
+        		 resu =  new SequenceAlleleDataCollection(new File( Constants.inputDir(i)+"/" + Constants.extraChrom(0) + ".zip"),(short)i, no_copies[i], mid,buildF, snpidrest);
+             	Fastphase.marks = new HashSet<Integer>();
+             	if(Constants.reverse[0]) resu.reverse();
+             	for(int jj=1; jj<Constants.extraChrom.length; jj++){
+             		Fastphase.marks.add(resu.length);
+             		DataCollection resu1 = new SequenceAlleleDataCollection(new File( Constants.inputDir(i)+"/" + Constants.extraChrom(jj) + ".zip"),(short)i, no_copies[i], mid,buildF, snpidrest);
+             		if(Constants.reverse[jj]) resu1.reverse();
+             		resu.addCollection(resu1,(int)Constants.initalSeparation());
+             	}
+        	 }else{
+            resu = new SequenceAlleleDataCollection(inp[i],(short)i, no_copies[i], mid,buildF, snpidrest);
+        }	
             String[] join = Constants.toJoin(i);
             if(join!=null &&  join.length>0){
             	((SimpleDataCollection)res[kk][i]).join(join);

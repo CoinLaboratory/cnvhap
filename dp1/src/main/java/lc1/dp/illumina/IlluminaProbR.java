@@ -9,6 +9,7 @@ import java.io.Serializable;
 import java.io.StringWriter;
 import java.lang.reflect.Array;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.logging.Logger;
@@ -112,6 +113,18 @@ public class IlluminaProbR implements Serializable {
 	final int index;
 //public static boolean startWithZeroMix = false;
 
+	public void addCollection(IlluminaProbR probRB) {
+		this.r = (ProbabilityDistribution2[][]) Constants.join(this.r, probRB.r).toArray(new ProbabilityDistribution2[0][]);
+		this.mixeR = (SimpleExtendedDistribution1[]) Constants.join(this.mixeR, probRB.mixeR).toArray(new SimpleExtendedDistribution1[0]);
+	}
+	
+	
+	public void reverse(){
+		Constants.reverse(this.r);
+		Constants.reverse(this.mixeR);
+		
+	}
+	
 public IlluminaProbR(EmissionStateSpace emstsp,
                boolean train, int ik, int noSNPS,  File clusterFile){
 	 index = ik;
@@ -754,6 +767,8 @@ final EmissionStateSpace emstsp;
 	public boolean canMergeWith(IlluminaProbR probRB) {
 		return this.basis_mean.equals(probRB.basis_mean) && this.prior.equals(probRB.prior);
 	}
+
+	
 	
 	
 }

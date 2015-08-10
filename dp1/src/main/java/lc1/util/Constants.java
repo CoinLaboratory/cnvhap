@@ -11,6 +11,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -31,6 +32,8 @@ import jxl.Sheet;
 import jxl.Workbook;
 import lc1.dp.model.CompoundMarkovModel;
 import lc1.dp.states.State;
+import lc1.stats.ProbabilityDistribution2;
+import lc1.stats.SimpleExtendedDistribution1;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
@@ -800,7 +803,7 @@ public static File getClusterFile(int index){
 	public static double[][] r_train2Var = new double[0][0];
 	public static double[][] b_train2 = new double[0][0];
 	public static double[][] b_train2Var = new double[0][0];
-	public static double[][] rho_train = new double[0][0];;
+	public static double[][] rho_train = new double[1][0];;
 	public static double[] rho_train2 = new double[0];
 	//public static double[][] r_train0 = new double[0][0];
 	// private static double[][] b_train0 =new double[][] {new double[]
@@ -1247,6 +1250,7 @@ public static void resetIndices(){
 		} else if (type.equals(int.class)) {
 			return Integer.parseInt(st);
 		} else if (type.equals(boolean.class)) {
+			System.err.println(st);
 			return parseBoolean(st);
 
 		} else if (type.equals(Boolean.class)) {
@@ -1449,7 +1453,8 @@ public static void resetIndices(){
 					System.err.println("set inputDir" + " : "
 							+ getString(inputDirNew));
 					Constants.class.getField("inputDir").set(null, inputDirNew);
-					inner: for (int i = 0; i < ws.getRows(); i++) {// (st
+					int len = ws.getRows();
+					inner: for (int i = 0; i <len; i++) {// (st
 																	// =br.readLine())!=null){
 						String[] cell = ws.getRow(i);
 						if (cell.length == 0
@@ -4316,7 +4321,10 @@ private static double[][][]priors;
 		//if(priors==null) 
 		if(priors==null){
 			priors = new double[Constants.r_train.length][][];
-			for(int index=0; index<priors.length; index++){
+			int len = priors.length;
+			for(int index=0; index<len; index++){
+				System.err.println(index+" ");
+				System.err.println(index+" "+len+" "+(index < len));
 			priors[index] = new double[][]{Constants.r_train[index],Constants.r_trainVar[index],
 					Constants.b_train[index], Constants.b_trainVar[index],Constants.rho_train[index]};
 //					Constants.r_train2[index], Constants.r_train2Var[index], Constants.b_train2, Constants.b_train2Var,
@@ -5456,6 +5464,28 @@ return muteAlpha;
 	public static int annotateMB() {
 		// TODO Auto-generated method stub
 		return annotateMB;
+	}
+	
+	public static void reverse(Object[] mixeR) {
+		List l = Arrays.asList(mixeR);
+		Collections.reverse(l);
+		System.arraycopy(l.toArray(new Object[0]), 0, mixeR, 0, l.size());
+	}
+	public static List join(Object[] o, Object[] l){
+		Object[] res = new Object[o.length+l.length];
+		System.arraycopy(o,0,res,0,o.length);
+		System.arraycopy(l,0,res,o.length,l.length);
+		return Arrays.asList(res);
+	}
+	public static double A2B=0.1;
+	public static double A2B() {
+		// TODO Auto-generated method stub
+		return A2B;
+	}
+	public static int shapeMult = 6;
+	public static int shapeMult() {
+		// TODO Auto-generated method stub
+		return shapeMult;
 	}
 	
 	

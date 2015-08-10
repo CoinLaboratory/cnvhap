@@ -40,7 +40,6 @@ public class IlluminaNoBg extends  HaplotypeEmissionState{
     			  
     			  public Double b(int i) {
     				  MatchedDistributionCollection mdc = ((MatchedDistributionCollection)DataCollection.datC.dc);
-    				
     				  double p = b()/r().doubleValue();
     				  double p1 = mdc.refCount(i)/mdc.totnormal();
     				  double mult = p/p1;

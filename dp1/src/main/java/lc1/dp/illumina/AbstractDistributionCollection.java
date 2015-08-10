@@ -1,7 +1,5 @@
 package lc1.dp.illumina;
 
-import java.awt.Color;
-import java.awt.Shape;
 import java.io.File;
 import java.io.Serializable;
 import java.util.List;
@@ -9,7 +7,7 @@ import java.util.List;
 import lc1.dp.states.HaplotypeEmissionState;
 import lc1.stats.ProbabilityDistribution;
 import lc1.stats.ProbabilityDistribution2;
-import lc1.stats.PseudoDistribution;
+import lc1.util.Constants;
 
 
 public abstract class AbstractDistributionCollection implements Serializable {
@@ -98,4 +96,13 @@ public abstract class AbstractDistributionCollection implements Serializable {
 		
 	}
 	public abstract String[] getFormGlob(int ind) ;
+
+	public void addCollection(AbstractDistributionCollection dc) {
+		if(r_formulae!=null) r_formulae = (String[][]) Constants.join(this.r_formulae, dc.r_formulae).toArray(new String[0][]);
+		//throw new RuntimeException("!!");
+	}
+	public  void reverse(){
+		Constants.reverse(this.r_formulae);
+		//throw new RuntimeException("!!");
+	}
 }

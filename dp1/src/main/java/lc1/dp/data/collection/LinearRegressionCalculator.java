@@ -337,21 +337,28 @@ public class LinearRegressionCalculator extends AssociationCalculator {
      strat_ind[ii] = stratHead==null ? -1 : l.indexOf(stratHead) ;
       
        String st = "";
-     
-       while((st=br.readLine())!=null){
+   //  int iik=0;
+       inner1: while((st=br.readLine())!=null){
     	   String[] str = st.split("\t");
     	   
     	   String pat =  str[patient_id[ii]];
     	 EmissionState emst =  mdc.dataL.get(pat);
     	   if(emst!=null){
+    		 
+    	   
     		 if( emst.noCop()==ploidy &&(stratHead==null || str[strat_ind[ii]].equals(stratVal))){
-    		   rows++;
+    			  if(!keysToIndex.containsKey(pat)){
+    				  keysToIndex.put(pat, rows);
+    		    		   rows++;
+   			   	}
+       	  
     		 }
     		   
     	   }
     	   else{
     		   if(stratHead==null || str[strat_ind[ii]].equals(stratVal)){
     	    		  if(pat.indexOf("Inf")>=0 && mdc.name.startsWith("SLEGEN")){
+    	    			 if(true) throw new RuntimeException("!!!");
     	    			  inner: for(Iterator<String> it = mdc.dataL.keySet().iterator(); it.hasNext();){
     	    				 String key =  it.next();
     	    				 if(key.startsWith(pat)){
@@ -359,6 +366,10 @@ public class LinearRegressionCalculator extends AssociationCalculator {
     	    			    		//   rows++;
     	    			    		
     	    					trans[ii].put(pat, key);
+    	    					if(!keysToIndex.containsKey(pat)){
+    	    	    				  keysToIndex.put(pat, rows);
+    	    	    		    		   rows++;
+    	    	   			   	}
     	    					 rows++;
     	    					
     	    					 break inner;
@@ -375,15 +386,16 @@ public class LinearRegressionCalculator extends AssociationCalculator {
        }
        br.close();
      }
-    
+    rows++;
        this.Y = new DenseDoubleMatrix2D(rows,pheno_id.size()); //first is CN
 	//   this.Y1 =new DenseDoubleMatrix2D(rows, pheno_id.size());
 	   {
-	   int i=0;
+	 //  int i=0;
 	   for(int ii=0; ii<pheno.length; ii++){
 		   if(pheno[ii]==null) continue;
 	   BufferedReader br = new BufferedReader(new FileReader(pheno[ii]));
      String st =   br.readLine();
+    // keysToIndex.clear();
   //     boolean isnumeric = true;
      // List<String> samps = mdc.indiv();
       inner: for(; (st= br.readLine())!=null; ){
@@ -394,18 +406,10 @@ public class LinearRegressionCalculator extends AssociationCalculator {
     	   String pat = str[patient_id[ii]];
     	   if(trans[ii]!=null&& trans[ii].containsKey(pat)) pat = trans[ii].get(pat);
     		 EmissionState emst =  mdc.dataL.get(pat);
-      	   if(emst!=null){
+      	   if(emst!=null && keysToIndex.containsKey(pat)){
+      		 int i = keysToIndex.get(pat);
       		 if( emst.noCop()==ploidy &&(stratHead==null || str[strat_ind[ii]].equals(stratVal))){
-    	   //if(mdc.dataL.containsKey(pat)){
-    		//   if(stratHead==null || str[strat_ind[ii]].equals(stratVal)){
-    			 //  if(pat.equals("471111")){
-    				//   System.err.println(pat);
-    			   //}
-    			   if(keysToIndex.containsKey(pat)){
-    				   continue inner;
-    				   //throw new RuntimeException("trying to add "+pat+" twice!!!");
-    			   }
-	    	   keysToIndex.put(pat, i);
+      			
 	    	   for(int k=0; k<pheno_id.size(); k++){
 	    		   String st_ = str[pheno_id.get(k)[ii]];
 	    		   double d = Double.NaN;
@@ -425,7 +429,7 @@ public class LinearRegressionCalculator extends AssociationCalculator {
 		    		   }
 	    		   
 	    	   }
-	    	   i++;
+	    	  // i++;
     		   }
     	   }
     	  
@@ -497,10 +501,13 @@ public class LinearRegressionCalculator extends AssociationCalculator {
 		   }
 		   double rank = ((double)j+(double)k)/2.0;
 		   if(rank>d.length) throw new RuntimeException("!!");
-		   double val = dist.inverseCumulativeProbability(rank/(double)d.length);
 		   for(int jj=k; jj<j; jj++){
-			   if(!equalRank) val = dist.inverseCumulativeProbability((jj+0.5)/(double)d.length);
-			   Y.setQuick(d[jj].i,i, val); 
+			   if(!equalRank){
+				   rank = jj;
+			   }
+			   double val = dist.inverseCumulativeProbability(rank/(double)d.length);
+			  // System.err.println("rank: "+jj+" "+rank);
+			   Y.setQuick(d[jj].i,i, val);//val); 
 		   }
 		   if(k==j)k = j+1;
 		   else k = j;

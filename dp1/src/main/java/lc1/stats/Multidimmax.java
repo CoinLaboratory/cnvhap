@@ -23,14 +23,15 @@ public class Multidimmax implements MultivariateFunction {
 	List<String> name = new ArrayList<String>();
 	List<int[]> alias = new ArrayList<int[]>(); //converts args to i
 	//List<Integer> alias1=new ArrayList<Integer>(); //converts args to j  l.get(i)[j] 
-	int ratios_ind = -1;
+	int ratiosL_ind, ratiosR_ind = -1;
 	
 	final MatchedDistributionCollection mdc;
 	public void add(String name, double[] d, double[] lower, double[] upper){
 		for(int k=0; k<d.length; k++){
 			alias.add(new int[] {l.size(),k});
 		}
-		if(name.equals("ratios")) ratios_ind = l.size();
+		if(name.equals("ratiosL")) ratiosL_ind = l.size();
+		else if(name.equals("ratiosR")) ratiosR_ind = l.size();
 		this.name.add(name);
 		this.l.add(d);
 		initial.add(d.clone());
@@ -54,33 +55,25 @@ public class Multidimmax implements MultivariateFunction {
 	 public Multidimmax(MatchedDistributionCollection mdc){
 		 this.mdc = mdc;
 	 }
+	 public void updateBounds(){
+		 this.updateBounds(ratiosL_ind, 0);
+		 this.updateBounds(ratiosR_ind, 1);
+	 }
 	
-	
-	public void updateBounds(){
-		if(ratios_ind<0) return;
-		double[] ratios = l.get(ratios_ind);
-		double[] lower = this.lower.get(ratios_ind);
-		double[] upper = this.upper.get(ratios_ind);
+	public void updateBounds(int ratiosL_ind, double min){
+		if(ratiosL_ind<0) return;
+		{
+		double[] ratios = l.get(ratiosL_ind);
+		double[] lower = this.lower.get(ratiosL_ind);
+		double[] upper = this.upper.get(ratiosL_ind);
 			for(int k=0; k<ratios.length; k++){
-				if(k==Constants.maxPloidy1()){
-					lower[k]=1.0;
-					upper[k]=1.0;
-				}else{
-					  lower[k] = k==0 ? 0.001: ratios[k-1]+0.0001;
+				{
+					  lower[k] = k==0 ? min+0.001: ratios[k-1]+0.0001;
 					  upper[k] = k<ratios.length-1 ? ratios[k+1]-0.0001 : ratios[k]+0.5;
-					  if(k<Constants.maxPloidy1()){
-						  lower[k] = Math.min(lower[k], 0.99999999);
-						  upper[k] = Math.min(upper[k], 0.99999999);
-					  }
-					  else if(k>Constants.maxPloidy1()){
-						  lower[k] = Math.max(lower[k], 1.0000001);
-						  upper[k] = Math.max(upper[k], 1.0000001);
-					  }
-				  if(Math.signum(lower[k]-1) != Math.signum(upper[k]-1)){
-					  throw new RuntimeException("!!");
-				  }
 				}
 			}
+		}
+		
 			System.err.println("h");
 		}
 	 

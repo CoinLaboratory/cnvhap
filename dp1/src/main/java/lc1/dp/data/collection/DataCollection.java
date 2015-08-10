@@ -813,6 +813,7 @@ protected int getNumberDataTypes() {
     public void reverse(){
     	   //     this.maf.reverse();
     	        Collections.reverse(this.loc);
+    	        this.dc.reverse();
     	        for(int i=0; i<loc.size(); i++){
     	            loc.set(i,-1 *loc.get(i));
     	        }
@@ -821,9 +822,7 @@ protected int getNumberDataTypes() {
     	        Collections.reverse(this.alleleA);
     	        Collections.reverse(this.alleleB);
     	        Collections.reverse(this.baf);
-    	        List<Boolean> po = new ArrayList( Arrays.asList(this.probeOnly));
-    	        Collections.reverse(po);
-    	        this.probeOnly = po.toArray(new Boolean[0]);
+    	        Constants.reverse(this.probeOnly);
     	        for(Iterator<PIGData> it = this.data.values().iterator(); it.hasNext();){
     	           PIGData nxt = it.next();
     	           if(nxt!=null) nxt.reverse();
@@ -834,8 +833,9 @@ protected int getNumberDataTypes() {
     	        }
     	    }
     public void addCollection(DataCollection datC, int offset){
+    	this.dc.addCollection(datC.dc);
     	int offset1 = offset - datC.loc.get(0) + loc.get(loc.size()-1);
-    	List<Boolean> po = new ArrayList( Arrays.asList(this.probeOnly));
+    
     	for(int k=0; k< datC.loc.size(); k++){
     		this.loc.add(datC.loc.get(k)+offset1);
     		this.snpid.add(datC.snpid.get(k));
@@ -843,10 +843,8 @@ protected int getNumberDataTypes() {
     		if(k<datC.alleleB.size())this.alleleB.add(datC.alleleB.get(k));
     		if(k<datC.baf.size())this.baf.add(datC.baf.get(k));
     		if(k<datC.strand.size()) this.strand.add(datC.strand.get(k));
-    		po.add(datC.probeOnly[k]);
-    		//this.probeOnly.add(datC.probeOnly.get(k));
     	}
-    	this.probeOnly = po.toArray(new Boolean[0]);
+    	this.probeOnly = (Boolean[]) Constants.join(this.probeOnly, datC.probeOnly).toArray(new Boolean[0]);//po.toArray(new Boolean[0]);
     	this.length = loc.size();
     	   for(Iterator<EmissionState> it = this.dataL.values().iterator(); it.hasNext();){
     		   EmissionState data =  it.next();
@@ -1962,6 +1960,8 @@ public String getInfo(String tag, String key, int i, boolean style) throws Excep
     	else if(ch=='C') return 'G';
     	else if(ch=='N') return 'N';
     	else if(ch=='-') return '-';
+    	else if(ch=='I') return 'I';
+    	else if(ch=='D') return 'D';
     	else {
     		throw new RuntimeException("!!"+ch);
     	}
@@ -6541,11 +6541,11 @@ public void dropMissing(double d) {
 public void dropIndiv(String[] toDel) {
 	System.err.println("before "+this.dataL.size());
     System.err.println("dropping from "+this.name+" "+Arrays.asList(toDel));
-    if(indiv==null) indiv = new ArrayList<String>(this.dataL.keySet());
+   // if(indiv==null) indiv = new ArrayList<String>(this.dataL.keySet());
     int size1 = this.indiv.size();
     for(int i=0; i<toDel.length; i++){
     	if(!toDel[i].equals("null")){
-    	indiv.remove(toDel[i]);
+    	if(indiv!=null) indiv.remove(toDel[i]);
         dataL.remove(toDel[i]);
         data.remove(toDel[i]);
     	}

@@ -186,7 +186,7 @@ public class SequenceDataCollection extends LikelihoodDataCollection{
 	        	 else{
 		             String stri =l.get(j);
 		             String[] st =stri.trim().split("\\s+");
-		             Boolean po = this.process( indiv.get(j), header, st, i, ploidy.get(j),avgDepth.get(j),j);
+		             Boolean po = this.process( indiv.get(j), header, st, i, ploidy.get(j),(Double)avgDepth.get(j),j);
 		             if(this.lrr_index>=0){
 			        	 lrr[j_] = Double.parseDouble(st[lrr_index]);
 			         }

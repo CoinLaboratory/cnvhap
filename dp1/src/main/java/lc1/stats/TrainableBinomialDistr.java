@@ -11,6 +11,14 @@ import cern.colt.matrix.DoubleMatrix2D;
 
 public class TrainableBinomialDistr extends TrainableNormal2 implements UnivariateFunction{
 
+	
+	public void recalcName() {
+		//System.err.println(name +" --- > "+meany);
+		name =   id+"_"+String.format("%5.3g,", this.meany);
+		
+	   
+	}
+
 	public TrainableBinomialDistr(String name, double meanx, double stddevx,
 			double stddevxprior, double meany, double stddevy,
 			double stddevyprior) {
@@ -56,7 +64,7 @@ public class TrainableBinomialDistr extends TrainableNormal2 implements Univaria
 	    }
 	 
 	 public int fill(DoubleMatrix2D x, DoubleMatrix2D y, DoubleMatrix2D yB, int numObs, double[] noCop,   double pseudo){
-		 if(true) throw new RuntimeException("!!");
+		// if(true) throw new RuntimeException("!!");
 		 return 0;
 	 }
 	 
@@ -64,6 +72,7 @@ public class TrainableBinomialDistr extends TrainableNormal2 implements Univaria
 	  public void maximise(double pseudo,  double pseudoSD, double pseudoSkew, 
 	    		double pseudo1, double pseudoSD1, double pseudoSkew1, double pseudoCov
 	    		) {
+		 if(true) throw new RuntimeException("checking if go through");
 		 if(this.x_obs.size()>0){
 	    	        UnivariateMinimum uv = new UnivariateMinimum();
 	    	       meany = uv.findMinimum(this.meany, this, 5);
@@ -83,6 +92,7 @@ public class TrainableBinomialDistr extends TrainableNormal2 implements Univaria
 		if(arg0 > getUpperBound() || arg0  < getLowerBound()) return Double.POSITIVE_INFINITY; 
 		try{
 		//	System.err.println(arg0);
+			this.meany = arg0;
         binom.setProbabilityOfSuccess(arg0);
 		}catch(MathRuntimeException exc){
 			exc.printStackTrace();
