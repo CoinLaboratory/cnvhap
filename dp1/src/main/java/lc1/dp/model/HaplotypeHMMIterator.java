@@ -13,6 +13,7 @@ import lc1.dp.data.collection.DataCollection;
 import lc1.dp.data.representation.Emiss;
 import lc1.dp.emissionspace.EmissionStateSpace;
 import lc1.dp.states.AlleleCopyPairEmissionState;
+import lc1.dp.transition.FreeRateTransitionProbs1;
 import lc1.dp.transition.FreeTransitionProbs1;
 import lc1.dp.transition.MultiExpProbs;
 import lc1.dp.transition.SimpleExpTransProb;
@@ -107,7 +108,7 @@ public static Class[][] getMode(int [] transMode){
         }
     else if
        ( transMode[i]==1){
-        clazz[i] =  new Class[] {FreeTransitionProbs1.class};
+        clazz[i] =  new Class[] {FreeRateTransitionProbs1.class};
     }
     else if
        ( transMode[i]==2){
@@ -121,7 +122,8 @@ public static Class[][] getMode(int [] transMode){
         clazz[i] =   new Class[] {  MultiExpProbs.class , MultiExpProbs.class};
     }
     else  if(transMode[i]==5  ){
-        throw new RuntimeException("!!");
+    	 clazz[i] =  new Class[] {FreeTransitionProbs1.class};
+       // throw new RuntimeException("!!");
  //       clazz[i] =  FreeTransitionProbs.class;
     }
         Logger.global.info("clazz "+Arrays.asList(clazz));

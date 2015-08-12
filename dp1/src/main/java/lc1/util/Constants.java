@@ -1990,9 +1990,9 @@ public static void resetIndices(){
 	public static int numRep() {
 		return numRep;
 	}
-
+public static double switchU = 1e10;
 	public static double switchU() {
-		return 1e10;
+		return switchU;
 	}
 
 	public static int sample(double[] d) {

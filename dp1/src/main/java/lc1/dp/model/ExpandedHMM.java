@@ -167,7 +167,12 @@ int[] stateToGroup;
  /* hmm_core is hmm with model between alleles */
   public ExpandedHMM(FreeHaplotypeHMM hmm_original, 
 		int[] expand, DataCollection datac){
+	 
 	  super(hmm_original.getName()+"_expanded", datac.loc.size());
+	  boolean allsamesize = true;
+	  for(int k=1; k<expand.length; k++){
+		  if(expand[k]!=expand[0]) allsamesize = false;
+	  }
 	//  Constants.gammaRate = Constants.gammaRate1;
 	  transWithin = new FreeSiteTrans1[hmm_original.states.size()];
 	  List<Integer> no_cop = new ArrayList<Integer>();
@@ -296,7 +301,7 @@ int[] stateToGroup;
       trans.globalTrans = hmm_original.trans.globalTrans;
       Logger.global.info("state space size is "+this.states.size()+" for "+this.getName());
       try{
-     this.stateToGroup =  ((FreeSiteTrans1)trans).initialise1(hmm_original.trans, m, transWithin, Constants.expand_init_prior(2));
+     this.stateToGroup =  allsamesize ?  ((FreeSiteTrans1)trans).initialise2(hmm_original.trans, m, core[0].trans, Constants.expand_init_prior(2)) : ((FreeSiteTrans1)trans).initialise1(hmm_original.trans, m, transWithin, Constants.expand_init_prior(2));
      SimpleExtendedDistribution dist1 = ((SimpleExtendedDistribution)((FreeTransitionProbs1)trans.transProbs[0]).transitionsOut[0]);
      
      int[][] gToS = ((FreeSiteTrans1)trans).groupToState;

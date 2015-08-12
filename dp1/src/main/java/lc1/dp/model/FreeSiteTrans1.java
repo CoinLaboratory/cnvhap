@@ -19,6 +19,7 @@ import lc1.dp.transition.FreeRateTransitionProbs;
 import lc1.dp.transition.FreeRateTransitionProbs1;
 import lc1.dp.transition.FreeTransitionProbs1;
 import lc1.dp.transition.MatrixExp;
+import lc1.dp.transition.MultipliedProbs;
 import lc1.stats.Dirichlet;
 import lc1.stats.PermutationSampler;
 import lc1.stats.Sampler;
@@ -238,6 +239,73 @@ List<State> states;
             return stateToGroup;
     }
     
+    public int[] initialise2(SiteTransitions orig, int[][] m, SiteTransitions withinGroup, double initialU) throws Exception{
+    	this.allFree = true;
+         int[] stateToGroup = new int[states.size()];
+      
+         int[] groupSizes =  new int[m.length];
+         int[] stateToIndexWithinGroup = new int[states.size()];
+        
+         double[]d2 = new double[this.states.size()];
+         Arrays.fill(d2,0);
+         /* for(int i=1; i<d2.length; i++){
+               d2[i] = 1.0/(double)(d2.length-1);
+          }*/
+         for(int i=0; i<m.length ; i++){
+             for(int j=0; j<m[i].length; j++){
+                int k = m[i][j];
+                stateToGroup[k] = i;
+                stateToIndexWithinGroup[k] = j;
+                double totProb = orig.transProbs[0].getTransition(0, i);
+                    d2[k] = totProb/(double) m[i].length;
+             }
+             groupSizes[i] = m[i].length;
+        
+         }
+          groupToState = new int[groupSizes.length][];
+         for(int i=0; i<groupSizes.length; i++){
+         	groupToState[i] = new int[groupSizes[i]];
+         	
+         }
+         for(int i=0; i<stateToGroup.length; i++){
+         	groupToState[stateToGroup[i]][stateToIndexWithinGroup[i]] = i;
+         }
+      
+         
+         double[] start = new double[states.size()];
+         start[0] = 1.0;
+      double[] probs = new double[states.size()];
+         
+         {
+          
+                         transProbs[0] =new FreeTransitionProbs1(true,
+new Dirichlet(d2, initialU), states.size());
+                         if(Constants.CHECK ){
+                             transProbs[0].validate();
+                         }
+                         fillProbs(transProbs[0], probs, start);
+         }
+             Double[] d = new Double[groupSizes.length];
+             Arrays.fill(d, 0.0);
+             for(int i=1; i<d.length; i++){
+                d[i] = 1.0/(double)(d.length-1);
+             }
+         
+         //Double[] r_0 = new Double[] {1e-60,r[1]};
+         int[][]sameSize = this.getSameSize(groupSizes);
+         for(int i=1; i<transProbs.length; i++){
+                    	 AbstractTransitionProbs between = orig.transProbs[i];
+                    	 
+                         transProbs[i] = new MultipliedProbs(between, withinGroup.transProbs[i]);
+                        	
+           transProbs[i].validate();
+             if(Constants.CHECK){
+                 validate(transProbs[i], states.size(), i);
+             }
+         }
+         return stateToGroup;
+     	
+    }
     public int[] initialise1(SiteTransitions orig, int[][] m, SiteTransitions[] withinGroups, double initialU) throws Exception{
     	//Arrays.fill(withinGroups,null);
     	this.allFree = true;
@@ -668,17 +736,19 @@ public static void makeStateToGroupTrans(int[] stateToGroup, int[] stateToWithin
             for(int i=1; i<transProbs.length; i++){
             	if(globalTrans!=null){
             	this.globalTrans.mat.setDistance(this.getDist(i));
-            	if(clazz.equals(FreeTransitionProbs1.class) 
-                    	|| (!(clazz instanceof Class) &&  ((Class[])clazz)[0].equals(FreeTransitionProbs1.class) )
+            	if(clazz.equals(FreeRateTransitionProbs1.class) 
+                    	|| (!(clazz instanceof Class) &&  ((Class[])clazz)[0].equals(FreeRateTransitionProbs1.class) )
                             	){
             		  transProbs[i] = 	
             			  Constants.diffRatesPerState() ? 
             					  new FreeRateTransitionProbs1((FreeExpTransitionProbs)this.globalTrans, this.getDist(i), this.rateDistributionG
             							  ,this.rateDistribution):
             			  new FreeRateTransitionProbs((FreeExpTransitionProbs)this.globalTrans, this.getDist(i), this.rateDistributionG);
-            			  //new FreeTransitionProbs1(this.globalTrans);
-            	}
-            	else{
+            			 // new FreeTransitionProbs1(this.globalTrans);
+            	}else if(clazz.equals(FreeTransitionProbs1.class) 
+                    	|| (!(clazz instanceof Class) &&  ((Class[])clazz)[0].equals(FreeTransitionProbs1.class))){
+            		 transProbs[i] = new FreeTransitionProbs1(this.globalTrans);
+            	}else{
             		transProbs[i] = new FreeExpTransitionProbs(globalTrans, this.getDist(i));
             			
             			//(

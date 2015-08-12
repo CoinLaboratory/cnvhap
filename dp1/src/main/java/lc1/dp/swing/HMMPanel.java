@@ -547,12 +547,12 @@ public void paint0(){
          
          // vg.setLineWidth(HMMPanel.this.maxLineWidth);
         //  double[][] mat1 = mat;
-          double mult  = Constants.plotFlux() ? mat[i][j+1] : 1.0;
+          double mult  = Constants.plotFlux() ? mat[i][j+1] : 0.2;
           if(i<noSnps-1 && hmm!=null){
               for(int k=0; k<numFounders; k++){
             	//  hmm.getHittingProb(hmm.noSnps);
             	  double pr = hmm.getTransitionScore(j+1, k+1, i+1);
-                 double val = transform(pr*(mult));
+                 double val = transform2(pr*(mult));
                  
                   vg.setColor(c);//getLineColor(val, c));
                   double wid = HMMPanel.this.maxLineWidth*val;
