@@ -466,6 +466,7 @@ public class HaplotypeEmissionState extends EmissionState {
     	   else{
     		   init2 = init1[di];
     	   }
+    	   if(true)Arrays.fill(init2, 1.0/(double)init2.length);  // this sets default to uniform
     	   int index1 = Constants.getMax(init2);
            emissions[i] = 
         	   init2[index1]>0.9999 ? new IntegerDistribution(index1,emStSp) : 

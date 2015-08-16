@@ -4956,23 +4956,34 @@ public  DataCollection (File f, short index, int no_copies, final int[][] mid,Fi
 				@Override
 				public boolean accept(File arg0) {
 					if( arg0.getName().startsWith(chrom)){
-						final	String[] strs = arg0.getName().split("\\.")[0].split("_");
-						int i1 = Integer.parseInt(strs[1])-20000;
-						int i2 = Integer.parseInt(strs[2])+20000;
-						int m1 = mid[0][0];
-						int m2 = mid[0][1];
-						int o1 = m2 - i1;
-						int o2 = i2 - m1;
-						double overl = Math.min(o1,o2);
-					
-					return overl>0;
+						return true;
+						
+					//return overl>0;
 					}else return false;
 				}
 				
 			});
+			if(fs.length>0){
+				
+			}
 			
 			if(fs.length==0) f = new File(f.getParentFile(),"all.zip");
-			else f = fs[0];
+			else {
+				SortedMap<Double, File> sm = new TreeMap<Double,File>();
+				for(int k=0; k<fs.length; k++){
+					final	String[] strs = fs[k].getName().split("\\.")[0].split("_");
+					int i1 = Integer.parseInt(strs[1])-20000;
+					int i2 = Integer.parseInt(strs[2])+20000;
+					int m1 = mid[0][0];
+					int m2 = mid[0][1];
+					int o1 = m2 - i1;
+					int o2 = i2 - m1;
+					double overl = Math.min(o1,o2);
+					sm.put(overl,fs[k]);
+				}
+				f = sm.get(sm.lastKey());
+				System.err.println(f);
+			}
 			
 		}
 	}
@@ -5863,7 +5874,11 @@ protected List<Integer> getSamps() throws Exception{
      if(!todel.get(0).equals("null")){
     	 toinc.removeAll(todel);
      }
+     try{
      modifySampList(Arrays.asList(Constants.phenoToExclude(this.index)), pheno, toinc, false);
+     }catch(Exception exc){
+    	 exc.printStackTrace();
+     }
      modifySampList(Arrays.asList(Constants.platesToExclude(this.index)), plate, toinc, false);
      for(int k=0; k<toinc.size(); k++){
     	int ind = indiv.indexOf(toinc.get(k));
