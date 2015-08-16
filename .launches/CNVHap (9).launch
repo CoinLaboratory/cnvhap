@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<launchConfiguration type="org.eclipse.jdt.launching.localJavaApplication">
+<listAttribute key="org.eclipse.debug.core.MAPPED_RESOURCE_PATHS">
+<listEntry value="/cnvHap/dp1/src/main/java/lc1/dp/appl/CNVHap.java"/>
+</listAttribute>
+<listAttribute key="org.eclipse.debug.core.MAPPED_RESOURCE_TYPES">
+<listEntry value="1"/>
+</listAttribute>
+<booleanAttribute key="org.eclipse.debug.core.appendEnvironmentVariables" value="true"/>
+<stringAttribute key="org.eclipse.jdt.launching.MAIN_TYPE" value="lc1.dp.appl.CNVHap"/>
+<stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="--paramFile  param.txt  --baseDir /home/lcoin/Desktop/Data/data    --numIt 25    --showScatter true  --restrictKb 0kb:0kb --plot 2 --mid X:5758732:6145942 --showHMM true --showHaps true --r_panel false --b_panel false"/>
+<stringAttribute key="org.eclipse.jdt.launching.PROJECT_ATTR" value="cnvHap"/>
+<stringAttribute key="org.eclipse.jdt.launching.VM_ARGUMENTS" value="-Xmx3900m"/>
+<stringAttribute key="org.eclipse.jdt.launching.WORKING_DIRECTORY" value="/home/lcoin/Desktop/Data/analysis/tisham/genderCorrection"/>
+</launchConfiguration>

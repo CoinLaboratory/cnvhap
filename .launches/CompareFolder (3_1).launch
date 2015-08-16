@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<launchConfiguration type="org.eclipse.jdt.launching.localJavaApplication">
+<listAttribute key="org.eclipse.debug.core.MAPPED_RESOURCE_PATHS">
+<listEntry value="/dp1/src/main/java/lc1/dp/appl/CompareBasic.java"/>
+</listAttribute>
+<listAttribute key="org.eclipse.debug.core.MAPPED_RESOURCE_TYPES">
+<listEntry value="1"/>
+</listAttribute>
+<booleanAttribute key="org.eclipse.debug.core.appendEnvironmentVariables" value="true"/>
+<stringAttribute key="org.eclipse.jdt.launching.MAIN_TYPE" value="lc1.dp.appl.CompareBasic"/>
+<stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="all 185k  0;1:3;4 200809241-1-5 -1-1:-1-3:-1-6:-2-1:-2-4:-2-5:-2-6:-3-1:-4-1:-4-4"/>
+<stringAttribute key="org.eclipse.jdt.launching.PROJECT_ATTR" value="dp1"/>
+<stringAttribute key="org.eclipse.jdt.launching.VM_ARGUMENTS" value="-Xmx3500m"/>
+<stringAttribute key="org.eclipse.jdt.launching.WORKING_DIRECTORY" value="/home/lcoin/CNV_RESULTS/compa"/>
+</launchConfiguration>

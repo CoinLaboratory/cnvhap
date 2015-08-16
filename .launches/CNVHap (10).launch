@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<launchConfiguration type="org.eclipse.jdt.launching.localJavaApplication">
+<listAttribute key="org.eclipse.debug.core.MAPPED_RESOURCE_PATHS">
+<listEntry value="/cnvHap/dp1/src/main/java/lc1/dp/appl/CNVHap.java"/>
+</listAttribute>
+<listAttribute key="org.eclipse.debug.core.MAPPED_RESOURCE_TYPES">
+<listEntry value="1"/>
+</listAttribute>
+<booleanAttribute key="org.eclipse.debug.core.appendEnvironmentVariables" value="true"/>
+<stringAttribute key="org.eclipse.jdt.launching.MAIN_TYPE" value="lc1.dp.appl.CNVHap"/>
+<stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="--paramFile  param.txt --index 1 --column 1 --baseDir /home/lcoin/Desktop/Data/data/  --restrictKb 0kb:0kb    --experiment cnv_both6 --plot 1  --showHMM true --showHaps false --r_panel true --b_panel true --numIt 2 --showScatter true --allowLocalDist false --dataPanelToPlot 1"/>
+<stringAttribute key="org.eclipse.jdt.launching.PROJECT_ATTR" value="cnvHap"/>
+<stringAttribute key="org.eclipse.jdt.launching.VM_ARGUMENTS" value="-Xmx3900m"/>
+<stringAttribute key="org.eclipse.jdt.launching.WORKING_DIRECTORY" value="/home/lcoin/Desktop/Data/analysis/longCNVs"/>
+</launchConfiguration>

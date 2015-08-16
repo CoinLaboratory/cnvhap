@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<launchConfiguration type="org.eclipse.jdt.launching.localJavaApplication">
+<listAttribute key="org.eclipse.debug.core.MAPPED_RESOURCE_PATHS">
+<listEntry value="/cnvhap/dp1/src/main/java/lc1/dp/appl/CNVHap.java"/>
+</listAttribute>
+<listAttribute key="org.eclipse.debug.core.MAPPED_RESOURCE_TYPES">
+<listEntry value="1"/>
+</listAttribute>
+<stringAttribute key="org.eclipse.jdt.launching.MAIN_TYPE" value="lc1.dp.appl.CNVHap"/>
+<stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="--paramFile  param.txt --index 1 --column 1 --baseDir ../data/  --numIt 10  --plot 2 --showScatter false  --r_panel true  --b_panel true  --showHMM false    --showHaps false  --restrictKb 0kb:0kb  --include OESO_0384  --experiment OESO0384   --initialCellularity 0.99:1.0  --downsample 1:1  --dilute 1:0   --cumulativeR 10  --useAvgDepth  true     --makeNewRef false  --maxPloidy1 1 --noCopies 2 --backgroundCount 2  --ratioAsLevels null  --trainCellularity 2 --reference REFALL   --betaDownWeight 10 --noSampleFromBeta 10 --minNormalDepth 0"/>
+<stringAttribute key="org.eclipse.jdt.launching.PROJECT_ATTR" value="cnvhap"/>
+<stringAttribute key="org.eclipse.jdt.launching.VM_ARGUMENTS" value="-Xmx6800m"/>
+<stringAttribute key="org.eclipse.jdt.launching.WORKING_DIRECTORY" value="/home/lcoin/WORK/Sarahnew/output_cumulativeR100/analysis7"/>
+</launchConfiguration>
