@@ -860,12 +860,14 @@ public class MultipleDataRegression{
 	   private void maximise(final ProbabilityDistribution2[] prob22, double[] initialValue) {
 		//   if(true) throw new RuntimeException("!!");
 		final double[] noB = new double[prob22.length];
+		final double[] noCop = new double[prob22.length];
 		/*double[] errorA2B = new double[prob22.length];
 		double[] errorB2A = new double[prob22.length];*/
 		final boolean[] include = new boolean[prob22.length];
 		int sze =0;
 		for(int k=0; k<noB.length; k++){
 			noB[k] = this.illuminaProbRB.emstsp.getBCount(k);
+			noCop[k] = this.illuminaProbRB.emstsp.getCN(k);
 			TrainableBinomialDistr dis = (TrainableBinomialDistr) prob22[k];
 			if(dis.size()>0){
 				include[k] = true;
@@ -888,14 +890,17 @@ public class MultipleDataRegression{
 			public double evaluate(double[] arg0) {
 				double val = 0;
 				double A2B = arg0[0]; double B2A = arg0[1];
+				//double A2A = 1 - A2B;
+				double B2B = 1-B2A;
 				for(int k=0; k<prob22.length; k++){
 					if(include[k]){
-					double p = noB[k] ==0 ?  A2B : (noB[k]==2 ? 1-B2A : 0.5+(A2B-B2A)/2.0);
+					double p = (noB[k] * B2B + (noCop[k] - noB[k])*A2B)/noCop[k];
+//							noB[k] ==0 ?  A2B : (noB[k]==2 ? 1-B2A : 0.5+(A2B-B2A)/2.0);
 				
 					val+= ((UnivariateFunction) prob22[k]).evaluate(p);
 					}
 				}
-//				System.err.println(A2B+" "+B2A+" "+val);
+		//	System.err.println(A2B+" "+B2A+" "+val);
 				return val;
 			}
 
@@ -928,6 +933,7 @@ public class MultipleDataRegression{
 		 uv.findMinimum(funct, initialValue);
 	       for(int k=0; k<prob22.length; k++){
            prob22[k].recalcName();
+        //   System.err.println(prob22[k]);
 	       }
 	       
 		

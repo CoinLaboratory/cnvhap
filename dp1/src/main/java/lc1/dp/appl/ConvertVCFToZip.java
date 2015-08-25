@@ -29,7 +29,7 @@ public class ConvertVCFToZip {
 	static boolean replaceNumWithAB = false;
 static String split="\\s+";
 static int buffer =1;
-static boolean includeRef = true; //SET TO TRUE TO ADD UP DEPTHS!!!
+static boolean includeRef = false; //SET TO TRUE TO ADD UP DEPTHS!!!
  static boolean useID = false;
 static  boolean noskip = true;
 //static boolean mergeNeighbourin = true;	
@@ -337,7 +337,7 @@ class BufferedReader1 {
             	 }
       		   }
           	  st = br.readLine();
-          	  System.err.println(st);
+        //  	  System.err.println(st);
 		}
 		StringBuffer sb = new StringBuffer(res[0]);
 		for(int k=1; k<offset; k++){	

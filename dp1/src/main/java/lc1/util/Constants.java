@@ -518,10 +518,17 @@ public static int maxCoordDiff(){
 public static String[] parentobj = null;//"{'107665_19':'1_2','107665_9':'3_4'}";
 			//"{'Trifida_D_P1_C5U9YACYY_2_242543611':'1_2','Trifida_D_P2_C5U9YACYY_2_242543612' : '3_4'}";
 public static Map<String, String[]> parentObj = null;
+public static Set<List<Comparable>>parentstates = new HashSet<List<Comparable>>();
 public static Set<String> parentObj1 = null;
 public static String[] parentObj(String string){
 	 return parentObj==null || !parentObj.containsKey(string) ? null :  parentObj.get(string);		
 }
+
+public static boolean allow(Comparable[] list) {
+	return parentstates.contains(Arrays.asList(list));
+}
+
+
 public static boolean limitTransByParent() {
 	// TODO Auto-generated method stub
 	return parentobj!=null;
@@ -530,33 +537,95 @@ public static boolean parentObjContains(String name) {
 	return parentObj1!=null && parentObj1.contains(name);
 }
 public static void parentObj(List<String> samples){
+	char[] ch = Constants.modify0[0];
+	int nostates = ch.length;
+	int nocop = Constants.noCopies()[0];
+	int torep = nocop/nostates;
+	if(parentobj==null || nostates==1) return;
+	boolean oneperstate = nostates == nocop * parentobj.length;
+	if(!oneperstate && Math.abs(Math.IEEEremainder(nocop, nostates)) >1e-5) throw new RuntimeException("!!");
 	if(parentobj!=null && parentObj==null){
 		parentObj1 = new HashSet<String>();
-		int nocop = Constants.noCopies()[0];
+	
 		parentObj = new HashMap<String, String[]>();//new JSONObject(parentobj);
-		for(int k=0; k<parentobj.length; k++){
-			parentObj1.add(parentobj[k]);
-			StringBuffer sb = new StringBuffer(""+(k*nocop+1));
-			for(int j=1; j<nocop; j++){
-				sb.append("_");
-				sb.append((k*nocop+1+j));
+		if(!oneperstate){
+			int nocop2 = (int) Math.floor((double) nostates/2.0);
+			for(int k=0; k<parentobj.length; k++){
+				parentObj1.add(parentobj[k]);
+				StringBuffer sb = new StringBuffer(0);
+				for(int j=0; j<nocop2; j++){
+					sb.append(rep(k*nocop2+j+1,torep*2));
+					if(j<nocop2-1)sb.append("_");
+				}
+				parentObj.put(parentobj[k],new String[] {sb.toString()});
+				
 			}
-					
-			parentObj.put(parentobj[k],new String[] {sb.toString()});
+		}else{
+			for(int k=0; k<parentobj.length; k++){
+				parentObj1.add(parentobj[k]);
+				StringBuffer sb = new StringBuffer(""+(k*nocop+1));
+				for(int j=1; j<nocop; j++){
+					sb.append("_");
+					sb.append((k*nocop+1+j));
+					if(k*nocop+1+j > ch.length){
+							throw new RuntimeException("!!");
+					}
+				}
+						
+				parentObj.put(parentobj[k],new String[] {sb.toString()});
+			}
 		}
 	}
 	if(parentobj!=null){
-	for(int k=0; k<samples.size(); k++){
-		String str = samples.get(k);
-		if(!parentObj.containsKey(str)){
-			parentObj.put(str, new String[] {"1_3","1_4","2_3","2_4"});
+		List<String> strs = new ArrayList<String>();
+		
+		if(Math.abs(Math.IEEEremainder(ch.length, 2)) >1e-5) throw new RuntimeException("!!");
+		if(nostates==parentobj.length){
+			
 		}
+		int mid1 = ch.length/2;
+		
+			for(int i=1; i<=mid1; i++){
+				for(int j=mid1+1; j<=ch.length; j++){
+					if(!oneperstate){
+					 strs.add(rep(i,torep)+"_"+rep(j,torep));	
+					}else{
+					strs.add(i+"_"+j);
+					}
+				}
+			}
+			
+		
+		String[] strs1 = strs.toArray(new String[0]);
+			//String[] strs = new String[] {"1_3","1_4","2_3","2_4"};
+		for(int k=0; k<samples.size(); k++){
+			String str = samples.get(k);
+			if(!parentObj.containsKey(str)){
+				parentObj.put(str, strs1);
+			}
+		}
+		
 	}
+	for(Iterator<String[]> it = parentObj.values().iterator(); it.hasNext();){
+		String[] str = it.next();
+		for(int k=0; k<str.length; k++){
+			String[] st1 = str[k].split("_");
+			Comparable[] comp = new Comparable[st1.length];
+			System.arraycopy(st1, 0, comp, 0, st1.length);
+			Constants.parentstates.add(Arrays.asList(comp));
+		}
 	}
 }
 
 
 	
+private static String rep(int j, int mid1) {
+	StringBuffer sb = new StringBuffer();
+	for(int k=0; k<mid1; k++){
+		sb.append(j+(k<mid1-1 ? "_" : ""));
+	}
+	return sb.toString();
+}
 public static double[][] transitionMatrix = null;
 public static double[][] transitionMatrix(){
 	//if(Constants.trainGlobal) return null;

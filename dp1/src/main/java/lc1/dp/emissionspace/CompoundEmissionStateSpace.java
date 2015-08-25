@@ -168,10 +168,10 @@ public class CompoundEmissionStateSpace extends EmissionStateSpace{
    CompoundEmissionStateSpace(){
 	   
    }
-   public CompoundEmissionStateSpace(final EmissionStateSpace[] stateSpaces, boolean onlyRepeats){
+   public CompoundEmissionStateSpace(final EmissionStateSpace[] stateSpaces, boolean onlyRepeats, boolean limitparents){
      //   super( noCop);
         this.members = stateSpaces;
-        init(initStateSpace(stateSpaces, onlyRepeats));
+        init(initStateSpace(stateSpaces, onlyRepeats, limitparents));
       this.typeIndices = new int[stateSpaces.length];
       for(int i=0; i<typeIndices.length; i++){
     	  typeIndices[i] = i;
@@ -234,7 +234,7 @@ public class CompoundEmissionStateSpace extends EmissionStateSpace{
     protected Comparable translate(ComparableArray array) {
         return array;
       }
-     List<Comparable> initStateSpace(final List<Comparable>[] stateSpaces, final boolean onlyRepeats){
+     List<Comparable> initStateSpace(final List<Comparable>[] stateSpaces, final boolean onlyRepeats, final boolean limitparents){
         final List<Comparable> set = new ArrayList<Comparable>();
         
         
@@ -257,9 +257,12 @@ public class CompoundEmissionStateSpace extends EmissionStateSpace{
                   
                 @Override
                   public boolean exclude(Comparable[] list) {
-                	if(!onlyRepeats)
+                	if(limitparents){
+                		return Constants.allow(list);
+                	}
+                	else if(!onlyRepeats){
                       return false;
-                	else{
+                	}else{
                 		for(int i=1; i<list.length; i++){
                 			if(!list[i].equals(list[0])) return true;
                 		}

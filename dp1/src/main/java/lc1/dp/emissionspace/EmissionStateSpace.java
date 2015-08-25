@@ -583,7 +583,7 @@ public int getRealCN(ComparableArray compA){
               
             }
           
-            if(true || Constants.annotate()){
+            if( Constants.annotate()){
                 StringBuffer sw = new StringBuffer();
                 sw.append("emission state space");
                 
@@ -612,6 +612,7 @@ public int getRealCN(ComparableArray compA){
         
       
         public void initialise(){
+        	System.err.println('h');
             for(int i=0; i<genotypeList.size(); i++){
                 Comparable com = genotypeList.get(i);
                 String genString = getGenotypeString(com);

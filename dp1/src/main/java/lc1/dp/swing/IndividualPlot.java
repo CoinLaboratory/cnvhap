@@ -861,15 +861,17 @@ public XYSeriesCollection[] getBSeriesCollection(int k){
 		XYTextAnnotation annot = new XYTextAnnotation(st,val.getXValue(), val.getYValue());
 		l.put(st, annot);
 		annot.setFont(font5);
-		if(i<0) annot.setPaint(Color.LIGHT_GRAY);
-		else annot.setPaint(col[i]);
+	//	if(i<0) annot.setPaint(Color.LIGHT_GRAY);
+	//	else annot.setPaint(col[i]);
+		annot.setPaint(Color.RED);
 		
 	}
 
 	public void addAnnotation(XYPlot xyp) {
 		for(Iterator<XYTextAnnotation> it = l.values().iterator(); it.hasNext();){
-			
-			xyp.addAnnotation(it.next());	
+			XYTextAnnotation xyt = it.next();
+		xyt.setPaint(Color.RED);
+			xyp.addAnnotation(xyt);	
 		}
 		
 	}

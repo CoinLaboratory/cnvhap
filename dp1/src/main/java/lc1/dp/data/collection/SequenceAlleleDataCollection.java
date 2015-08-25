@@ -108,7 +108,7 @@ public class SequenceAlleleDataCollection extends SequenceDataCollection {
 		 else{
 		 for(int k=0; k<header.length; k++){	   		
 			 String hk = header[k].toLowerCase();
-			 if(geno[k].startsWith("nul")) geno[k] = "NaN";
+			 if(k< geno.length && geno[k].startsWith("nul")) geno[k] = "NaN";
 			 if(hk.indexOf("counta")>=0){
 				
 				aCount = Integer.parseInt(geno[k]);
@@ -123,7 +123,27 @@ public class SequenceAlleleDataCollection extends SequenceDataCollection {
 				 String[] str = geno[k].split(",");
 				 aCount = Integer.parseInt(str[0]);
 				 bCount = Integer.parseInt(str[1]);
+			 }else if(hk.equals("ro")){
+				 if(geno.length==1 && geno[0].equals(".") || geno[k] == "."){
+					aCount =0;
+					bCount =0;
+				 }else{
+				   aCount = Integer.parseInt(geno[k]);
+				 }
+			 
+		 }else if(hk.equals("ao")){
+			 if(geno.length==1 && geno[0].equals(".") || geno[k] == "."){
+				aCount =0;
+				bCount =0;
+			 }else{
+			   String[] str = geno[k].split(",");
+			   if(str.length==1) bCount = Integer.parseInt(str[0]);
+			   else {
+				   aCount = Integer.parseInt(str[0]);
+  				  bCount = Integer.parseInt(str[1]);
+			   }
 			 }
+		 }
 		 }
 		 }
 		 int totDepth = aCount+bCount;

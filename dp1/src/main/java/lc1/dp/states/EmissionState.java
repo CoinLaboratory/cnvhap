@@ -431,6 +431,7 @@ public final  double[] score(HaplotypeEmissionState data_state, boolean logspace
    // JSONArray arr1 = obj.getJSONArray("107665_19");
    // System.err.println(obj.has("107665_19"));
     boolean matches = true;
+   // System.err.println(hmm_state.getName())
     String[] arr = Constants.parentObj(data_state.getName());
     if(arr!=null){
     	matches = false;

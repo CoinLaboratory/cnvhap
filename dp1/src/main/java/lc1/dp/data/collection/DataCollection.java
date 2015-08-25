@@ -4963,9 +4963,7 @@ public  DataCollection (File f, short index, int no_copies, final int[][] mid,Fi
 				}
 				
 			});
-			if(fs.length>0){
-				
-			}
+			
 			
 			if(fs.length==0) f = new File(f.getParentFile(),"all.zip");
 			else {
