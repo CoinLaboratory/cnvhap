@@ -2821,6 +2821,7 @@ public Comparator<PIGData> comp = new Comparator<PIGData>(){
     	final boolean state;
     	
     	  public void print(String key) throws Exception{
+    		 // System.err.println(key);
           	indiv.println(key);
           	  for( int pos_index =0; pos_index < loc.size(); pos_index++){
           		  if(loc.get(pos_index)<start ) continue;
