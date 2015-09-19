@@ -20,7 +20,7 @@ public class CompoundEmissionStateSpace2 extends CompoundEmissionStateSpace {
 	public CompoundEmissionStateSpace2(EmissionStateSpace[] stateSpaces, boolean onlyRepeats
 			) {
 		  this.members = stateSpaces;
-	        init(initStateSpace(stateSpaces, onlyRepeats));
+	        init(initStateSpace(stateSpaces, onlyRepeats, false));
 	      
 	        haploToMember = new int[haploList.size()][];
 	        haploToTypeIndex = new int[haploList.size()][];
@@ -80,7 +80,7 @@ public class CompoundEmissionStateSpace2 extends CompoundEmissionStateSpace {
 
 
 	@Override
-	 List<Comparable> initStateSpace(final List<Comparable>[] stateSpaces1, final boolean onlyRepeats){
+	 List<Comparable> initStateSpace(final List<Comparable>[] stateSpaces1, final boolean onlyRepeats, final boolean limitParents){
         final List<Comparable> set = new ArrayList<Comparable>();
        final  List<Comparable>[] stateSpaces = new List[stateSpaces1.length];
         for(Iterator<int[]> it = getReOrderings(stateSpaces.length).iterator(); it.hasNext();){

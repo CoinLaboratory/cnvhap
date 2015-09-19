@@ -2821,6 +2821,7 @@ public Comparator<PIGData> comp = new Comparator<PIGData>(){
     	final boolean state;
     	
     	  public void print(String key) throws Exception{
+    		 // System.err.println(key);
           	indiv.println(key);
           	  for( int pos_index =0; pos_index < loc.size(); pos_index++){
           		  if(loc.get(pos_index)<start ) continue;
@@ -3415,8 +3416,9 @@ class PrintAberations{
 	    	        
 	    	    }
 	    	   if(DataCollection.this.dc instanceof MatchedDistributionCollection){
-					pw.println("##Estimated cellularity:"+((MatchedDistributionCollection)dc).cellularity[0]);
-					pw.println("##Estimated ratio:"+((MatchedDistributionCollection)dc).ratio[0]);
+	    		   int indivk = indiv.indexOf(key);
+					pw.println("##Estimated cellularity:"+((MatchedDistributionCollection)dc).cellularity[indivk]);
+					pw.println("##Estimated ratio:"+((MatchedDistributionCollection)dc).ratio[indivk]);
 				    pw.println("##Version:"+2.0);
 				}
 	    }
@@ -5737,6 +5739,8 @@ private void modifySampList(List<String[]> phenoBoth1, File pheno, List<String> 
    	 String st = br.readLine();
    	 List<String> header = Arrays.asList(st.split("\t"));
    	 int pat_id = header.indexOf("PATIENT");
+   	 System.err.println(header.get(0));
+   	 if(pat_id<0)pat_id = header.indexOf("Sample");
    	 int[] incl_inds =  new int[phenoBoth.size()] ;
    	 List<String>[] incl_val = new List[phenoBoth.size()];
    	 boolean[] all = new boolean[phenoBoth.size()];

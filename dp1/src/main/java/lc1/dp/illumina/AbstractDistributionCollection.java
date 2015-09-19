@@ -105,4 +105,9 @@ public abstract class AbstractDistributionCollection implements Serializable {
 		Constants.reverse(this.r_formulae);
 		//throw new RuntimeException("!!");
 	}
+
+	public String getInfo(String st) {
+		// TODO Auto-generated method stub
+		return "";
+	}
 }

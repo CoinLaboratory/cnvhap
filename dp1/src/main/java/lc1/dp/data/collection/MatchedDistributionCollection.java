@@ -10,9 +10,11 @@ import lc1.dp.data.representation.Emiss;
 import lc1.dp.emissionspace.EmissionStateSpace;
 import lc1.dp.illumina.AbstractDistributionCollection;
 import lc1.dp.states.HaplotypeEmissionState;
+import lc1.stats.AbstractMultiDimMax;
 import lc1.stats.IlluminaDistribution;
 import lc1.stats.IlluminaRDistribution;
 import lc1.stats.Multidimmax;
+import lc1.stats.MultidimmaxSingle;
 import lc1.stats.ProbabilityDistribution;
 import lc1.stats.ProbabilityDistribution2;
 import lc1.stats.PseudoDistribution;
@@ -21,8 +23,6 @@ import lc1.util.Constants;
 
 import org.apache.commons.math.special.Gamma;
 
-import pal.math.MultivariateMinimum;
-import pal.math.OrthogonalSearch;
 import cern.colt.matrix.DoubleMatrix2D;
 import cern.jet.random.Beta;
 import cern.jet.random.engine.DRand;
@@ -32,14 +32,23 @@ import cern.jet.random.engine.DRand;
 			AbstractDistributionCollection {
 	
 		
-		final Multidimmax mdf;
+		final AbstractMultiDimMax mdf;
 		
-		int sample_index =0;
+		int sample_index1 =0;
 		@Override
 		public void setIndiv(String protName) {
-			this.sample_index = this.indiv.indexOf(protName);
+			this.sample_index1 = this.indiv.indexOf(protName);
 			// TODO Auto-generated method stub
 			
+		}
+		
+		public String getInfo(String key) {
+			if(Constants.trainCellularity() >=1){
+			  int indivk = indiv.indexOf(key);
+				return " ##Estimated cellularity:"+cellularity[indivk];
+			}else{
+				return  "";
+			}
 		}
 		
 		static class BetaBinom {
@@ -67,7 +76,7 @@ import cern.jet.random.engine.DRand;
 		
 		static final boolean ratioAsLevels = Constants.ratioAsLevels()!=null && Constants.ratioAsLevels;
 		static final boolean cellAsLevels = Constants.ratioAsLevels()!=null && !Constants.ratioAsLevels;
-		static final boolean trainPool = Constants.ratioAsLevels()!=null;
+		static final boolean trainPool = Constants.ratioAsLevels()!=null && Constants.trainPool();
 		static final int trainCellularity = Constants.trainCellularity();
 		static final double mix = 0.5; //essentially controls the starting bands for the ratios.  This is effectively the minimunm value
 		
@@ -75,10 +84,16 @@ import cern.jet.random.engine.DRand;
 		
 		final double[] cellularity, ratio, ratiosLe, ratiosR;
 
-		public double ratios(int back) {
-			if(back==Constants.maxPloidy1) return 1;
-			if(back<Constants.maxPloidy1) return ratiosLe[back];
-			else return ratiosR[back-Constants.maxPloidy1-1];
+		public double ratios(double back) {
+			if(Constants.trainPool())
+			{
+				if(back==Constants.maxPloidy1) return 1;
+			
+			if(back<Constants.maxPloidy1) return ratiosLe[(int) back];
+			else return ratiosR[(int)back-Constants.maxPloidy1-1];
+			}else{
+				return (double) back/(double)Constants.maxPloidy1;
+			}
 		}
 		
 		private double totnormal;
@@ -96,7 +111,7 @@ import cern.jet.random.engine.DRand;
 		final double[] refCount;  //this lists the tumour count in each window
 		final public HaplotypeEmissionState pool;
 		
-		final int[] backCNall;
+		final double[] backCNall;
 		
 		public double refCount(int i){
 			return refCount[i];
@@ -118,7 +133,7 @@ import cern.jet.random.engine.DRand;
 			 double cellularity, File dir, int maxCN,int maxCN1, int noprobes,HaplotypeEmissionState ref, Double[] ratiosL, List<String> indiv) {
 			// TODO Auto-generated constructor stub
 			this.index = (short)index;
-			mdf = new Multidimmax(this);
+			mdf = indiv.size()>1 && Constants.trainCellularity()==1 ? new MultidimmaxSingle(this): new Multidimmax(this);
 			
 			this.indiv = new ArrayList<String>(indiv);
 			this.indiv.remove("pool");
@@ -155,7 +170,7 @@ import cern.jet.random.engine.DRand;
 			}
 			this.pool = new HaplotypeEmissionState("pool", ref.length(), Emiss.getSpaceForNoCopies(Constants.maxPloidy1()),(short)ref.dataIndex());
 			pool.setNoCop(Constants.maxPloidy1());
-			this.backCNall =new int[ref.length()];
+			this.backCNall =new double[ref.length()];
 			if(ratiosL!=null){
 				throw new RuntimeException("!!");
 				/*for(int k=0; k<ratiosL.length; k++){
@@ -262,21 +277,27 @@ import cern.jet.random.engine.DRand;
 		public void maximisationStep(int i, double[] pseudo, double[] pseudoGlobal,
 				List tasks) {
 		{
+			//for(int k=0; k<pool.emissions.length; k++){
+			//	System.err.println(((BackgroundDistribution)this.pool.emissions[k]).ratio1_count/((BackgroundDistribution)this.pool.emissions[k]).cnt);
+		//	}
 				BackgroundDistribution bd = ((BackgroundDistribution)this.pool.emissions[0]);
-				if(bd.cnt>0 && trainPool){
+				if(bd.cnt>0 && Constants.ratioAsLevels() && Constants.makeNewRef()){
 					for(int k=0; k<this.backCNall.length; k++){
 						 bd = ((BackgroundDistribution)this.pool.emissions[k]);
 						 bd.transfer(0);
 						 this.backCNall[k] = bd.ratio1_count/bd.cnt;
+					//	System.err.print(String.format("%3.2g", backCNall[k])+"\t");
 					}
+					System.err.println("\n");
 				}
 				if(max_index>0){
-				   MultivariateMinimum mvm =new OrthogonalSearch(); // new ConjugateGradientSearch();//n
+			   
 				if(trainPool){
 					mdf.updateBounds();
 				}
-				
-				   mvm.findMinimum(this.mdf, mdf.vals(), 1, 3);
+				  
+				   mdf.minimize();	
+				  
 				}
 			
 				
@@ -347,14 +368,17 @@ import cern.jet.random.engine.DRand;
 		
 		public double inverseMult(double mult, int i, String name){
 			//if(true) return mult;
-			int sample_index = indiv.indexOf(name);
-			double cellularity = this.cellularity[sample_index]; double ratio = Constants.plasma() ? this.ratio[0] : this.ratio[sample_index]; int backCN = this.backCNall[i];
+			int sample_index2 = indiv.indexOf(name);
+			double cellularity = this.cellularity[sample_index2]; double ratio = Constants.plasma() ? this.ratio[0] : this.ratio[sample_index2]; 
+			double backCN = this.backCNall[i];
 
 			 if(Constants.plasma()){
 					double rcn1 = ratios(backCN);
 				 return (mult*(rcn1*ratio + (1-ratio)) - (1-cellularity))/cellularity;
 			 }else{
-			if(ratioAsLevels) ratio = ratios(backCN)*ratio;
+			if(ratioAsLevels){
+				ratio = ratios(backCN)*ratio;
+			}
 			else if(cellAsLevels){
 					cellularity =ratios(backCN)*cellularity;
 			}
@@ -362,13 +386,16 @@ import cern.jet.random.engine.DRand;
 			 }
 		}
 		
-		public double getMult(double cellularity, double ratio, double rcn, int backCN){
+		public double getMult(double cellularity, double ratio, double rcn, double backCN){
 			  if(Constants.plasma()){
 				//	ratio = vals[1];
 					double rcn1 = ratios(backCN);
 			    	return ((rcn*cellularity) + (1-cellularity))/(rcn1*ratio + (1-ratio));
 				}else{
-					if(ratioAsLevels) ratio = ratios(backCN)*ratio;
+					if(ratioAsLevels){
+						
+						ratio = ratios(backCN)*ratio;
+					}
 					else if(cellAsLevels){
 							cellularity = Math.min(1.0, ratios(backCN)*cellularity);
 							//if(cellularity>1) cellularity = 1.0/cellularity;
@@ -381,7 +408,7 @@ import cern.jet.random.engine.DRand;
 		class BinomialDistr1 implements ProbabilityDistribution2 {
 		    Beta b = new Beta(0,0, new DRand());
 		   
-		    double[]logprobs = new double[numIt];
+		 //   double[]logprobs = new double[numIt];
 			final double rcn;
 			final int cn;
 			BetaBinom bb = new BetaBinom();
@@ -394,15 +421,15 @@ import cern.jet.random.engine.DRand;
 			//List<Double> countratio = new ArrayList<Double>();
 			
 			private final double countnormal;
-			private int backCN= Constants.maxPloidy1();
+		  private double backCN= Constants.maxPloidy1();
 			
-			BinomialDistr1(int cn, double refCount, int backCN){
+			BinomialDistr1(int cn, double refCount, double backCN){
 				this.cn = cn;
 				this.rcn = (double)cn/Constants.backgroundCount(0);
 				this.countnormal =refCount;
 				this.backCN = backCN;
 			}
-			public void setRefCount(int backCN) {
+			public void setRefCount(double backCN) {
 			//	this.countnormal =d;
 				this.backCN = backCN;
 				
@@ -436,7 +463,7 @@ import cern.jet.random.engine.DRand;
 			public double probability(double lrr, double baf) {
 				//double cellularity = 
 				//double ratio = vals[1];
-				double mult = getMult(cellularity[sample_index], Constants.plasma() ? ratio[0] : ratio[sample_index], rcn, backCN);
+				double mult = getMult(cellularity[sample_index1], Constants.plasma() ? ratio[0] : ratio[sample_index1], rcn, backCN);
 			 // double 	mult = ((rcn/ratio)*cellularity) + (1-cellularity);// this wa sold one
 				
 	//			double baf;
@@ -654,7 +681,7 @@ import cern.jet.random.engine.DRand;
 		public ProbabilityDistribution2 getDistributionRB(short data_index, int n,
 				int noB, int i) {
 			// TODO Auto-generated method stub
-		      BinomialDistr1 dist = ((BackgroundDistribution)this.pool.emissions[i]).bin[sample_index][n];//.get(n);
+		      BinomialDistr1 dist = ((BackgroundDistribution)this.pool.emissions[i]).bin[sample_index1][n];//.get(n);
 		   //   dist.setRefCount(refCount[i],ratio[i]);
 		    //  dist.tumourCount=tumour[i];
 		      return dist;
@@ -697,7 +724,6 @@ import cern.jet.random.engine.DRand;
 			//if(val>0.5){
 			//	System.err.println("adding "+noCop+" "+r+" "+b+" "+val);\
 			//this.countProbesTumour+=((double)noCop/2.0)*val; 
-			
 			 BackgroundDistribution dist = ((BackgroundDistribution)this.pool.emissions[i]);
 		
 		   //   dist.setRefCount(refCount[i], this.ratio[i]);
@@ -724,11 +750,27 @@ import cern.jet.random.engine.DRand;
 			for(int k=0; k<this.pool.length(); k++){
 				BackgroundDistribution dists = ((BackgroundDistribution)this.pool.emissions[k]);
 				for(int j=0; j <numsamples; j++){//numsamples
-					this.sample_index = j;
+					this.sample_index1 = j;
 					for(int kk=0; kk<=maxCN; kk++){//noCN
 						lp+=dists.bin[j][kk].eval();// dist.get(k).eval();
 					}
 				}
+			}
+			//System.err.println(arg0+" "+lp);
+			return -lp;
+		}
+		
+		public double evaluate(int j) {
+			//double lp=-Math.abs(arg0)*priorWeight;
+			double lp =0;
+			for(int k=0; k<this.pool.length(); k++){
+				BackgroundDistribution dists = ((BackgroundDistribution)this.pool.emissions[k]);
+				//for(int j=0; j <numsamples; j++){//numsamples
+					this.sample_index1 = j;
+					for(int kk=0; kk<=maxCN; kk++){//noCN
+						lp+=dists.bin[j][kk].eval();// dist.get(k).eval();
+					}
+				//}
 			}
 			//System.err.println(arg0+" "+lp);
 			return -lp;
@@ -766,8 +808,8 @@ import cern.jet.random.engine.DRand;
 		}
 	
 		public class BackgroundDistribution extends PseudoDistribution{
-			private int ratio1_count=0;
-			private int cnt=0;
+			 double ratio1_count=0;
+			 double cnt=0;
 			
 			
 			BinomialDistr1[][] bin; //first is by sample, second is by CN.  All should have same backCN
@@ -788,9 +830,13 @@ import cern.jet.random.engine.DRand;
 				//return ratios(bin[0][0].backCN);
 			}
 			public void addCount(Double r, Double b, double val,int noCop) {
-				 bin[sample_index][noCop].addCount(r, b, val); //this.pool[i].bin[noCop];
+			//	System.err.println(sample_index1);
+				 bin[sample_index1][noCop].addCount(r, b, val); //this.pool[i].bin[noCop];
 				 allr+=r;
 				 allb+=b;
+				    ratio1_count+=noCop*val;
+				    cnt+=val;
+				  //  System.err.println(cnt);
 //				this.allr.add(r); this.allb.add(r);
 			}
 			/*public Number r1(int cn){
@@ -798,7 +844,7 @@ import cern.jet.random.engine.DRand;
 			}*/
 			
 			//EmissionStateSpace emStp;
-			public BackgroundDistribution(int maxCN, double refCount, int backCN, EmissionStateSpace emstsp, int numsamp) {
+			public BackgroundDistribution(int maxCN, double refCount, double backCN, EmissionStateSpace emstsp, int numsamp) {
 				bin = new BinomialDistr1[numsamp][maxCN+1];
 				this.refcount = refCount;
 				//this.emstsp = emstsp;
@@ -811,6 +857,7 @@ import cern.jet.random.engine.DRand;
 			}
 			@Override
 			public void addRBCount(EmissionStateSpace emStSp, int j, double val, int i) {
+				if(true) throw new RuntimeException("!!");
 				//double noCop = (double)emStSp.getCN(j)/(double) Constants.maxPloidy1();///Constants.backgroundCount(index);;//
 				int noCop =emStSp.getCN(j);///(double) Constants.maxPloidy1();///Constants.backgroundCount(ind
 			    ratio1_count+=noCop*val;
@@ -850,11 +897,13 @@ import cern.jet.random.engine.DRand;
 	
 			@Override
 			public void transfer(double pseudoC1) {
-				int ratio1 = this.ratio1_count/this.cnt;
+				double ratio1 = (this.ratio1_count/this.cnt) * (Constants.maxPloidy()/Constants.backgroundCount(0));
 				//System.err.println("hh "+ratio1_count+" "+cnt);
-			    for(int k=0; k<bin.length; k++){
-			    	bin[sample_index][k].setRefCount(ratio1);
+				for(int ssi = 0; ssi < bin.length; ssi++){
+			    for(int k=0; k<bin[ssi].length; k++){
+			    	bin[ssi][k].setRefCount(ratio1);
 			    }
+				}
 				
 			}
 	
@@ -996,7 +1045,7 @@ import cern.jet.random.engine.DRand;
 			//	System.err.println(noCop);
 				double lp =0;
 				for(int k=0; k<numsamples; k++){
-					sample_index =k ;
+					sample_index1 =k ;
 					for(int jj=0; jj<=maxCN; jj++){
 					bin[k][jj].setRefCount(noCop);
 					

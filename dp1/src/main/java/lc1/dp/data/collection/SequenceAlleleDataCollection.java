@@ -6,6 +6,7 @@ import java.util.Collection;
 import lc1.dp.data.representation.Emiss;
 import lc1.dp.illumina.DistributionCollection;
 import lc1.dp.states.HaplotypeEmissionState;
+import lc1.stats.AllelicDistribution;
 import lc1.stats.IlluminaDistribution;
 import lc1.util.Constants;
 import cern.jet.stat.Probability;
@@ -165,7 +166,7 @@ public class SequenceAlleleDataCollection extends SequenceDataCollection {
 
 		 }
 		 else{
-			 IlluminaDistribution ill = new IlluminaDistribution(index);
+			 IlluminaDistribution ill = new AllelicDistribution(index);
 			 state.emissions[i] = ill;//
 			 ill.setR(lrr);
 			 ill.setB(baf);

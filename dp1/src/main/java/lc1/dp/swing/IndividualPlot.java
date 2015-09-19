@@ -2647,7 +2647,7 @@ private void addList(final ChartPanel cr, boolean domain) {
 ChartPanel plotR(String datname, String st, final  Integer l) {
 	  String r_name =  
         	datname+
-        	 st
+        	 st+DataCollection.datC.dc.getInfo(st);
         	// "LRR on Agilent 185k array colored by cnvHap CN prediction";
      	 //" LRR on Illumina 317k chip colored by cnvHap CN prediction";
         	 //+"LRR on Illumina 1M chip (dots) and on Agilent 244k aCGH array (bars) colored by CN genotype prediction"
@@ -2715,11 +2715,13 @@ ChartPanel plotR(String datname, String st, final  Integer l) {
 	}
 
 public ChartPanel plotB(String datname, String st, final int l, int ik) {
-	 String b_name = datname+"_"+st
+	 String b_name = //datname+"_"+
+st +DataCollection.datC.dc.getInfo(st);
+	
   //+	 "BAF on Illumina 317k chip colored by cnvHap CN genotype prediction "
 	 ;
        XYSeriesCollection[] current_b =  Constants.plot()>1 ? this.getBSeriesCollection(l) : bdc.remove(l);
-   final  ChartPanel cp =   new ChartPanel(graph(current_b, st, emStSp.getColor(false),
+   final  ChartPanel cp =   new ChartPanel(graph(current_b, b_name, emStSp.getColor(false),
     		shapes, true),
     		 Constants.r_panel_width, //width
     		 Constants.plotHeight, //height

@@ -5546,7 +5546,7 @@ return muteAlpha;
 		System.arraycopy(l,0,res,o.length,l.length);
 		return Arrays.asList(res);
 	}
-	public static double A2B=0.1;
+	public static double A2B=0.01;
 	public static double A2B() {
 		// TODO Auto-generated method stub
 		return A2B;
@@ -5555,6 +5555,11 @@ return muteAlpha;
 	public static int shapeMult() {
 		// TODO Auto-generated method stub
 		return shapeMult;
+	}
+	public static boolean trainPool = false;
+	public static boolean trainPool() {
+		// TODO Auto-generated method stub
+		return trainPool;
 	}
 	
 	
