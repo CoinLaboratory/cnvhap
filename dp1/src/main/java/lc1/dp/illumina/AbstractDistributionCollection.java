@@ -110,4 +110,16 @@ public abstract class AbstractDistributionCollection implements Serializable {
 		// TODO Auto-generated method stub
 		return "";
 	}
+
+	public void drop(List<Integer> toDrop) {
+		throw new RuntimeException("!!");
+//		System.err.println("warning - not dropping anything!");
+		// TODO Auto-generated method stub
+		
+	}
+
+	public Double b(Double b, Number r, int i, String name) {
+		// TODO Auto-generated method stub
+		return b;
+	}
 }

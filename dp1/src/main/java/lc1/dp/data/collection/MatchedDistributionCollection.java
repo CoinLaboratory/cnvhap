@@ -108,10 +108,12 @@ import cern.jet.random.engine.DRand;
 		
 		//double countProbesTumour=0;
 		
-		final double[] refCount;  //this lists the tumour count in each window
+		 Double[] refCount;  //this lists the tumour count in each window
 		final public HaplotypeEmissionState pool;
 		
-		final double[] backCNall;
+		 Double[] backCNall;
+		
+		
 		
 		public double refCount(int i){
 			return refCount[i];
@@ -120,6 +122,13 @@ import cern.jet.random.engine.DRand;
 			return backCNall[i];
 		}
 		
+		public void drop(List<Integer> toDrop) {
+			this.pool.removeAll(toDrop);
+			refCount = (Double[]) Constants.drop(refCount, toDrop);
+			backCNall = (Double[]) Constants.drop(backCNall, toDrop);
+			
+			}
+
 		
 		final short index;
 		
@@ -150,7 +159,7 @@ import cern.jet.random.engine.DRand;
 			
 					  
 			
-			this.refCount = new double[ref.length()];
+			this.refCount = new Double[ref.length()];
 			
 			this.maxCN = maxCN;
 			this.ratiosR = new double[maxCN1-Constants.maxPloidy1];
@@ -170,7 +179,7 @@ import cern.jet.random.engine.DRand;
 			}
 			this.pool = new HaplotypeEmissionState("pool", ref.length(), Emiss.getSpaceForNoCopies(Constants.maxPloidy1()),(short)ref.dataIndex());
 			pool.setNoCop(Constants.maxPloidy1());
-			this.backCNall =new double[ref.length()];
+			this.backCNall =new Double[ref.length()];
 			if(ratiosL!=null){
 				throw new RuntimeException("!!");
 				/*for(int k=0; k<ratiosL.length; k++){
@@ -194,7 +203,7 @@ import cern.jet.random.engine.DRand;
 			}*/
 			}
 			else{
-				Arrays.fill(this.backCNall, Constants.maxPloidy1());
+				Arrays.fill(this.backCNall, (double) Constants.maxPloidy1());
 			}
 			if(trainPool)mdf.updateBounds();
 			for(int i =0; i<refCount.length;i++){
@@ -206,7 +215,14 @@ import cern.jet.random.engine.DRand;
 			mdf.print();
 			
 		}
-		
+		public Double b(Double b, Number r, int i, String name) {
+		  double p = b/r.doubleValue();
+		  double p1 =refCount(i)/totnormal();
+		  double mult = p/p1;
+		  
+		 return inverseMult(mult, i,name);//(mult - (1-cellularity))* (ratio/cellularity);
+		}
+			
 		
 	
 		private double avg(List<Double> list, double d1, double pseudo) {
@@ -288,7 +304,7 @@ import cern.jet.random.engine.DRand;
 						 this.backCNall[k] = bd.ratio1_count/bd.cnt;
 					//	System.err.print(String.format("%3.2g", backCNall[k])+"\t");
 					}
-					System.err.println("\n");
+					//System.err.println("\n");
 				}
 				if(max_index>0){
 			   

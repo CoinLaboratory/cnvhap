@@ -875,7 +875,7 @@ protected int getNumberDataTypes() {
            
         }
         if(this.dc!=null){
-        	((DistributionCollection)this.dc).drop(toDrop);
+        	(this.dc).drop(toDrop);
         }
         probeOnly = po==null ? null : po.toArray(new Boolean[0]);
        for(Iterator<EmissionState> it = this.dataL.values().iterator(); it.hasNext();){
@@ -5385,7 +5385,7 @@ public  DataCollection (File f, short index, int no_copies, final int[][] mid,Fi
     				((HaplotypeEmissionState)it.next()).emissions[i].standardise(mean, sd);
     			}
     		}
-           if(missing[0]/(double)dToInc.size()>missThresh){
+           if(missing[0]/(double)dToInc.size()>=missThresh){
         	   todrop.add(i);
            }
            if(cnvP!=null && probeOnly[i]!=null){
@@ -7257,6 +7257,26 @@ public void printcompressed(List<String> keys) throws Exception {
 public double baf(int i) {
 	if(this.probeOnly[i]!=null && probeOnly[i]) return 0.0;
 	return this.baf.get(i);
+}
+public void offset(Set<Integer> positions) {
+	for(int i=0; i<loc.size(); i++){
+		Integer pos = loc.get(i);
+		if(positions.contains(pos)){
+			Logger.global.info("before "+i+" "+pos);
+			while(positions.contains(pos)){
+				pos = pos+1;
+			}
+			Logger.global.info("after "+i+" "+pos);
+		
+			loc.set(i, pos);
+			System.err.println(loc.get(i));
+			this.snpid.set(i, this.chrom+"_"+pos);
+		}
+		positions.add(pos);
+	}
+	//  System.err.println(loc.get(217));
+	//  System.err.println(loc.indexOf("152458882"));
+//	System.err.println("done");
 }
 
    

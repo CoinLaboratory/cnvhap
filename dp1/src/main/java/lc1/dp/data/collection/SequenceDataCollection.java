@@ -149,6 +149,7 @@ public class SequenceDataCollection extends LikelihoodDataCollection{
 
 	protected  Boolean process(String snpid, int i,ZipFile zf,
 			List<Integer> ploidy, List<Integer> sampToInc, double[] miss, double[] lrr) throws Exception {
+		Arrays.fill(miss,0);
 		int counta_ind = this.indexOf1(headsLowerCase, "counta".split(":"));
 		int    countb_ind = this.indexOf1(headsLowerCase, "countb".split(":"));
 		if(counta_ind<0 && countb_ind<0){
@@ -186,13 +187,15 @@ public class SequenceDataCollection extends LikelihoodDataCollection{
 	        	 else{
 		             String stri =l.get(j);
 		             String[] st =stri.trim().split("\\s+");
-		             Boolean po = this.process( indiv.get(j), header, st, i, ploidy.get(j),(Double)avgDepth.get(j),j);
+		             Boolean po = this.process( indiv.get(j), header, st, i, ploidy.get(j),(Double)avgDepth.get(j_),j);
 		             if(this.lrr_index>=0){
 			        	 lrr[j_] = Double.parseDouble(st[lrr_index]);
 			         }
 		             if(po!=null){
 		            	 allNull = false;
 		                 probeOnly = probeOnly && po;
+		             }else{
+		            	 miss[0]++;
 		             }
 		             
 	        	 }
@@ -225,31 +228,39 @@ public class SequenceDataCollection extends LikelihoodDataCollection{
 	
 
 	private double getBaf(List<String> l, int inda, int indb) {
-		double cnt=Constants.bafPseudo();
-		double bcnt =0.5*Constants.bafPseudo();
+		//double cnt=0.5*Constants.bafPseudo();
+		//double bcnt =0.5*Constants.bafPseudo();
+		int cnta=0;
+		int cntb=0;
 		for(int k=0; k<l.size(); k++){
 			String[] str = l.get(k).trim().split("\\s+");
-			if(inda>str.length){
+		//	if(inda>str.length){
 				
-				int cnta,cntb;
+				
 				if(indb==inda){
+				  if(!str[inda].equals(".") && !str[inda].equals("./.")){
+					  
+				 
 					String[] st1 = str[inda].split(",");
-					 cnta = Integer.parseInt(st1[0]);
-					 cntb = Integer.parseInt(st1[1]);
+				
+					 cnta+=  Integer.parseInt(st1[0]);
+					 cntb += Integer.parseInt(st1[1]);
+				  }
 				}else{
-			 cnta = Integer.parseInt(str[inda]);
-			 cntb = Integer.parseInt(str[indb]);
-			bcnt+=cntb;
-			cnt+=cnta+cntb;
-			}
+			 cnta += Integer.parseInt(str[inda]);
+			 cntb+= Integer.parseInt(str[indb]);
+			//bcnt+=cntb;
+			//cnt+=cnta+cntb;
+		//	}
 			}
 		}
-		if(cnt==0 || Double.isNaN(bcnt)){
+		/*if(cnta==0 || Double.isNaN(bcnt)){
 			System.err.println("WARNING TOTAL CNT IS ZERO");
 			return 0.5;
 //			throw new RuntimeException(" problem calculating b allele freq "+cnt+ " "+bcnt);
-		}
-		return bcnt/cnt;
+		}*/
+		double b =  ((double)cntb + Constants.bafPseudo())/((double) cnta+(double) cntb + 2*Constants.bafPseudo());
+		return b;
 	}
 
 	 @Override

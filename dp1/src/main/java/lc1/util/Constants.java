@@ -872,7 +872,7 @@ public static File getClusterFile(int index){
 	public static double[][] r_train2Var = new double[0][0];
 	public static double[][] b_train2 = new double[0][0];
 	public static double[][] b_train2Var = new double[0][0];
-	public static double[][] rho_train = new double[1][0];;
+	public static double[][] rho_train = new double[2][0];;
 	public static double[] rho_train2 = new double[0];
 	//public static double[][] r_train0 = new double[0][0];
 	// private static double[][] b_train0 =new double[][] {new double[]
@@ -4395,7 +4395,9 @@ private static double[][][]priors;
 				System.err.println(index+" ");
 				System.err.println(index+" "+len+" "+(index < len));
 			priors[index] = new double[][]{Constants.r_train[index],Constants.r_trainVar[index],
-					Constants.b_train[index], Constants.b_trainVar[index],Constants.rho_train[index]};
+					Constants.b_train[index], 
+					Constants.b_trainVar[index],
+					Constants.rho_train[index]};
 //					Constants.r_train2[index], Constants.r_train2Var[index], Constants.b_train2, Constants.b_train2Var,
 	//				new double[][] {Constants.rho_train2}};
 			
@@ -4929,6 +4931,11 @@ public static boolean transformTheta =false;
 		}
 		return l.toArray((Object[]) Array.newInstance(r[0].getClass(), 0));
 	}
+	
+	/*public static double[] drop(double[] r, List<Integer> toDrop) {
+		
+	}*/
+	
 	public static double printRoundThresh = 0.01;
 	public static double printRoundThresh() {
 		return printRoundThresh;
@@ -5089,8 +5096,8 @@ public static boolean trainEmissions = true;
 	public static float strokeWidth() {
 		return strokeWidth.floatValue();
 	}
-	public static Double bafPseudoCount = 500.0;
-	public static Double bafPseudo() {
+	public static double bafPseudoCount = 10.0;
+	public static double bafPseudo() {
 		// TODO Auto-generated method stub
 		return bafPseudoCount;
 	}
@@ -5561,6 +5568,17 @@ return muteAlpha;
 		// TODO Auto-generated method stub
 		return trainPool;
 	}
+	public static boolean intersectSamples = false;
+	public static boolean offsetSamples = false;
+	public static boolean intersectSamples() {
+		// TODO Auto-generated method stub
+		return intersectSamples;
+	}
+	public static boolean offsetSamples() {
+		// TODO Auto-generated method stub
+		return offsetSamples;
+	}
+	
 	
 	
 

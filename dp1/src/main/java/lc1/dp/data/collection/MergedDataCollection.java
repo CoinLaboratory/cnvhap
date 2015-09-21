@@ -6,16 +6,17 @@ import java.io.FileWriter;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.SortedMap;
 import java.util.SortedSet;
 import java.util.TreeMap;
-import java.util.Map.Entry;
 import java.util.logging.Logger;
 
 import lc1.dp.data.representation.Emiss;
@@ -382,6 +383,14 @@ public String[] getUnderlyingDataSets() {
    
    
     public static DataCollection getMergedDataCollection(DataCollection[] ldl1, String name, String[][] overl, boolean b){
+    	  if(Constants.offsetSamples()){
+      		Set<Integer> positions = new HashSet<Integer>();
+      		for(int k=ldl1.length-1; k>=0 ;k--){
+      			ldl1[k].offset(positions);
+      		//	positions.addAll(l.get(k).loc);
+      		}
+      	//  System.err.println(ldl1[0].loc.get(217));  System.err.println(ldl1[1].loc.get(500));
+      	}
         List<DataCollection> l = new ArrayList<DataCollection>();
         int dropped=0;
         for(int i=0; i<ldl1.length; i++){
@@ -417,8 +426,9 @@ public String[] getUnderlyingDataSets() {
      	   }
         }*/
     //	EmissionState emst = l.get(0).dataL.values().iterator().next();
-    	
-    	
+      
+      //  System.err.println(l.get(0).loc.indexOf(152458882));
+       // System.err.println(l.get(1).loc.indexOf(152458882));
          return new MergedDataCollection(l.toArray(new DataCollection[0]), name,overl, b);
      }
   
@@ -485,6 +495,18 @@ public String[] getUnderlyingDataSets() {
     //	System.err.println("hj");
       //  EmissionState st = ldl[0].dataL.get("NA06985");
        // HaplotypeEmissionState st1 = (HaplotypeEmissionState) ldl[0].dataL.get("NA06984");
+    	if(Constants.intersectSamples()){
+    		Set<String> intersection = new HashSet<String>(ldl[0].indiv());
+    		for(int k=1; k<ldl.length; k++){
+    			intersection.retainAll(ldl[k].indiv());
+    		}
+    		for(int k=0; k<ldl.length; k++){
+    			Set<String> torem = new HashSet<String>(ldl[k].indiv());
+    			torem.removeAll(intersection);
+    			ldl[k].dropIndiv(torem.toArray(new String[0]));
+    		}
+    
+    	}
     	
     	
     	if(allowedOverlaps!=null){
@@ -698,7 +720,8 @@ protected void prepareStates(List< String > keysL, Set<String> problems, Compoun
             
         
              if(st.emissions[i]==null){
-            	  if(first.isProbeOnly()){
+            //	 System.err.println(first);
+            	  if(first.isProbeOnly() !=null && first.isProbeOnly()){
              		
              		st.emissions[i] = emstsp[st.noCop()-1].getHWEDist1(0.0);
              	}
@@ -1132,10 +1155,13 @@ private static void compareCommonStates(Map<Integer, Info> m, Set<String>[][]com
 
 	}
    
+  
+   
   protected Info[][] getMap(DataCollection[] ldl2,Map<String, Integer> idToPos ){
 	  this.map = new Info[this.loc.size()][ldl.length];
       
       for(int i=0; i<ldl2.length; i++){
+    	//  if(Constants.offsetSamples() && i>1 && overlaps(ldl2[i].loc, ldl2[])
           for(int j=0; j<ldl2[i].loc.size(); j++){
               Character A_all =ldl2[i].alleleA.size()>0 ?  ldl2[i].alleleA.get(j) : null;
               Character B_all = ldl2[i].alleleB.size()>0 ?  ldl2[i].alleleB.get(j) : null;
@@ -1150,9 +1176,13 @@ private static void compareCommonStates(Map<Integer, Info> m, Set<String>[][]com
               Integer x =  idToPos.get(id);
               if(x!=null){
               	map[x][i]= inf;
+              	if(Constants.offsetSamples() && i>=1 && map[x][0]!=null) {
+              		throw new RuntimeException("!!");
+              	}
               }
           }
       }
+//      Info[] inf = map[717];
       return map;
   }
    
@@ -1260,8 +1290,8 @@ private static void compareCommonStates(Map<Integer, Info> m, Set<String>[][]com
     	}
        }
        for(int j=0; j<len; j++){
-    	   ldl[j].drop(todrop[j], false);
-    	   if(toinsert[j].size()>0) ldl[j].insert(toinsert[j]);
+    	  if(todrop[j].size()>0) ldl[j].drop(todrop[j], false);
+    	  if(toinsert[j].size()>0) if(toinsert[j].size()>0) ldl[j].insert(toinsert[j]);
        }
        if(modified){
        this.map = getMap(ldl,getPosLoc(ldl, Constants.includeSNPS()));

@@ -893,7 +893,7 @@ public class MultipleDataRegression{
 				//double A2A = 1 - A2B;
 				double B2B = 1-B2A;
 				for(int k=0; k<prob22.length; k++){
-					if(include[k]){
+					if(include[k] && noCop[k]>0){
 					double p = (noB[k] * B2B + (noCop[k] - noB[k])*A2B)/noCop[k];
 //							noB[k] ==0 ?  A2B : (noB[k]==2 ? 1-B2A : 0.5+(A2B-B2A)/2.0);
 				

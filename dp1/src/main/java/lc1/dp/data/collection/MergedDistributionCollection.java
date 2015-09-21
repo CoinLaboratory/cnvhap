@@ -49,9 +49,10 @@ public class MergedDistributionCollection extends AbstractDistributionCollection
 			if(nonnull<0) nonnull =i;
 			//lrrCoeff[i] = ((DistributionCollection)dc[i]).probRB.getAssumedLRRCoeff(
 				//	Constants.r_mean(i), Constants.r_x(i), Constants.backgroundCount(i)).viewColumn(0);
+			if(dc[i] instanceof DistributionCollection){
 			clazz[i] = ((DistributionCollection)dc[i]).probRB.getClass();
 			for(int j=0; j<i; j++){
-				if(dc[j]!=null){
+				if(dc[j]!=null && dc[j] instanceof DistributionCollection){
 				if( clazz[i].equals(clazz[j]) && nme[i].equals(nme[j]) &&
 						((DistributionCollection)dc[i]).probRB.canMergeWith(((DistributionCollection)dc[j]).probRB)
 					//	Constants.basisNme(i).equals(Constants.basisNme(j))
@@ -60,6 +61,7 @@ public class MergedDistributionCollection extends AbstractDistributionCollection
 					continue inner;
 				}
 				}
+			}
 			}
 			type_alias[i] = numTypes;
 		//	coeff.add(lrrCoeff[i]);
@@ -480,5 +482,15 @@ public class MergedDistributionCollection extends AbstractDistributionCollection
 		}
 		
 	}
+	@Override
+	 public Double b(Double b, Number r, int i, String name) {
+			// TODO Auto-generated method stub
+		   for(int k=this.map[i].length-1; k>=0; k--){
+				if(map[i][k]!=null){
+					return  this.dc[k].b(b, r, map[i][k].relative_position, name);
+				}
+			}
+			return b;
+		}
 
 }

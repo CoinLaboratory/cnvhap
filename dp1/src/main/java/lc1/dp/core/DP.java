@@ -486,7 +486,7 @@ protected void calcScoresBackward(){
            for(int j=0; j<dist.length; j++){
         	 int cn =   emstsp.getCN(j);
         	 int nob = emstsp.getBCount(j);
-        	 if(DistributionCollection.dc!=null)
+        	 if(DistributionCollection.dc!=null &&(short)obj.emissions(0).getDataIndex()>=0 )
         	   dist[j] = DistributionCollection.dc.getDistributionRB((short)obj.emissions(0).getDataIndex(), cn, nob, i);
            }
           PseudoDistribution dist1  = obj.emissions(i);

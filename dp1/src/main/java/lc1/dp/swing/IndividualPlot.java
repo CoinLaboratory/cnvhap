@@ -911,7 +911,8 @@ public XYSeriesCollection[] getBSeriesCollection(int k){
     //    XYSeriesCollection rbi1 = rb[ind].get(-1) ;
         AnnotationSeries annoti = i1>=0 ? this.annotation[ind].get(i1) : null;
    //     AnnotationSeries annoti1 = i1>=0 ? this.annotation[ind].get(-1) : null;
-        double[] prob =  PairEmissionState.pool.getObj(Emiss.getSpaceForNoCopies(sta.noCop()).genoListSize());
+        EmissionStateSpace emsp = Emiss.getSpaceForNoCopies(sta.noCop());
+        double[] prob =  PairEmissionState.pool.getObj(emsp.genoListSize());
         
         double sumNonMix = Constants.allowComponent() ?  Sampler.getProbOverStates(emissionC, bwt.hmm, sta,i,prob,0) : 0;
         
@@ -948,6 +949,7 @@ public XYSeriesCollection[] getBSeriesCollection(int k){
                 int tot_s = Constants.getMax(prob);
             //    int r_s = Constants.getMax(prob_r);
                 int b_s = tot_s;//Constants.getMax(prob);
+               // System.err.println(emsp.getGenotype(b_s));
                if( dist instanceof IlluminaDistribution){
             	   Number rv = ((IlluminaRDistribution)dist).r1();
             	   if(useVals){
@@ -957,7 +959,7 @@ public XYSeriesCollection[] getBSeriesCollection(int k){
                    }
             	   Double bv =  ((IlluminaDistribution)dist).b(i);
             	//   bv = rv.doubleValue()==0 ? Math.random() : bv/(rv.doubleValue());
-            	
+            //	if(bv.doubleValue()<0){ throw new RuntimeException( ""+bv);
             	   
                 	if(rv!=null && current_r!=null) current_r.getSeries(b_s).addOrUpdate(x, Math.max(rv.doubleValue(), minrv));
                 	if(bv!=null && current_b!=null) current_b.getSeries(b_s).addOrUpdate(x, bv.doubleValue());
@@ -1058,9 +1060,9 @@ public XYSeriesCollection[] getBSeriesCollection(int k){
                 }
                 else if(Constants.b_panel() && dist instanceof SimpleExtendedDistribution){ //r_s!=bwt.probDists[index].normal_index
                 	//double[] probr1 = 
-                	
-                	sum( dist.probs(), prior_st);
-                	int bcount =  emStSp.getBCount(Constants.getMax(dist.probs()));
+                    	
+                	//sum( dist.probs(), prior_st);
+                	//int bcount =  emStSp.getBCount(Constants.getMax(dist.probs()));
                 //	if(current_r!=null)  current_r.getSeries(b_s).addOrUpdate(x,prob[cn]);
 //                	 if(current_b!=null) current_b.getSeries(b_s).addOrUpdate(x,  prob[cn]);
 //                     current_b.getSeries(b_s).addOrUpdate(x,  bcount/2.0);
@@ -1071,6 +1073,7 @@ public XYSeriesCollection[] getBSeriesCollection(int k){
                 	current_b.getSeries(b_s).addOrUpdate(x,  ((MatchedDistributionCollection.BackgroundDistribution)dist).b1());
                 }
             }
+           // if(current_b.getSeries(b_s).g
             PairEmissionState.pool.returnObj(prob);
       //  }
     }

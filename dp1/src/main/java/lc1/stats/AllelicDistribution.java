@@ -15,8 +15,9 @@ public class AllelicDistribution extends IlluminaDistribution {
 	}
 	
 	public Double b(int i) {
-		return this.b;///this.r().doubleValue();
-		
+		if(this.r>=4)
+		return this.b/this.r().doubleValue();
+		else return Double.NaN;
 	}
 	
 	

@@ -100,7 +100,7 @@ public class SequenceAlleleDataCollection extends SequenceDataCollection {
 		 
 		 int numPoints=0;*/
 		 HaplotypeEmissionState state = (HaplotypeEmissionState)this.dataL.get(indiv);
-
+         boolean isnull = true;
 		 Integer aCount=null;
 		 Integer bCount = null;
 		 if(geno.length==1 && geno[0].equals("./.")){
@@ -111,16 +111,18 @@ public class SequenceAlleleDataCollection extends SequenceDataCollection {
 			 String hk = header[k].toLowerCase();
 			 if(k< geno.length && geno[k].startsWith("nul")) geno[k] = "NaN";
 			 if(hk.indexOf("counta")>=0){
-				
+				isnull = false;
 				aCount = Integer.parseInt(geno[k]);
 				 // if(depth>0){
 				 //	 System.err.println(depth);
 				 // }
 			 }
 			 else if(hk.indexOf("countb")>=0){
+				 isnull = false;
 					bCount = Integer.parseInt(geno[k]);
 			 }else if(hk.equals("ad")){
 				 if(geno[k].equals(".")) geno[k] = "0,0";
+				 else isnull = false;
 				 String[] str = geno[k].split(",");
 				 aCount = Integer.parseInt(str[0]);
 				 bCount = Integer.parseInt(str[1]);
@@ -129,6 +131,7 @@ public class SequenceAlleleDataCollection extends SequenceDataCollection {
 					aCount =0;
 					bCount =0;
 				 }else{
+					 isnull = false;
 				   aCount = Integer.parseInt(geno[k]);
 				 }
 			 
@@ -137,6 +140,7 @@ public class SequenceAlleleDataCollection extends SequenceDataCollection {
 				aCount =0;
 				bCount =0;
 			 }else{
+				isnull = false;
 			   String[] str = geno[k].split(",");
 			   if(str.length==1) bCount = Integer.parseInt(str[0]);
 			   else {
@@ -161,7 +165,7 @@ public class SequenceAlleleDataCollection extends SequenceDataCollection {
 		 } 
 		 
 		 if(Double.isNaN(totDepth) || Double.isNaN(lrr)){
-			
+			isnull = true;
 			 state.emissions[i] = Emiss.getSpaceForNoCopies(ploidy).getHWEDist1(null);
 
 		 }
@@ -173,7 +177,7 @@ public class SequenceAlleleDataCollection extends SequenceDataCollection {
 				 //new lc1.stats.AlleleCountDistribution(this.index,aCount,bCount,averageDepth/(double)ploidy, ind_indiv);
 
 		 }
-		 return false;		
+		 return isnull ? null : false;		
 
 
 

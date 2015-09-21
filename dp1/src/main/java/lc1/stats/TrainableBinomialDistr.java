@@ -1,5 +1,7 @@
 package lc1.stats;
 
+import lc1.util.Constants;
+
 import org.apache.commons.math.MathRuntimeException;
 import org.apache.commons.math.distribution.BinomialDistribution;
 import org.apache.commons.math.distribution.BinomialDistributionImpl;
@@ -18,12 +20,15 @@ public class TrainableBinomialDistr extends TrainableNormal2 implements Univaria
 		
 	   
 	}
+	
+	boolean isuniform = false;
 
 	public TrainableBinomialDistr(String name, double meanx, double stddevx,
 			double stddevxprior, double meany, double stddevy,
 			double stddevyprior) {
 		super(name, meanx, stddevx, stddevxprior, meany, stddevy, stddevyprior);
 		this.name = name;
+		if(Double.isNaN(meany)) isuniform = true;
 		binom = new BinomialDistributionImpl(1,meany);
 		
 		// TODO Auto-generated constructor stub
@@ -36,6 +41,7 @@ public class TrainableBinomialDistr extends TrainableNormal2 implements Univaria
 
 	public TrainableBinomialDistr(TrainableBinomialDistr dist){
 		super(dist);
+		if(Double.isNaN(meany)) isuniform = true;
 		binom = new BinomialDistributionImpl(1,meany);
 	}
 	
@@ -49,6 +55,8 @@ public class TrainableBinomialDistr extends TrainableNormal2 implements Univaria
 	BinomialDistribution binom;
 	@Override
 	    public double probability(double x1, double y1) {
+		if(Constants.isLogProbs()) return probabilityLog(x1,y1);
+		if(this.isuniform) return 1.0/(x1+1);
 	    	binom.setNumberOfTrials((int)x1);
 	    	double p = binom.probability(y1);
 	    	//if(y1 < 0.75 * x1);
@@ -57,8 +65,9 @@ public class TrainableBinomialDistr extends TrainableNormal2 implements Univaria
 	    }
 	
 	 public double probabilityLog(double x1, double y1) {
+		 if(this.isuniform) return -1*Math.log(x1+1);
 	    	binom.setNumberOfTrials((int)x1);
-	    	return Math.log(binom.probability(x1));
+	    	return Math.log(binom.probability(y1));
 	    	
 	  
 	    }
@@ -87,7 +96,7 @@ public class TrainableBinomialDistr extends TrainableNormal2 implements Univaria
 
 	@Override
 	public double evaluate(double arg0) {
-		if(x_obs.size()==0) return 0;
+		if(x_obs.size()==0 || isuniform) return 0;
 		double l =0;
 		if(arg0 > getUpperBound() || arg0  < getLowerBound()) return Double.POSITIVE_INFINITY; 
 		try{

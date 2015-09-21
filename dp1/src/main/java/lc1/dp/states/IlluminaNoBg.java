@@ -14,7 +14,28 @@ import lc1.util.Constants;
 public class IlluminaNoBg extends  HaplotypeEmissionState{
 
 
-  @Override
+  private final class MatchedIlluminaDistribution extends
+			IlluminaDistribution {
+		private final String name;
+
+		private MatchedIlluminaDistribution(short data_index, String name) {
+			super(data_index);
+			this.name = name;
+		}
+
+		public Double b(int i) {
+			 return (DataCollection.datC.dc).b(b(), r(), i, name);
+				 //Constants.ratioAsLevels()!=null && Constants.ratioAsLevels() ? p/p1 : (p/p1)*ratio; //CHANGED 01/12/2014
+		  }
+
+		@Override
+		  public Double r1(){
+			  return this.b();
+		  }
+	}
+
+
+@Override
   public int getParamIndex() {
      return 0;
   }
@@ -36,22 +57,7 @@ public class IlluminaNoBg extends  HaplotypeEmissionState{
       for(int i=0; i<this.noSnps; i++){
     	  String id = snpid.get(i*cumul);
     	  if(format.equals("matcheddepth")){
-    		  emissions[i] = new IlluminaDistribution(index){
-    			  
-    			  public Double b(int i) {
-    				  MatchedDistributionCollection mdc = ((MatchedDistributionCollection)DataCollection.datC.dc);
-    				  double p = b()/r().doubleValue();
-    				  double p1 = mdc.refCount(i)/mdc.totnormal();
-    				  double mult = p/p1;
-    				  
-    				 return mdc.inverseMult(mult, i,name);//(mult - (1-cellularity))* (ratio/cellularity);
-    						 //Constants.ratioAsLevels()!=null && Constants.ratioAsLevels() ? p/p1 : (p/p1)*ratio; //CHANGED 01/12/2014
-    			  }
-    			  @Override
-    			  public Double r1(){
-    				  return this.b();
-    			  }
-    		  };
+    		  emissions[i] = new MatchedIlluminaDistribution(index, name);
     	  }
     	  else if(po || id.startsWith("A_") || id.startsWith("cnv")){
         	 emissions[i] = new IlluminaRDistribution(index);
