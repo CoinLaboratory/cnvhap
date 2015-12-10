@@ -13,6 +13,7 @@ import java.util.SortedMap;
 import java.util.SortedSet;
 import java.util.TreeMap;
 import java.util.TreeSet;
+import java.util.logging.Logger;
 
 import lc1.dp.data.representation.ComparableArray;
 import lc1.dp.data.representation.Emiss;
@@ -171,6 +172,7 @@ public class CompoundEmissionStateSpace extends EmissionStateSpace{
    public CompoundEmissionStateSpace(final EmissionStateSpace[] stateSpaces, boolean onlyRepeats, boolean limitparents){
      //   super( noCop);
         this.members = stateSpaces;
+        Logger.global.info("compound of "+stateSpaces.length);
         init(initStateSpace(stateSpaces, onlyRepeats, limitparents));
       this.typeIndices = new int[stateSpaces.length];
       for(int i=0; i<typeIndices.length; i++){

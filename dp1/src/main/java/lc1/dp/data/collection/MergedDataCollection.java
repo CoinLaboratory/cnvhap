@@ -1236,12 +1236,14 @@ private static void compareCommonStates(Map<Integer, Info> m, Set<String>[][]com
     		if(Constants.equaliseGroupMode()==2){
     			if(!hasFirst){
     				double baf = 0;
+    				int ind = -1;
     				for(int k=1; k<eq[j].length; k++){
 		    			if(mapi[eq[j][k]]!=null){
 		    				baf = Math.max(baf,ldl[eq[j][k]].baf(mapi[eq[j][k]].relative_position));
+		    				ind = eq[j][k];
 		    			}
     				}
-    				if(baf <= Constants.excludeBafThresh() || baf > (1-Constants.excludeBafThresh())){
+    				if(baf <= Constants.excludeBafThresh(ind) || baf > (1-Constants.excludeBafThresh(ind))){
 	    			for(int k=1; k<eq[j].length; k++){
 		    			if(mapi[eq[j][k]]!=null){
 		    				

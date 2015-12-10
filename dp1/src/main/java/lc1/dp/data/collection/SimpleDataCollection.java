@@ -436,6 +436,8 @@ public class SimpleDataCollection extends DataCollection {
     
     @Override
     protected double calcBaf(List<String> l) {
+    	//int ploidy = Constants.backgroundCount(index);
+    	//   CompoundEmissionStateSpace stsp = Emiss.getSpaceForNoCopies(ploidy);
     	int gl_ind = this.headsLowerCase.indexOf("gl");
     	boolean pl = false;
     	if(gl_ind < 0){
@@ -453,12 +455,14 @@ public class SimpleDataCollection extends DataCollection {
     	    		String str = l.get(k).trim();//.split("\\s+")
     	    		if(str.equals(".")) continue;
     	    		else{
-    	    			String[] st = str.split("\\s+")[gt_ind].split(",");
     	    			
-    	    		 cnt++;
-    	    		 if(st[gt_ind].equals("1")  || st[gt_ind].equals("2")){
-    	    			 bcnt++;
-    	    		 }
+    	    			char[]  st = str.split("\\s+")[gt_ind].replaceAll("/", ",").replaceAll("0","A").replaceAll("1", "B").replaceAll("2", "BB").toCharArray();;
+    	    			cnt+=st.length;
+    	    			for(int kk=0; kk<st.length ;kk++){
+    	    				if(st[kk]=='B') bcnt++;
+    	    			}
+    	    			
+    	    		 
     	    		
     	    		
     	    		}
@@ -655,7 +659,7 @@ public class SimpleDataCollection extends DataCollection {
             for(int k=0; k<header.length; k++){
             	String hk =header[k].toLowerCase(); 
             if(hk.equals("gt")&& dataSt.emissions[i]==null){
-            	if(k>= geno.length || geno[k].equals("./.")|| geno[k].equals(".")) {
+            	if(k>= geno.length || geno[k].equals("./.")|| geno[k].equals(".") || geno[k].indexOf('.')>=0) {
             		//dataSt.emissions[i] = stsp.getZeroDistProb((int)Constants.coverage(index), ploidy);
             		dataSt.emissions[i] = stsp.getHWEDist1(null);
             		return false;

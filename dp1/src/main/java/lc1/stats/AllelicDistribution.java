@@ -15,7 +15,7 @@ public class AllelicDistribution extends IlluminaDistribution {
 	}
 	
 	public Double b(int i) {
-		if(this.r>=4)
+		if(this.r>=Constants.depthPlotThresh())
 		return this.b/this.r().doubleValue();
 		else return Double.NaN;
 	}

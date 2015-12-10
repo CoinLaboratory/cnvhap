@@ -1334,12 +1334,12 @@ public static void resetIndices(){
 	}
 
 	private static Boolean parseBoolean(String st) {
-		if (st.toLowerCase().equals("true"))
+		if (st.toLowerCase().equals("true") || st.equals("1"))
 			return true;
-		else if (st.toLowerCase().equals("false"))
+		else if (st.toLowerCase().equals("false") || st.equals("0"))
 			return false;
 		else {
-			return null;
+			return Boolean.parseBoolean(st);
 //			throw new RuntimeException("is not boolean " + st);
 		}
 	}
@@ -2147,6 +2147,20 @@ public static double switchU = 1e10;
 	}
 
 	public static double[] modifyFrac(int i) {
+		if(modifyFrac0 ==null && modifyFracStart==null){
+			int len = Constants.modify0[0].length;
+			modifyFrac0 = new double[len];
+			modifyFrac1 = new double[len];
+			modifyFrac2 = new double[len];
+			modifyFrac3 = new double[len];
+			modifyFracStart = new double[len];
+			Arrays.fill(modifyFrac0, 1.0 / (double) len);
+			Arrays.fill(modifyFrac1, 1.0 /(double) len);
+			Arrays.fill(modifyFrac2, 1.0 /(double) len);
+			Arrays.fill(modifyFrac3, 1.0 / (double) len);
+			Arrays.fill(modifyFracStart, 1.0 / (double) len);
+			//System.err.println(Constants.sum(modifyFrac0));
+		}
 		// return i==0 ?
 		// (modifyFrac0==null ? null : modifyFrac0)
 		// : modifyFrac1==null ? null : modifyFrac1;
@@ -5275,22 +5289,22 @@ public static boolean trainEmissions = true;
 	}
 	public static boolean removeIndels = false;
 
-	public static double excludeBafThresh=0.0;
+	public static double[] excludeBafThresh=new double[]{0};
 	public static boolean removeIndels() {
 		// TODO Auto-generated method stub
 		return removeIndels;
 	}
-	public static double excludeBafThresh() {
+	public static double excludeBafThresh(int index) {
 		// TODO Auto-generated method stub
-		return excludeBafThresh;
+		return excludeBafThresh[index];
 	}
 	public static String[] color() {
-	
+	  if(color==null) color = "pink:red:gray~0.5:green:cyan:blue:yellow:orange:MAGENTA:green~0.5:green~0.3:yellow~0.5:yellow~0.3".split(":");
 		return color;
 	}
 	public static int numPcs = 0;
 	
-	public static String[] color="pink:red:gray~0.5:green:cyan:blue:yellow:orange:MAGENTA:green~0.5:green~0.3:yellow~0.5:yellow~0.3".split(":");
+	public static String[] color=null;//
 	public static int numPcs() {
 		// TODO Auto-generated method stub
 		
@@ -5577,6 +5591,17 @@ return muteAlpha;
 	public static boolean offsetSamples() {
 		// TODO Auto-generated method stub
 		return offsetSamples;
+	}
+	public static double depthPlotThresh = 3;
+	public static double depthPlotThresh() {
+		// TODO Auto-generated method stub
+		return depthPlotThresh;
+	}
+	
+	public static double backgroundCount1 = 2;
+	public static double backgroundCount1(int i) {
+		// TODO Auto-generated method stub
+		return backgroundCount1;
 	}
 	
 	

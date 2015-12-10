@@ -292,7 +292,7 @@ new Dirichlet(d2, initialU), states.size());
              }
          
          //Double[] r_0 = new Double[] {1e-60,r[1]};
-         int[][]sameSize = this.getSameSize(groupSizes);
+        // int[][]sameSize = this.getSameSize(groupSizes);
          for(int i=1; i<transProbs.length; i++){
                     	 AbstractTransitionProbs between = orig.transProbs[i];
                     	 

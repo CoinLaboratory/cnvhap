@@ -5,6 +5,7 @@ import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.logging.Logger;
 
 import lc1.dp.data.representation.Emiss;
 import lc1.dp.emissionspace.EmissionStateSpace;
@@ -41,7 +42,7 @@ import cern.jet.random.engine.DRand;
 			// TODO Auto-generated method stub
 			
 		}
-		
+		@Override
 		public String getInfo(String key) {
 			if(Constants.trainCellularity() >=1){
 			  int indivk = indiv.indexOf(key);
@@ -298,11 +299,12 @@ import cern.jet.random.engine.DRand;
 		//	}
 				BackgroundDistribution bd = ((BackgroundDistribution)this.pool.emissions[0]);
 				if(bd.cnt>0 && Constants.ratioAsLevels() && Constants.makeNewRef()){
+					Logger.global.info("updating backgroun");
 					for(int k=0; k<this.backCNall.length; k++){
 						 bd = ((BackgroundDistribution)this.pool.emissions[k]);
 						 bd.transfer(0);
 						 this.backCNall[k] = bd.ratio1_count/bd.cnt;
-					//	System.err.print(String.format("%3.2g", backCNall[k])+"\t");
+						System.err.print(String.format("%3.2g,", backCNall[k]));
 					}
 					//System.err.println("\n");
 				}
@@ -398,10 +400,10 @@ import cern.jet.random.engine.DRand;
 			else if(cellAsLevels){
 					cellularity =ratios(backCN)*cellularity;
 			}
-			return mult * (ratio/cellularity) - (1-cellularity) * (ratio/cellularity);
+			return (ratio/cellularity) * ( mult - (1-cellularity) );
 			 }
 		}
-		
+		//static double mod = 2;
 		public double getMult(double cellularity, double ratio, double rcn, double backCN){
 			  if(Constants.plasma()){
 				//	ratio = vals[1];
@@ -441,7 +443,7 @@ import cern.jet.random.engine.DRand;
 			
 			BinomialDistr1(int cn, double refCount, double backCN){
 				this.cn = cn;
-				this.rcn = (double)cn/Constants.backgroundCount(0);
+				this.rcn = (double)cn/Constants.backgroundCount1(0);
 				this.countnormal =refCount;
 				this.backCN = backCN;
 			}
@@ -913,7 +915,8 @@ import cern.jet.random.engine.DRand;
 	
 			@Override
 			public void transfer(double pseudoC1) {
-				double ratio1 = (this.ratio1_count/this.cnt) * (Constants.maxPloidy()/Constants.backgroundCount(0));
+				double r1 = (Constants.maxPloidy()/Constants.backgroundCount(0));
+				double ratio1 = (this.ratio1_count/this.cnt) * r1;
 				//System.err.println("hh "+ratio1_count+" "+cnt);
 				for(int ssi = 0; ssi < bin.length; ssi++){
 			    for(int k=0; k<bin[ssi].length; k++){

@@ -391,8 +391,13 @@ public void paint0(){
            EmissionStateSpace emStSp=  ((EmissionState)hmm.getState(j+1)).getEmissionStateSpace();
            
            if(fixed!=null){
-        	   emStSp = ((IntegerDistribution)ems).emstsp;
-        	   int bcount = emStSp.getBCount(fixed);
+        	 //  emStSp = ((IntegerDistribution)ems).emstsp;
+        	   int bcount=0;
+        	   if(emStSp==null){
+        		  Logger.global.info("null");
+        	   }else{
+        	    bcount = emStSp.getBCount(fixed);
+        	   }
         	   vg.drawString(
         			   1.0+"",
                         x_start, y_start+bcount*Constants.hmmFontSize);

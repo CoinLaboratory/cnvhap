@@ -183,6 +183,15 @@ public class MergedDistributionCollection extends AbstractDistributionCollection
 				);
 	}
 	
+	@Override
+	public String getInfo(String key) {
+	    StringBuffer sb = new StringBuffer();
+		for(int k=0; k<this.dc.length; k++){
+			sb.append(dc[k].getInfo(key));
+		}
+		return sb.toString();
+	}
+	
 	public void print(int i){
 		Info[] inf = this.map[i];
 		for(int k=0; k<inf.length; k++){

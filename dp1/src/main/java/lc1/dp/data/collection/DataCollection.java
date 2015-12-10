@@ -5638,10 +5638,10 @@ protected Collection<? extends Integer> findLowDepth() {
 }
 protected Collection<? extends Integer> findLowBAF() {
 	List l = new ArrayList<Integer>();
-	if(Constants.excludeBafThresh()>0){
+	if(Constants.excludeBafThresh(this.index)>0){
 	
 	for(int k=0; k<this.baf.size(); k++){
-		if(baf.get(k) < Constants.excludeBafThresh() || 1-baf.get(k) < Constants.excludeBafThresh()){
+		if(baf.get(k) < Constants.excludeBafThresh(index) || 1-baf.get(k) < Constants.excludeBafThresh(index)){
 			l.add(k);
 		}
 	}

@@ -14,7 +14,6 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
 import java.util.Set;
-import java.util.SortedSet;
 import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.logging.Logger;
@@ -24,7 +23,7 @@ import lc1.dp.data.representation.ComparableArray;
 import lc1.dp.data.representation.Emiss;
 import lc1.dp.data.representation.IntegerEmiss;
 import lc1.dp.data.representation.SimpleScorableObject;
-import lc1.dp.illumina.IlluminaProbR;
+import lc1.dp.swing.Rainbow;
 import lc1.stats.IntegerDistribution;
 import lc1.stats.PseudoDistribution;
 import lc1.stats.SimpleExtendedDistribution;
@@ -46,7 +45,12 @@ public abstract class  EmissionStateSpace implements List<Comparable>, Serializa
 		float[] compArray1 = new float[4];
 		 String[] str = Constants.color();
 		 try{
-			if(str.length==1 && str[0].startsWith("null") || str[0]==null){
+		 if(str != null  && str[0].equals("rainbow")){
+			 col = Rainbow.getColors(Constants.modify0[0].length *Constants.maxPloidy(), (int) Constants.backgroundCount1);
+//					 new Color[];
+			 
+		 }
+		 else if(str.length==1 && str[0].startsWith("null") || str[0]==null){
 				  double bg = Constants.backgroundCount(0);
 				  double noStates = Constants.modify0[0].length;
 				   double max = noStates * bg;
@@ -612,7 +616,7 @@ public int getRealCN(ComparableArray compA){
         
       
         public void initialise(){
-        	System.err.println('h');
+        	//System.err.println('h');
             for(int i=0; i<genotypeList.size(); i++){
                 Comparable com = genotypeList.get(i);
                 String genString = getGenotypeString(com);
@@ -643,7 +647,7 @@ public int getRealCN(ComparableArray compA){
                 stateSpaceToHaploPairIndex.put(
                        haploPairString, j);
             }
-          System.err.println(stateSpaceToGenotypeIndex.size()+" "+stateSpaceToHaplolistIndex.size());
+          Logger.global.info(stateSpaceToGenotypeIndex.size()+" "+stateSpaceToHaplolistIndex.size());
         }
         
         

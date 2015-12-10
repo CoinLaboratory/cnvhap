@@ -6,6 +6,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.SortedSet;
 import java.util.TreeSet;
+import java.util.logging.Logger;
 
 import lc1.dp.data.representation.ComparableArray;
 import lc1.util.CopyEnumerator;
@@ -20,6 +21,7 @@ public class CompoundEmissionStateSpace2 extends CompoundEmissionStateSpace {
 	public CompoundEmissionStateSpace2(EmissionStateSpace[] stateSpaces, boolean onlyRepeats
 			) {
 		  this.members = stateSpaces;
+		  Logger.global.info("compound of "+stateSpaces.length);
 	        init(initStateSpace(stateSpaces, onlyRepeats, false));
 	      
 	        haploToMember = new int[haploList.size()][];
