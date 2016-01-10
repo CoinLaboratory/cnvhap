@@ -16,6 +16,7 @@ import java.util.SortedMap;
 import java.util.SortedSet;
 import java.util.TreeMap;
 import java.util.Map.Entry;
+import java.util.concurrent.Callable;
 import java.util.logging.Logger;
 
 import lc1.dp.data.collection.AssociationCalculator;
@@ -336,7 +337,7 @@ public class Sampler {
    }
    
   public static  double getProbOverStates(StateDistribution emissionC,
-           MarkovModel hmm, HaplotypeEmissionState obj, int i, double[] res, boolean log) {
+           MarkovModel hmm, HaplotypeEmissionState obj, int i, double[] res, boolean log, double[] dist) {
 	   EmissionStateSpace emstsp =Emiss.getSpaceForNoCopies(obj.noCop());
        Arrays.fill(res,  0.0);
        double sum = 0;
@@ -344,9 +345,9 @@ public class Sampler {
            double p = emissionC.dist[j];
            EmissionState state_j = (EmissionState) hmm.getState(j);
            if(p>0){
-               sum+=obj.calcDistribution((EmissionState) state_j, i,  p,log);
+          	 // double[] dist = state_j.distribution();
+               sum+=HaplotypeEmissionState.calcDistribution(obj, (EmissionState) state_j, i,  p,log, dist);
                EmissionStateSpace emstsp1 = state_j.getEmissionStateSpace();
-         	  double[] dist = state_j.distribution;
                for(int k=0; k<dist.length; k++){
             	   int haploPair = emstsp.get(emstsp1.get(k)).intValue();
             	   int geno = emstsp.getGenoForHaplopair(haploPair);
@@ -371,9 +372,10 @@ public class Sampler {
           double p = emissionC.dist[j];
           EmissionState state_j = (EmissionState) hmm.getState(j);
           if(p>0){
-              sum+=obj.calcDistribution((EmissionState) state_j, i,  p,Constants.isLogProbs());
+        	  double[] dist = state_j.distribution();
+              sum+=HaplotypeEmissionState.calcDistribution(obj, (EmissionState) state_j, i,  p,Constants.isLogProbs(), dist);
               EmissionStateSpace emstsp1 = state_j.getEmissionStateSpace();
-        	  double[] dist = state_j.distribution;
+        	 
               for(int k=0; k<dist.length; k++){
            	   int haploPair = emstsp.get(emstsp1.get(k)).intValue();
            	 
@@ -398,9 +400,10 @@ public class Sampler {
           double p = emissionC.dist[j];
           EmissionState state_j = (EmissionState) hmm.getState(j);
           if(p>Constants.countThresh3()){
-              sum+=obj.calcDistribution((EmissionState) state_j, i,  p,Constants.isLogProbs(),mixComp);
+        	  double[] dist = state_j.distribution();
+              sum+=HaplotypeEmissionState.calcDistribution(obj, (EmissionState) state_j, i,  p,Constants.isLogProbs(),mixComp, dist);
               EmissionStateSpace emstsp1 = state_j.getEmissionStateSpace();
-        	  double[] dist = state_j.distribution;
+        	
               for(int k=0; k<dist.length; k++){
            	   int haploPair = emstsp.get(emstsp1.get(k)).intValue();
            	   int geno = emstsp.getGenoForHaplopair(haploPair);
@@ -423,8 +426,13 @@ public class Sampler {
    final List<AssociationCalculator>[][] ac;
    final HWECalculator[] hwe_calc;
 List<EmissionStateSpace> stateEm1 = new ArrayList<EmissionStateSpace>();
-   public void sampleFromHMM(EmissionState dat1, int noSamples, List models, File sampleDir) throws Exception{
-       boolean sample = noSamples >1;
+   public Callable sampleFromHMM(final int j1, final EmissionState dat1, final int noSamples, final List models, final File sampleDir) throws Exception{
+	  return new Callable(){
+		   
+	   public Object call(){
+		   
+	    try{
+	   boolean sample = noSamples >1;
        
     
       
@@ -450,7 +458,7 @@ List<EmissionStateSpace> stateEm1 = new ArrayList<EmissionStateSpace>();
     		   }
     	   }
        }
-       DP dp = (DP) dp_pool.get(data.noCopies(key)-1).getObj(dat1.getName());
+      // System.err.println("getting "+j1);
        EmissionStateSpace stateEm=  null;
       
        if(Constants.transMode(1)==null && Constants.saveStates()){
@@ -463,15 +471,14 @@ List<EmissionStateSpace> stateEm1 = new ArrayList<EmissionStateSpace>();
        }
          //   new DP(hmm, dat1.getName(),dat1, false);
             //bwt.dp[ik1];
-       dp.setData(dat1);
-       //   dp[j1] = dp1; 
-            dp.reset(true);  
-       // dp.reset(false);
+       DP dp = (DP) dp_pool.get(data.noCopies(key)-1).getObj(j1);
+       dp.setData(dat1,j1);
+       dp.reset(true);  
        
         if(!sample) dp.searchViterbi();
         else  dp.search(true, sample);
      //   int len=1;
-        Object[][] os1 =  !sample && Constants.numRep()<=1 ? null : this.getOutputStream(sampleDir, key) ;
+        Object[][] os1 =  !sample && Constants.numRep()<=1 ? null : getOutputStream(sampleDir, key) ;
         CompoundEmissionStateSpace emStSp =Emiss.getSpaceForNoCopies(nocop);
         	//(CompoundEmissionStateSpace) ((EmissionState)hmm.getState(1)).getEmissionStateSpace(); 
       
@@ -499,7 +506,7 @@ List<EmissionStateSpace> stateEm1 = new ArrayList<EmissionStateSpace>();
         if(Constants.calcLD()){
         	certainty = new double[dat1.noSnps()];//
         }
-        StateDistribution emissionC = (StateDistribution) this.stateDist.get(data.noCopies(key)-1).getObj(dat1.getName());
+        StateDistribution emissionC = (StateDistribution) stateDist.get(data.noCopies(key)-1).getObj(j1);
       
            for(int i=0; i<hmm.noSnps; i++){
 	            dp.getPosterior(i, emissionC);
@@ -511,7 +518,7 @@ List<EmissionStateSpace> stateEm1 = new ArrayList<EmissionStateSpace>();
 	          		 Constants.allowComponent() ? 	getProbOverStates(emissionC, hmm,(HaplotypeEmissionState) dat1, i,prob, 0) : 0;
 	          	
 	          	  
-	          	 double sum = getProbOverStates(emissionC, hmm,(HaplotypeEmissionState) dat1, i,prob,Constants.isLogProbs());
+	          	 double sum = getProbOverStates(emissionC, hmm,(HaplotypeEmissionState) dat1, i,prob,Constants.isLogProbs(), dp.distribution);
 	          	if(!Constants.allowComponent()) sumNonMix = sum;
 	          	 
 		          double maxV = prob[Constants.getMax(prob)];
@@ -576,7 +583,7 @@ List<EmissionStateSpace> stateEm1 = new ArrayList<EmissionStateSpace>();
 	            else if(os1!=null){
 	            	 PrintWriter geno = (PrintWriter)os1[1][0];
 	            	  double[] prob1 =  PairEmissionState.pool.getObj(Emiss.getSpaceForNoCopies(nocop).defaultList.size());
-	            	 this.getProbOverStatesHaplo(emissionC, hmm,(HaplotypeEmissionState) dat1, i,prob1);
+	            	 getProbOverStatesHaplo(emissionC, hmm,(HaplotypeEmissionState) dat1, i,prob1);
 	            	print(geno, prob1,0);
 	            	   PairEmissionState.pool.returnObj(prob1);
 	            }
@@ -590,7 +597,8 @@ List<EmissionStateSpace> stateEm1 = new ArrayList<EmissionStateSpace>();
             if(sam[1]!=null) sam[1].setName(noSamples==1 ? key : key+"_"+k);
             if(os1!=null) addObject(os1[0],sam ,   k);
         }
-    
+        dp_pool.get(data.noCopies(key)-1).returnObj(j1);
+        stateDist.get(data.noCopies(key)-1).returnObj(j1);
        // if(!buffer){
         if(os1!=null){
             for(int i=0; i<os1.length; i++){
@@ -600,7 +608,8 @@ List<EmissionStateSpace> stateEm1 = new ArrayList<EmissionStateSpace>();
             }
         }
        // }
-        dp_pool.get(data.noCopies(key)-1).returnObj(dat1.getName());
+       // System.err.println("returning "+j1);
+      
         if(updateDirect){
         	sam[0].setNoCop(nocop);
         	samL[0].setNoCop(nocop);
@@ -619,6 +628,13 @@ List<EmissionStateSpace> stateEm1 = new ArrayList<EmissionStateSpace>();
         		//((DataCollection)data)
         	//}
         }
+        }catch(Exception exc){
+        	System.err.println("problem with "+j1);
+        	exc.printStackTrace();
+        }
+	    return null;
+	   }
+	  };
    }
    private void print(PrintWriter states, double[] dist, int start) {
        Object[] obj = new Object[1];
@@ -649,26 +665,12 @@ public void sampleFromHMM(final List models, final int noSamples, int modelCount
 	   }
       for(int i=0; i<models.size(); i++){
           final int i1 = i;
-          MyObjectPool pool = null;
+          DPPool pool = null;
           MyObjectPool poolDist = null;
           if(models.get(i)!=null){
-             pool =  new MyObjectPool(new PoolableObjectFactory(){
-
-                  public void activateObject(Object arg0) throws Exception {}
-                  public void destroyObject(Object arg0) throws Exception {}
-                  public Object makeObject() throws Exception {
-                      System.err.println("MAKING NEW DP OBJECT -SAMPLER");
-                      CompoundMarkovModel hmm =(CompoundMarkovModel)models.get(i1);
-                      if(unwrapToSample){
-                          while(hmm instanceof WrappedModel){
-                           hmm = ((WrappedModel)hmm).getHMM();
-                          } 
-                      }
-                      return new DP(hmm,"", noSamples<=1, hmm.noSnps, noSamples>1 );
-                  }
-                  public void passivateObject(Object arg0) throws Exception {}
-                  public boolean validateObject(Object arg0) {return true;}}   ,Math.max(2, Constants.numThreads()), Constants.numThreads());
-            poolDist =  new MyObjectPool(new PoolableObjectFactory(){
+             pool =  new DPPool((MarkovModel)models.get(i1), noSamples, unwrapToSample,Math.max(2, Constants.numThreads()), Constants.numThreads());
+             
+               poolDist =  new MyObjectPool(new PoolableObjectFactory(){
 
                  public void activateObject(Object arg0) throws Exception {}
                  public void destroyObject(Object arg0) throws Exception {}
@@ -711,6 +713,7 @@ public void sampleFromHMM(final List models, final int noSamples, int modelCount
        // outer2: for(int ik2 =0; ik2<bwt.length; ik2++){
           //  if(bwt[ik2]==null) continue;
     	   List<String> keys =data.indiv();
+    	   List tasks = new ArrayList<Callable>();
            outer: for(//int ik1 =0; ik1<bwt[ik2].size(); ik1++){
                    Iterator<String> it = keys.iterator(); it.hasNext();){
         	   String key = it.next();
@@ -718,12 +721,13 @@ public void sampleFromHMM(final List models, final int noSamples, int modelCount
              EmissionState emst =   data.dataL.get(key);
         //       Logger.global.info("sampling "+modelCount+" "+emst.getName());
              try{
-           sampleFromHMM(emst, noSamples, models, sampleDir);// pw_rep);
+           tasks.add(sampleFromHMM(index, emst, noSamples, models, sampleDir));// pw_rep);
              }catch(Exception exc){
             	 exc.printStackTrace();
              }
            index+=1;
           }
+    	   BaumWelchTrainer.involeTasks(tasks,true);
        if(Constants.bufferCompress()){
     	   data.printcompressed(keys);
        }
@@ -901,9 +905,13 @@ public  void calcPairing(String key1, String key2, Double[] uncertainty,Integer[
 
 // int no_samples =0;
    public List<PIGData> getIterator(File f, Class clazz, EmissionStateSpace emStsp,  int noSnps) throws Exception{
-       final BufferedReader stream = new BufferedReader(new FileReader(f));
+	   if(!f.exists() || f.length()==0) {
+		   System.err.println("warning file did not exist "+f.getAbsolutePath());
+		   return new ArrayList();
+	   }
+	   final BufferedReader stream = new BufferedReader(new FileReader(f));
        boolean haps = f.getName().indexOf("_h_")>=0;
-       if(!f.exists() || f.length()==0) return new ArrayList();
+    
       List<PIGData> res =   haps ? new ArrayList(
                DataCollection.readFastPhaseOutput(stream, clazz, emStsp).data.values()) : 
                    Arrays.asList(new PIGData[] {DataCollection.readBasic(stream, clazz, emStsp, noSnps)});
@@ -1108,6 +1116,7 @@ public  void calcPairing(String key1, String key2, Double[] uncertainty,Integer[
              }
             System.err.println("viterbi "+viterbi);
             data.setViterbi(key,  viterbi);
+             dp_pool.get(data.noCopies(key)-1).returnObj(dat1.getName());
           //  pw.println();
             }catch(Exception exc){
                 exc.printStackTrace();

@@ -18,7 +18,6 @@ public class CachedEmissionState extends AbstractCachedEmissionState {
     public CompoundState innerState;
    
    public  PseudoDistribution[] emissions;
-   public  ProbabilityDistribution[][] emissionsDT;
  //  final double[] pseudo;
    @Override
    public void reverse(){
@@ -53,10 +52,7 @@ public class CachedEmissionState extends AbstractCachedEmissionState {
         ProbabilityDistribution[][] dists = null;//((HaplotypeEmissionState)state.getMemberStates(true)[0]).emissionsDatatype;
        // int[] numLevels = Constants.numLevels();
         this.emissions = new PseudoDistribution[noSites];
-        if(dists!=null &&  dists.length>0 && Constants.countDT){
-            
-            emissionsDT = new ProbabilityDistribution[dists.length][noSites];
-        }
+       
         this.innerState = state;
         for(int i=0; i<noSites; i++){
            Integer ind = this.calculateIndex(i);
@@ -65,14 +61,6 @@ public class CachedEmissionState extends AbstractCachedEmissionState {
            }
            else
                emissions[i] = new SimpleExtendedDistribution(stateSpaceSize);
-           if(emissionsDT!=null){
-               for(int k=0; k<emissionsDT.length; k++){
-                   this.emissionsDT[k][i] = state.calcAverageDistributions(k,i);
-                      
-//                      Class.forName("lc1.stats."+phenoTypes[i]).getConstructor(parameterTypes);
-//                       new SimpleExtendedDistribution(Constants.format().length);
-               }
-           }
        }
        refreshSiteEmissions();
     }
@@ -115,12 +103,7 @@ public class CachedEmissionState extends AbstractCachedEmissionState {
                   if(counts[k]==0) continue;
                       innerState.addCount(k, counts[k], i);
               }
-              if(emissionsDT!=null){
-                  for(int k1  =0; k1<emissionsDT.length; k1++){
-                      emissionsDT[k1][i].transfercounts(innerState, k1, i);
-                    
-                  }
-              }
+             
           }
           else{
         	  innerState.addCount(emissions[i].fixedInteger(), ((IntegerDistribution)emissions[i]).cnt, i);
@@ -139,17 +122,7 @@ public class CachedEmissionState extends AbstractCachedEmissionState {
        //return probs[object_index];
    }
    
-   @Override
-   public double scoreEmiss(Double[] object_index, int i1){
-       double sc = 1.0;
-       for(int k=0; k<object_index.length; k++){
-           if(object_index[k]==null) continue;
-           sc*=emissionsDT[k][i1].probability(object_index[k]);
-       }
-       //int i= emissions.length==1 ? 0 : i1;
-      return sc;
-       //return probs[object_index];
-   }
+   
    
     
    public Object clone() {
@@ -161,14 +134,6 @@ public class CachedEmissionState extends AbstractCachedEmissionState {
        for(int i=0; i<this.emissions.length; i++){
            this.emissions[i].initialise();
        }
-       
-           if(this.emissionsDT!=null){
-               for(int k=0; k<emissionsDT.length; k++){
-                   for(int i=0; i<this.emissions.length; i++){
-                       this.emissionsDT[k][i].initialise();
-                   }
-               }
-           }
    }
    
   /*@Override 
@@ -193,15 +158,7 @@ public class CachedEmissionState extends AbstractCachedEmissionState {
 ;  //     }
        this.emissions[i].addCount(obj_index, value);
    }
-   @Override
-   public void addCountDT(double  obj_index,  int phen_index, double value, int i1) {
-       if(emissionsDT!=null){
-       int i= emissions.length==1 ? 0 : i1;
-         //  for(int k=0; k<emissionsDT.length; k++){
-               this.emissionsDT[phen_index][i].addCount(obj_index, value);
-          // }
-       }
-   }
+   
     
    
 int paramIndex = 1;
@@ -236,18 +193,6 @@ int paramIndex = 1;
                    }
                       
            }
-           if(this.emissionsDT!=null){
-               for(int k=0; k<emissionsDT.length; k++){
-                   this.innerState.setAverageDistributions(emissionsDT[k][i], k, i);
-               }
-           }
-           
-              
-/*               
-              //  if(fixedIndex != Constants.getMax(probs)){
-            //  throw new RuntimeException( fixedIndex+"!!"+Constants.getMax(probs));
-             //   }
-            }*/
           if(Constants.CHECK && Math.abs(1-emissions[i].sum())>0.001) {
               try{
               innerState.validate();

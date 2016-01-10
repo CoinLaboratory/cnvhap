@@ -693,7 +693,10 @@ public class SimpleDataCollection extends DataCollection {
             	else{
             		String st = geno[k];
             		String[] str = st.split(",") ;
-            		String[] genos = ploidy==1 ?new String[] {"A",null,"B"}: new String[] {"A,A","A,B","B,B"};
+            		String[] genos = null;
+            		if(ploidy==1) genos = new String[] {"A",null,"B"};
+            		else if (ploidy==2) genos =  new String[] {"A,A","A,B","B,B"} ;
+            		else throw new Exception("need to modify for diff ploidy");
             		//PseudoDistribution hwe = stsp.getHWEDist1(null);
             		double[] probs = new double[stsp.haplopairListSize()];
             		SimpleExtendedDistribution dist =new SimpleExtendedDistribution(probs, Double.POSITIVE_INFINITY);

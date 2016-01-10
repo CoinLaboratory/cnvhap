@@ -143,10 +143,10 @@ public class ExponentialTransitionProbs extends AbstractTransitionProbs {
         PseudoDistribution alpha = this.alpha.getExp(from);
         double exp = exp_rd.probs[0];
         double toProb = alpha.probs(to);
-        if(Constants.limitTransByParent()){
+        /*if(Constants.limitTransByParent()){
         	int noc = Constants.noCopies[0];
         	toProb = Math.abs(to-from)<noc && (from<=noc && to<=noc || from >noc && to>noc) ? 0.5:0;
-        }
+        }*/
         /*if(Constants.CHECK && (Double.isNaN(toProb) || Double.isInfinite(toProb))){
           	throw new RuntimeException("!!");
           }
@@ -164,10 +164,7 @@ public class ExponentialTransitionProbs extends AbstractTransitionProbs {
         PseudoDistribution alpha = this.alpha.getExp(index);
         double exp = exp_rd.probs[0];
         double toProb = alpha.probs(to);
-        if(Constants.limitTransByParent()){
-        	int noc = Constants.noCopies[0];
-        	toProb = Math.abs(to-from)<noc && (from<=noc && to<=noc || from >noc && to>noc) ? 0.5:0;
-        }
+       
         if(to==from){
             return exp+(1-exp)*toProb;
         }

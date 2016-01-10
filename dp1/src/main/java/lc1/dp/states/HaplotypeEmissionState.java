@@ -467,7 +467,7 @@ public class HaplotypeEmissionState extends EmissionState {
     	   else{
     		   init2 = init1[di];
     	   }
-    	   if(false)Arrays.fill(init2, 1.0/(double)init2.length);  // this sets default to uniform
+    	   if(true)Arrays.fill(init2, 1.0/(double)init2.length);  // this sets default to uniform
     	   int index1 = Constants.getMax(init2);
            emissions[i] = 
         	   init2[index1]>0.9999 ? new IntegerDistribution(index1,emStSp) : 
@@ -1000,11 +1000,11 @@ public void applyAlias(int[] alias) {
     
     
     /* returns probability */
-    public double calcDistribution(EmissionState hmm_state, int i,  double p, boolean log){
+    public static double calcDistribution(HaplotypeEmissionState data_state , EmissionState hmm_state, int i,  double p, boolean log, double[] distribution){
         double sum=0;
-        double[] distribution = hmm_state.distribution;
+     //   double[] distribution = hmm_state.distribution;
         Arrays.fill(distribution,log ? Double.NEGATIVE_INFINITY: 0.0);
-        HaplotypeEmissionState data_state = this;
+      //  HaplotypeEmissionState data_state = this;
     //    int di = data_state.dataIndex(i);
         Integer nc = hmm_state.noCop();
       
@@ -1041,7 +1041,7 @@ public void applyAlias(int[] alias) {
 	        	sum=0;
 	        	int maxind =  Constants.getMax(distribution);
 	        	double v = distribution[maxind];
-	        	 for(int j=0; j<hmm_state.distribution.length; j++){
+	        	 for(int j=0; j<distribution.length; j++){
 	        		distribution[j]=Math.exp(distribution[j]-v);
 	        		sum+=distribution[j];
 	        	 }
@@ -1049,14 +1049,14 @@ public void applyAlias(int[] alias) {
       
         return sum;
     }
-    public double calcDistribution(EmissionState hmm_state, int i,  double p, boolean log, int mixComp){
+    public static double calcDistribution(  HaplotypeEmissionState data_state, EmissionState hmm_state, int i,  double p, boolean log, int mixComp, double[] distribution){
         double sum=0;
-        double[] distribution = hmm_state.distribution;
+       // double[] distribution = hmm_state.distribution;
         Arrays.fill(distribution, log ? Double.NEGATIVE_INFINITY: 0.0);
        // int di = this.dataIndex(i);
     	//Integer nc = hmm_state.noCop(di);
     	Integer nc = hmm_state.noCop();
-        HaplotypeEmissionState data_state = this;
+      //  HaplotypeEmissionState data_state = this;
         EmissionStateSpace emStSp = hmm_state.getEmissionStateSpace();
         if(distribution.length!=emStSp.defaultList.size()) {
         	throw new RuntimeException("!!");
@@ -1085,7 +1085,7 @@ public void applyAlias(int[] alias) {
 	        	sum=0;
 	        	int maxind =  Constants.getMax(distribution);
 	        	double v = distribution[maxind];
-	        	 for(int j=0; j<hmm_state.distribution.length; j++){
+	        	 for(int j=0; j<distribution.length; j++){
 	        		distribution[j]=Math.exp(distribution[j]-v);
 	        		sum+=distribution[j];
 	        	 }

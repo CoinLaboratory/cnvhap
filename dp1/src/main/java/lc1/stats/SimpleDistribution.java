@@ -18,7 +18,7 @@ public class SimpleDistribution implements Serializable {
     
     public final static transient SimpleDistribution noOffset = new SimpleDistribution(new int[] { 0 }, new double[] { 1 });
     public final static transient SimpleDistribution oneOffset = new SimpleDistribution(new int[] { -1, 0, 1 }, new double[] { 0.01, 0.98, 0.01 });
-    public static transient double tolerance = 1e-4;
+    public static transient double tolerance = 1e-3;
     
     static transient Double zero = new Double(0);
     

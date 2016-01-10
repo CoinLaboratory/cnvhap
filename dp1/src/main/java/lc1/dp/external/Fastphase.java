@@ -31,6 +31,8 @@ import java.util.zip.ZipFile;
 
 import javax.swing.JOptionPane;
 
+import com.sun.jmx.snmp.tasks.ThreadService;
+
 import lc1.dp.appl.CNVHap;
 import lc1.dp.core.BaumWelchTrainer;
 import lc1.dp.core.Sampler;
@@ -1167,6 +1169,7 @@ CNVHap.cnvf.setTab(s);
             	  for(int ik=0; ik<bwt.length ;ik++){
                   if(bwt[ik]!=null){
                      if(bwt[ik].hmm instanceof CachedHMM) ((CachedHMM)bwt[ik].hmm).refresh();
+                   
                       lp+=bwt[ik].expectationStep(pseudo, isLast, updateEmissions);
                       
                       if(Constants.trainDists() && train){
@@ -1187,7 +1190,7 @@ CNVHap.cnvf.setTab(s);
             //  isLast = isLast || (num>=1 && Math.abs(lp-logProb) < prec);
             if(train){
             try{
-                  BaumWelchTrainer.involeTasks(tasks, false);
+                  BaumWelchTrainer.involeTasks(tasks, true);
                   firePropertyChange("dist_maximisation", null,null);
               }catch(Exception exc){
                   exc.printStackTrace();

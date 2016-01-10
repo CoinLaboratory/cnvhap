@@ -66,7 +66,7 @@ public class CachedHMM extends CompoundMarkovModel implements WrappedModel{
                 });
             }
             try{
-            BaumWelchTrainer.involeTasks(tasks, false);
+            BaumWelchTrainer.involeTasks(tasks, true);
             }catch(Exception exc){
                 exc.printStackTrace();
             }
@@ -197,7 +197,7 @@ public class CachedHMM extends CompoundMarkovModel implements WrappedModel{
    
 
 @Override
-public  double getTransitionScore(int from, int to, int indexOfToEmission){
+public double getTransitionScore(int from, int to, int indexOfToEmission){
     return this.trans.getTransitionScore(from, to, indexOfToEmission);
 }
 

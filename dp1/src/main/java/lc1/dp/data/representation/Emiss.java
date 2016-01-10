@@ -168,7 +168,7 @@ public class Emiss implements AbstractEmiss{
               em[i] = getStateEmissionStateSpace(emStSp[i]);
           }
        //   if(emStSp.length==2)
-          stateEmissionStateSpace[1].put(numF, res = new CompoundEmissionStateSpace(em,false, false));
+          stateEmissionStateSpace[1].put(numF, res = new CompoundEmissionStateSpace(em,false, false,false));
       }
       return res;
    }
@@ -211,7 +211,7 @@ public class Emiss implements AbstractEmiss{
     				for(int i=0; i<stsp.length; i++){
     					stsp[i] = spaceByCN[numCopies[i]];
     				}
-    				val = allEqual ?new CompoundEmissionStateSpace(stsp,false, false) : new CompoundEmissionStateSpace2(stsp,false);
+    				val = allEqual ?new CompoundEmissionStateSpace(stsp,false, false, false) : new CompoundEmissionStateSpace2(stsp,false);
     			//}
     			spaceByCN2.set(numCopies, val);
     		}
@@ -250,7 +250,7 @@ public class Emiss implements AbstractEmiss{
         	for(int i=2; i<spaceByCN.length; i++){
         		EmissionStateSpace[] tmp = new EmissionStateSpace[i];
         		Arrays.fill(tmp, alleleSpace);
-        		spaceByCN[i] = new CompoundEmissionStateSpace(tmp,false, false);
+        		spaceByCN[i] = new CompoundEmissionStateSpace(tmp,false, false, false);
         	}
         	String mod = new String(Constants.modify(0));
 
@@ -262,7 +262,7 @@ public class Emiss implements AbstractEmiss{
         	for(int i=0; i<spaceByPloidy.length; i++){
         		EmissionStateSpace[] tmp = new EmissionStateSpace[i+1];
         		Arrays.fill(tmp, mergedSpace);
-        		spaceByPloidy[i] = new CompoundEmissionStateSpace(tmp,false,false);
+        		spaceByPloidy[i] = new CompoundEmissionStateSpace(tmp,false,false, false);
         	}
         }
         public  CompoundEmissionStateSpace getEmissionStateSpace(int i){

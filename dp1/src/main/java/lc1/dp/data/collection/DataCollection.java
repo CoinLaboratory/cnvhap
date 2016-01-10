@@ -833,7 +833,7 @@ protected int getNumberDataTypes() {
     	        }
     	    }
     public void addCollection(DataCollection datC, int offset){
-    	this.dc.addCollection(datC.dc);
+    	if(dc!=null) this.dc.addCollection(datC.dc);
     	int offset1 = offset - datC.loc.get(0) + loc.get(loc.size()-1);
     
     	for(int k=0; k< datC.loc.size(); k++){
@@ -5247,14 +5247,21 @@ public  DataCollection (File f, short index, int no_copies, final int[][] mid,Fi
         	  if(strand_id>=0 && header_snp.get(strand_id).equals("anc_eq_ref"))  {
         		  strand_represents_ref = true;
         	  }
+        	  if(buildF==null){
+    	            System.err.println("WARNING - USING INTERNAL BUILD FILE "+(bf==null ? "" : bf.getAbsolutePath() +" does not exist"));
+    	         	buildF = ApacheCompressor.getBufferedReader(zf, pref+"Snps");  
+    	         
+    	        }
         	   if(buildF==null){
    	            System.err.println("WARNING - USING INTERNAL BUILD FILE "+(bf==null ? "" : bf.getAbsolutePath() +" does not exist"));
    	         	buildF = ApacheCompressor.getBufferedReader(zf, pref+"SNPS");  
    	         
    	        }
+        	 
          int bin_id  = header_snp.indexOf("bins");
          int snpid_ = header_snp.indexOf("id");
          if(snpid_<0) snpid_ = header_snp.indexOf("snpid");
+         if(snpid_<0) snpid_ = header_snp.indexOf("snpID");
          if(snpid_ <0) throw new RuntimeException("no index of id in "+header_snp);
             String chr_ = chrom;//Constants.chrom0().split("_")[0];
             if(chr_.indexOf("chr")<0) chr_ = "chr"+chr_;

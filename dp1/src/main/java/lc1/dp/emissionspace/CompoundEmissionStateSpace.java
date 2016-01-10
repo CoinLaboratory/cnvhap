@@ -169,11 +169,11 @@ public class CompoundEmissionStateSpace extends EmissionStateSpace{
    CompoundEmissionStateSpace(){
 	   
    }
-   public CompoundEmissionStateSpace(final EmissionStateSpace[] stateSpaces, boolean onlyRepeats, boolean limitparents){
+   public CompoundEmissionStateSpace(final EmissionStateSpace[] stateSpaces, boolean onlyRepeats, boolean limitparents, boolean states){
      //   super( noCop);
         this.members = stateSpaces;
         Logger.global.info("compound of "+stateSpaces.length);
-        init(initStateSpace(stateSpaces, onlyRepeats, limitparents));
+        init(initStateSpace(stateSpaces, onlyRepeats, limitparents), states);
       this.typeIndices = new int[stateSpaces.length];
       for(int i=0; i<typeIndices.length; i++){
     	  typeIndices[i] = i;
@@ -195,15 +195,19 @@ public class CompoundEmissionStateSpace extends EmissionStateSpace{
             int[] members = haploToMember[i];
             membersIndexToIndex.put(members, i);
         }
+        if(Constants.CHECK){
         for(int i=0; i<this.defaultList.size(); i++){
             int[] hapL = this.getHaps(i);
             for(int i1=1; i1<hapL.length; i1++){
                 if(this.haploList.get(i1).toString().equals(this.haploList.get(0).toString())) throw new RuntimeException("!!");
             }
         }
+        }
+        if(!states){
         SortedSet<Integer> s = new TreeSet<Integer>();
         for(int i=0; i< this.haploPairToHaplo.length; i++){
             s.add(haploPairToHaplo[i].length);
+        }
         }
   
     }
@@ -260,7 +264,7 @@ public class CompoundEmissionStateSpace extends EmissionStateSpace{
                 @Override
                   public boolean exclude(Comparable[] list) {
                 	if(limitparents){
-                		return Constants.allow(list);
+                		return !Constants.allow(list);
                 	}
                 	else if(!onlyRepeats){
                       return false;

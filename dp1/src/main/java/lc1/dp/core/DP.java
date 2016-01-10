@@ -80,9 +80,10 @@ public class DP{
         this.protName = protName;
         this.hmm = hmm;
         this.nullEms = logspace ? 0 : 1;
-        emissions = new double[modelLength][];
+        emissions = new double[modelLength][seqLength];
         this.emiss = new boolean[modelLength];
         this.adv = new int[modelLength];
+        this.distribution =   new double[((EmissionState)this.hmm.getState(1)).getEmissionStateSpace().size()] ;
     //    this.nonZero = new boolean[seqLength];
         for(int i=0; i<modelLength; i++){
            State st =  hmm.getState(i);
@@ -115,8 +116,11 @@ public class DP{
     //this.hittingProb = hmm.getHittingProb(this.seqLength);
 }
    
-   
-   public void setData(EmissionState emissionState) {
+   List<Integer> history = new ArrayList<Integer>();
+   public void setData(EmissionState emissionState, Integer index) {
+	   if(inuse) throw new RuntimeException( "in use");
+		else inuse =true;
+	   this.history.add(index);
        this.obj = emissionState;
        this.protName = obj.getName();
       this.hmm.allowTransitions(!Constants.parentObjContains(emissionState.getName()));
@@ -219,10 +223,13 @@ public class DP{
     //  if(hwep== 0 || Double.isNaN(hwep)) throw new RuntimeException("is NAN "+hwep+" "+obs_exp);
       else return Math.log(hwep);
 }
-
+boolean inuse = false;
+final double[] distribution; 
 public final void  fillEmissions(boolean first ) {
       // if(hmm.trainEmissions() || first){
+	
        boolean objUpdated = obj.getParamIndex()!=this.objIndex;
+     
        //double max=Double.NEGATIVE_INFINITY;
        for(Iterator<int[]> it = hmm.equivalenceClasses(); it.hasNext();){
            int[] equiv = it.next();
@@ -231,8 +238,10 @@ public final void  fillEmissions(boolean first ) {
            if(objUpdated || state.getParamIndex()!=stateIndex[equiv[0]] || first){
                //Logger.global.info("updating "+state.getName()+" "+obj.getName());
         	   boolean isLog = Constants.isLogProbs();
-               double[] d  =   state.score((HaplotypeEmissionState)obj, logspace &!isLog,isLog); ///swap!!!
-               for(int k=0; k<equiv.length; k++){
+             //  double[] d  =   state.score((HaplotypeEmissionState)obj, logspace &!isLog,isLog); ///swap!!!
+        	   double[] d = emissions[equiv[0]];
+               EmissionState.score(state, (HaplotypeEmissionState)obj,   logspace &!isLog,isLog, d, distribution); ///swap!!!
+               for(int k=1; k<equiv.length; k++){
                    emissions[equiv[k]]  = d;
                }
               
@@ -260,8 +269,8 @@ public final void  fillEmissions(boolean first ) {
 	    		     if(sum==0){ 
 	    		    	 int loc =DataCollection.datC.loc.get(i); 
 	    		    	 if(true) throw new RuntimeException("!! "+obj.getName()+" "+i+" "+loc);
-			    		    
-	    		    	((EmissionState) hmm.getState(2)).calcDistribution((HaplotypeEmissionState)obj, 2, Constants.isLogProbs());
+	    		    	 EmissionState emstate = ((EmissionState) hmm.getState(2));
+	    		    	EmissionState.calcDistribution(emstate, (HaplotypeEmissionState)obj, 2, Constants.isLogProbs(), distribution);
 	    		       	   CompoundEmissionStateSpace emStSp =  
 		    		    		   Emiss.getSpaceForNoCopies(obj.noCop());
 //		    		    		   (CompoundEmissionStateSpace) ((HaplotypeEmissionState)this.obj).getEmissionStateSpace();
@@ -278,8 +287,8 @@ public final void  fillEmissions(boolean first ) {
 		    		   
 		    		  for(int j=0; j<this.modelLength; j++){
 		    			   if(emiss[j]){
-			    			 
-			    			   double sc = ((EmissionState) hmm.getState(j)).score((HaplotypeEmissionState) obj, i, Constants.isLogProbs()); ///switch!!
+			    			//   double[] distribution = ((EmissionState) hmm.getState(j)).distribution();
+			    			   double sc = EmissionState.score(((EmissionState) hmm.getState(j)), (HaplotypeEmissionState) obj, i, Constants.isLogProbs(), distribution); ///switch!!
 			    			   emissions[j][i] = logspace ? Math.log(sc) : sc;
 	;	    			   }
 	    		   }
@@ -828,7 +837,7 @@ private State  getBestEmission(int i){
                //  System.err.println("best "+state_j);
                  obj_i = 
                       //   Constants.fillGaps() ? 
-                                 state_j.getBestIndex((HaplotypeEmissionState) obj,i, sample, Constants.isLogProbs()) ;
+                                EmissionState.getBestIndex(state_j, (HaplotypeEmissionState) obj,i, sample, Constants.isLogProbs(),distribution) ;
                            //      : obj.getBestIndices()[i]
                         
              }
@@ -931,8 +940,11 @@ private State  getBestEmission(int i){
 		 	   double[] sc = getOverallScore();
 		    
 		      // if(Constants.CHECK){
-		       if(Math.abs(sc[0]-sc[1])>0.001 || Double.isNaN(sc[0]) || Double.isNaN(sc[1])){
-		           if(incBackward) throw new RuntimeException("these should match "+sc[0]+" "+sc[1]+"\n");
+		       if(Math.abs(sc[0]-sc[1])>1e-7 || Double.isNaN(sc[0]) || Double.isNaN(sc[1])){
+		    	   calcScoresForward(complete);
+		    	   if(incBackward) calcScoresBackward();
+		    	   double[] sc1 = getOverallScore();
+		           if(incBackward) throw new RuntimeException("these should match "+sc[0]+" "+sc[1]+" vs "+sc1[0]+" "+sc1[1]+"\n");
 		     //  }
 		       }
 		    logprob = sc[0];

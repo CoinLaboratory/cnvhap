@@ -13,9 +13,9 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
-import lc1.dp.data.collection.DataCollection;
 import lc1.dp.emissionspace.EmissionStateSpace;
 import lc1.dp.model.CachedHMM;
 import lc1.dp.model.MarkovModel;
@@ -43,10 +43,14 @@ import org.apache.commons.pool.PoolableObjectFactory;
  * for each iteration
  * */
 public class BaumWelchTrainer {
-    public static ExecutorService es = Constants.numThreads()== 0 ? null:  
+    public static ExecutorService es = Constants.numThreads()== 1 ? null:  
        Executor.getEs(BaumWelchTrainer.class, Constants.numThreads());;
         public static void involeTasks(List l, boolean seq) throws Exception{
-           if(!seq && Constants.numThreads()>1) es.invokeAll(l);
+           if(!seq && Constants.numThreads()>1) {
+        	   es.invokeAll(l);
+        	  // es.awaitTermination(10000, TimeUnit.MILLISECONDS);
+        	//   Thread.currentThread().sleep(10000);
+           }
             
            else{
            for(Iterator it = l.iterator(); it.hasNext();){
@@ -67,7 +71,7 @@ public class BaumWelchTrainer {
     int firstNonZeroIndex =-1;
     //DP[] dp;
   //  DP dp1;
-    final MyObjectPool dp;
+    final DPPool dp;
     final MyObjectPool stateDist;
    // PseudoIterator weights;
   final  double[] weight; //
@@ -95,16 +99,7 @@ public class BaumWelchTrainer {
         this.dataNames = dataNames;
         this.pcs = new PropertyChangeSupport(this);
         this.data = obj;
-        this.dp = new MyObjectPool(new PoolableObjectFactory(){
-
-            public void activateObject(Object arg0) throws Exception {}
-            public void destroyObject(Object arg0) throws Exception {}
-            public Object makeObject() throws Exception {
-                System.err.println("MAKING NEW DP OBJECT ");
-                return new DP(hmm,"",Constants.isLogProbs(), hmm.noSnps , false);
-            }
-            public void passivateObject(Object arg0) throws Exception {}
-            public boolean validateObject(Object arg0) {return true;}}   ,Math.max(2, Constants.numThreads()), Constants.numThreads());
+        this.dp =new DPPool(hmm  ,Math.max(2, Constants.numThreads()), Constants.numThreads());
         this.stateDist = new MyObjectPool(new PoolableObjectFactory(){
 
             public void activateObject(Object arg0) throws Exception {}
@@ -216,12 +211,12 @@ public class BaumWelchTrainer {
     public DP dp(int j) throws Exception{
         return (DP) this.dp.getObj(j);
     }
-    public void addTransitionProbSum(int j) throws Exception{
+    public void addTransitionProbSum(DP dp1, int j) throws Exception{
    	 int index = ((HaplotypeEmissionState)this.data[j]).dataIndex();
      double weight = this.weight(index);
     	for(int i=-1; i<seqLength-1; i++){
         
-            dp(j).addTransitionPosterior(i, 
+            dp1.addTransitionPosterior(i, 
             		  transProbs(i+1), weight);
         }
     }
@@ -255,48 +250,56 @@ public class BaumWelchTrainer {
   
  // DP backgroundDP=null;
  
-  
+public static final boolean print = false;  
   
   public Callable expectationStep(final int j1, final double[] pseudo, final boolean last, final boolean updateEmissions){
        Callable run = new Callable(){
            public Object call(){
                try{
-                
+            	  
              //  double time=  System.currentTimeMillis();
-         DP  dp1;
+         DP  dp1= dp(j1);
        //  if(backgroundDP!=null && j1==0){
        // 	 dp1 =backgroundDP;
       //   }
         // else{
-        	 dp1= dp(j1);
-        	 dp1.setData(data[j1]);
+         if(print) {
+ 		   	Logger.global.info("running "+j1+dp1.history);;
+ 		   	
+ 	   }
+        	 dp1.setData(data[j1], j1);
                dp1.reset(true);
               
        //  }
       //   System.err.println("doing "+j1);
        logprob[j1] =  dp1.search(true, false);
-            //      System.err.println("done "+j1);
+            if(print)     Logger.global.info("done "+j1);
        Object[] tmp = new Object[]{j1, dp1};
        firePropertyChange("expec_i", null, tmp);
                if(Double.isInfinite(logprob[j1])) throw new RuntimeException("is infinite!");
                try{
-                   addTransitionProbSum(j1);
+                   addTransitionProbSum(dp1, j1);
                  
                  //  if(pseudo[emiss_col]<1000 || pseudo[data_col]<1000){ 
-                       addEmissionProbSum(j1, last, updateEmissions);
+                       addEmissionProbSum(dp1, j1, last, updateEmissions);
                 //   }
              
                }catch(Exception exc){
                    exc.printStackTrace();
                    System.exit(0);
                }
+               dp1.inuse = false;
                dp.returnObj(j1);
                }catch(Exception exc){
                    exc.printStackTrace();
+                
+                   System.err.println("problem with "+j1);
+                   System.exit(0);
                }
              
                return logprob[j1];
            }
+          
        };
        this.hmm.allowTransitions(true);
        return run;
@@ -349,14 +352,9 @@ public class BaumWelchTrainer {
                 ((Callable)tasks.get(i)).call();
             }*/
          // es.
-            this.involeTasks(tasks,true);
-            /*if(this.backgroundDP!=null){
-            	backgroundDP.exponentiateEmissions();
-            	this.expectationStep(0, pseudo, last, updateEmissions).call();
-            }*/
-//           List res =  this.es.invokeAll(tasks);
-//          this.es.awaitTermination(60, TimeUnit.SECONDS);
-            //logprob = this.hmm
+            this.involeTasks(tasks,false);
+         //   Thread.currentThread().sleep(1000);
+
             
           for(int j=0; j<data.length; j++){
               logprob+=weight(((HaplotypeEmissionState)data[j]).dataIndex())*this.logprob[j];
@@ -436,10 +434,11 @@ public class BaumWelchTrainer {
    
     final static boolean ML = false;
   
-    public void addEmissionProbSum(Integer ll, boolean last, boolean updateEmissions) throws Exception{
+    public void addEmissionProbSum(DP dp1, Integer ll, boolean last, boolean updateEmissions) throws Exception{
         Object[] tmp = new Object[7];
         Arrays.fill(tmp, null);
         tmp[1] = ll;
+   
         HaplotypeEmissionState hes = (HaplotypeEmissionState)data[ll];
         tmp[3] = hes.dataIndex();
         StateDistribution emissionCount = (StateDistribution) this.stateDist.getObj(ll) ;
@@ -459,7 +458,7 @@ public class BaumWelchTrainer {
             tmp[2] = i;
      // if(ML)    dp[l].getPosteriorML(i, emissionCount);
      // else 
-           dp(ll).getPosterior(i, emissionCount);
+           dp1.getPosterior(i, emissionCount);
            /*if(ll>0 && this.backgroundDP!=null){
         	   
         	   this.backgroundDP.updateEmissions((HaplotypeEmissionState) data[ll], emissionCount, i);
@@ -469,7 +468,7 @@ public class BaumWelchTrainer {
         	   double[] prob =  PairEmissionState.pool.getObj(emstsp.genoListSize());
         	 //  if(true) throw new RuntimeException("!!");
         	   
-        	   Sampler.getProbOverStates(emissionCount, hmm, hes, i, prob,Constants.isLogProbs());
+        	   Sampler.getProbOverStates(emissionCount, hmm, hes, i, prob,Constants.isLogProbs(), dp1.distribution);
         	   int m = Constants.getMax(prob);
         	   if(prob[m]>0.99){
         		 
@@ -503,18 +502,19 @@ public class BaumWelchTrainer {
   
           for(int j=0; j<hmm.modelLength(); j++){
              // State st = hmm.getState(j);
-              if(dp(ll).emiss[j]){
+              if(dp1.emiss[j]){
                   EmissionState k = (EmissionState)hmm.getState(j);
                   double val = emissionCount.get(j);
                   if(val>Constants.bwThresh()){
                 	  int index = ((HaplotypeEmissionState)this.data[ll]).dataIndex();
                 	 // Constants.pseudoMod1(index);
-                      k.addCount((HaplotypeEmissionState) data[ll], val,i, weight(index), Constants.isLogProbs());
+                      EmissionState.addCount(k,(HaplotypeEmissionState) data[ll],  val,i, weight(index), Constants.isLogProbs(), dp1.distribution);
                  }
               }
           }
          
         }
+        
         stateDist.returnObj(ll);
         this.firePropertyChange("finished", null, tmp);
            

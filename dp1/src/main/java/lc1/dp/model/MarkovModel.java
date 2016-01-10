@@ -18,6 +18,7 @@ import lc1.dp.states.CompoundState;
 import lc1.dp.states.DotState;
 import lc1.dp.states.EmissionState;
 import lc1.dp.states.State;
+import lc1.dp.transition.AbstractTransitionProbs;
 import lc1.stats.IntegerDistribution;
 import lc1.stats.PseudoDistribution;
 import lc1.stats.SimpleDistribution;
@@ -236,7 +237,8 @@ public abstract class MarkovModel implements Serializable {
 	   if(!this.allowTransitions && from!=to&& from!=0 && to!=0) {
 		   return 0;
 	   }
-	   else return getTransitionScore(from,to,positionOfToEmission);
+	   else 
+		   return getTransitionScore(from,to,positionOfToEmission);
    }
    public abstract double getTransitionScore(int from, int to, int positionOfToEmission);
    public void initialiseEmissionCounts(){
@@ -435,7 +437,8 @@ public Iterator<int[]> equivalenceClasses(){
             }
         }
         //if(!(this instanceof CachedHMM) ){
-            this.validateTrans(length);
+        //if(Constants.parentobj==null)   
+        	 this.validateTrans(length);
         //}
       
     }
@@ -458,19 +461,49 @@ public Iterator<int[]> equivalenceClasses(){
                     sum+=d[j];
                 }
                if(Math.abs(1.0-sum)>SimpleDistribution.tolerance){
-                   this.validateTransAt(i);
+            	   
+                 
+                   if(this instanceof FreeHaplotypeHMM){
                    int adv = states.get(1).adv;
                    this.getTransitionScore(k, 1, adv+i);
-                   throw new Exception(sum+" at  "+i+" "+k+" "+this.getClass());
+                   
+                   
+                  AbstractTransitionProbs tp =   ((FreeHaplotypeHMM)this).trans.transProbs[i+1];
+                  double sum1 = 0;
+                  for(int j=0; j< modelLength(); j++){
+                      int adv1 = states.get(j).adv;
+                      double t1 =  tp.getTransition(k, j);//this.getTransitionScore(k, j, adv+i) ;
+                      sum1+=t1;
+                  }
+                  throw new Exception(sum+" at  "+i+" "+k+" "+this.getClass());
+                   }else if(this instanceof CompoundMarkovModel){
+                	
+                	   if(sum>0){
+                	   this.validateTransAt(i, k,sum);
+                	  double sum1=0;
+                       
+                       for(int j=0; j< modelLength(); j++){
+                           int adv = states.get(j).adv;
+                           d[j] = this.getTransitionScore(k, j, adv+i) ;
+                           sum1+=d[j];
+                       }
+                       if(Math.abs(1.0-sum1)>SimpleDistribution.tolerance)  {
+                    	   throw new Exception(sum+" at  "+i+" "+k+" "+this.getClass());
+                       }
+                	   }
+                	  // ((CompoundMarkovModel)this).getMemberModels()[0].validateTrans(length);
+                   }
+//                   tp.getTransition(i, from, to)
+                 
                }
             }
         }
     }
   // public abstract double getTransitionScorePseudo(int k, int j, int i);
 
-    protected void validateTransAt(int i) {
+    protected void validateTransAt(int i,  int k,double sum) {
     // TODO Auto-generated method stub
-    
+    	
 }
   
     

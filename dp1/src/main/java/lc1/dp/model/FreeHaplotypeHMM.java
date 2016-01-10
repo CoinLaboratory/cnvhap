@@ -271,7 +271,7 @@ public boolean converged(){
 
 
 @Override
-public void validateTransAt(int to){
+public void validateTransAt(int pos, int to, double sc){
     this.trans.validateTransAt(to);
 }
 

@@ -172,7 +172,8 @@ public void print(PrintWriter pw){
         double[] countsData = counts();
         for(int k=0; k<countsData.length; k++){
             if(countsData[k]==0) continue;
-                innerState.addCountDT((double)k,phen_index,  countsData[k], i);
+            if(true) throw new RuntimeException("!!");
+//                innerState.addCountDT((double)k,phen_index,  countsData[k], i);
         }
     }
 

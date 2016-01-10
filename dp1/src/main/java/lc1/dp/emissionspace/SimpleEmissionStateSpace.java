@@ -18,14 +18,14 @@ public  class SimpleEmissionStateSpace extends EmissionStateSpace{
     public SimpleEmissionStateSpace(List<Comparable> list){
         super();
      //   if(list.size()>2) throw newy RuntimeException("!!"); 
-        init(list);
+        init(list, false);
       
     }
     public List<String>nme = null;
     public SimpleEmissionStateSpace(List<Comparable> list, List<String>nme){
         super();
      //   if(list.size()>2) throw newy RuntimeException("!!"); 
-        init(list);
+        init(list, false);
         this.nme = nme;
     }
     
@@ -35,7 +35,7 @@ public  class SimpleEmissionStateSpace extends EmissionStateSpace{
     	for(int i=0; i<stsp.length; i++){
     		l.addAll(stsp[i].getGenotypeList());
     	}
-    	init(new ArrayList<Comparable>(l));
+    	init(new ArrayList<Comparable>(l), false);
     } 
     public String getHaploPairString(Comparable comp){
         return getHaploString(comp);

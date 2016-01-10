@@ -917,7 +917,7 @@ public XYSeriesCollection[] getBSeriesCollection(int k){
         double sumNonMix = Constants.allowComponent() ?  Sampler.getProbOverStates(emissionC, bwt.hmm, sta,i,prob,0) : 0;
         
        
-        double sum = 	Sampler.getProbOverStates(emissionC, bwt.hmm, sta, i,prob, Constants.isLogProbs());
+        double sum = 	Sampler.getProbOverStates(emissionC, bwt.hmm, sta, i,prob, Constants.isLogProbs(), sta.distribution());
         if(!Constants.allowComponent) sumNonMix = sum;
 //        double sumNonMix = Constants.allowComponent() ? Sampler.getProbOverStates(emissionC, bwt.hmm, sta, i,prob) : sum;//,0);	
      //    double[] prob_b = new double[current_b.getSeriesCount()];

@@ -938,7 +938,7 @@ public final ColorAdapter ca;
         	  }
         	  else{
         	  double[] prob =  PairEmissionState.pool.getObj(Emiss.getSpaceForNoCopies(sta.noCop()).genoListSize());
-           	 Sampler.getProbOverStates(emissionC, bwt.hmm, sta, i,prob, Constants.isLogProbs());
+           	 Sampler.getProbOverStates(emissionC, bwt.hmm, sta, i,prob, Constants.isLogProbs(), sta.distribution());
               int maxind = Constants.getMax(prob);
               cert_i[i] = prob[maxind];
               PairEmissionState.pool.returnObj(prob);

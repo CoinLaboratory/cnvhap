@@ -66,9 +66,9 @@ public abstract int noSnps();
         this.lengthDistrib = new SimpleDistribution(new int[] {(int) adv}, new double[] {1});
     }
     
-    public synchronized void addCountSynch(int obj_index,  double value, int i){
+   /* public synchronized void addCountSynch(int obj_index,  double value, int i){
        this.addCount(obj_index,  value, i);
-   }
+   }*/
     
     /*obj_index is the index in the state space (which is stored in the hmm)*/
  /*   public  void addCount(int obj_index,  double value, int i){
@@ -80,7 +80,6 @@ public abstract int noSnps();
         }
     }*/
     abstract public  void addCount(int obj_index,  double value, int i);
-    abstract public  void addCountDT(double phenotype, int phen_index,  double value, int i);
     
     /* (non-Javadoc)
      * @see lc1.dp.states.EmissState#adv(lc1.dp.states.State)
@@ -159,32 +158,9 @@ public  double score(HaplotypeEmissionState data_state,int i_data) {
  * @see lc1.dp.states.EmissionState#addCount(lc1.dp.states.EmissionState, java.lang.Double, int, double)
  */
 
- public   void addCount(HaplotypeEmissionState data_state, Double double1, int i, double weight, boolean log) {
+ public  static void addCount( EmissionState hmm_state,HaplotypeEmissionState data_state, Double double1, int i, double weight, boolean log, double[] distribution) {
 	 if(double1 < Constants.countThresh()) return;
- 	EmissionState hmm_state = this;
- 	EmissionStateSpace emstsp = hmm_state.getEmissionStateSpace();
- //	int di = data_state.dataIndex(i);
- //	int nocop = hmm_state.noCop(di);
-	
- 	/*if(!Constants.joint){
- 		int nocop = hmm_state.noCop();
- 	 
-	   if(bg!=null){
-		   if(!Constants.joint)
-		  data_state.emissions[i].addRCount(bg,nocop,  double1* weight,i);
-	   }
-	   else{
-		  double[] d = DataCollection.datC.calcDist(nocop,i, data_state.emissions[i]);
-		  
-		  
-		   for(int j=0; j<d.length; j++){
-			  data_state.emissions[i].addRCount(j,nocop,  double1* weight*d[j],i);
-		   }
-		  
-	   }
- 	}*/
-   
-    
+ 		EmissionStateSpace emstsp = hmm_state.getEmissionStateSpace();
       Integer index = hmm_state.getFixedInteger(i);
        
       if(index!=null){
@@ -197,23 +173,23 @@ public  double score(HaplotypeEmissionState data_state,int i_data) {
      	  else{
           data_state.emissions[i].addBCount( index, double1,i);
      	  }*/
-          hmm_state.addCountSynch(index, weight*double1, i);
+          hmm_state.addCount(index, weight*double1, i);
       }
       else{
     	   PseudoDistribution distr = data_state.emissions[i];
     	 // double mixP = 1.0;//distr.weight();
     	  if(distr.weight()>0){
 //    	  double sumMix = hmm_state.calcDistribution(data_state, i,0);
-            double sum = hmm_state.calcDistribution(data_state, i,log);
+            double sum = EmissionState.calcDistribution(hmm_state, data_state, i,log, distribution);
    //         mixP = sumMix/sum;
            
           
-            for(int j=0; j<hmm_state.distribution.length; j++){
-                double prob_j =(log ? Math.exp(hmm_state.distribution[j]-sum) : hmm_state.distribution[j] / sum);
+            for(int j=0; j<distribution.length; j++){
+                double prob_j =(log ? Math.exp(distribution[j]-sum) : distribution[j] / sum);
                 if(prob_j>0){  
                 	
                     double val =  prob_j*double1;
-                    hmm_state.addCountSynch(j,val*weight, i);
+                    hmm_state.addCount(j,val*weight, i);
                
                     if(Constants.joint ){
                  	 if(val > Constants.countThresh1()){
@@ -231,21 +207,19 @@ public  double score(HaplotypeEmissionState data_state,int i_data) {
  }
 
  /**Note, if log, then log(pr) returned */
- public  synchronized double calcDistribution(HaplotypeEmissionState data_state, int i,boolean log){
-    EmissionState hmm_state = this;
+ public  static double calcDistribution(EmissionState hmm_state, HaplotypeEmissionState data_state, int i,boolean log, double[] distribution){
+    //EmissionState hmm_state = this;
  	EmissionStateSpace emStSp = 	hmm_state.getEmissionStateSpace();
- 	
  	double sum=0;
-     
-     if(hmm_state.distribution==null){
+  /* if(hmm_state.distribution==null){
          hmm_state.distribution = new double[emStSp.size()];
          hmm_state.cn = new int[hmm_state.distribution.length];
          for(int j=0; j<hmm_state.distribution.length; j++){
          	hmm_state.cn[j] = emStSp.getCN(j);
          }
-     }
-     Arrays.fill(hmm_state.distribution, log ? Double.NEGATIVE_INFINITY: 0.0);
-     for(int j=0; j<hmm_state.distribution.length; j++){
+     }*/
+     Arrays.fill(distribution, log ? Double.NEGATIVE_INFINITY: 0.0);
+     for(int j=0; j<distribution.length; j++){
              double prob_j =hmm_state.score(j,i);
              if(prob_j>0){
                double ems =  
@@ -253,43 +227,43 @@ public  double score(HaplotypeEmissionState data_state,int i_data) {
              			 data_state.emissions[i].scoreBR(emStSp,j, i):
              	  data_state.emissions[i].scoreB(j,i);
               double weight = emStSp.getWeight(j);
-                hmm_state.distribution[j] =  log ? Math.log(prob_j*weight) + ems : prob_j   * ems *weight;  
-                sum+=log ? Math.exp(hmm_state.distribution[j]) :hmm_state.distribution[j] ;
+                distribution[j] =  log ? Math.log(prob_j*weight) + ems : prob_j   * ems *weight;  
+                sum+=log ? Math.exp(distribution[j]) :distribution[j] ;
              
              }
              
      }
      if(log && sum==0 ){
-    	int maxind =  Constants.getMax(hmm_state.distribution);
+    	int maxind =  Constants.getMax(distribution);
     	
-    	 for(int j=0; j<hmm_state.distribution.length; j++){
-    		 if(j!=maxind) hmm_state.distribution[j]=Double.NEGATIVE_INFINITY;
+    	 for(int j=0; j<distribution.length; j++){
+    		 if(j!=maxind) distribution[j]=Double.NEGATIVE_INFINITY;
     	 }
-    	 return hmm_state.distribution[maxind];
+    	 return distribution[maxind];
      }
    
      return log ? Math.log(sum) : sum;
  }
 
- public  synchronized double calcDistribution(HaplotypeEmissionState data_state, int i, int mixComponent){
-	    EmissionState hmm_state = this;
+ public static double calcDistribution(EmissionState hmm_state, HaplotypeEmissionState data_state, int i, int mixComponent, double[] distribution){
+	  //  EmissionState hmm_state = this;
 	 	EmissionStateSpace emStSp = //Emiss.getSpaceForNoCopies(data_state.noCop())
 	 		hmm_state.getEmissionStateSpace();
 	 	double sum=0;
-	     
+	     /*
 	     if(hmm_state.distribution==null){
 	         hmm_state.distribution = new double[emStSp.size()];
 	         hmm_state.cn = new int[hmm_state.distribution.length];
 	         for(int j=0; j<hmm_state.distribution.length; j++){
 	         	hmm_state.cn[j] = emStSp.getCN(j);
 	         }
-	     }
+	     }*/
 	   //  int di = data_state.dataIndex(i);
-	     Arrays.fill(hmm_state.distribution, 0.0);
+	     Arrays.fill(distribution, 0.0);
 	 //    IlluminaProbB[] probBState = hmm_state.probB();
 	    // SkewNormal[] probRState =  hmm_state.probR();
 	 //    double probr = this.emissions[i_data].score( probRState);
-	     for(int j=0; j<hmm_state.distribution.length; j++){
+	     for(int j=0; j<distribution.length; j++){
 	    //    if(hmm_state.cn[j]==hmm_state.noCop().intValue()){
 	             double prob_j =hmm_state.score(j,i);
 	             //int j1 = hmm_state.mod(j,di);
@@ -302,11 +276,11 @@ public  double score(HaplotypeEmissionState data_state,int i_data) {
 	             	  data_state.emissions[i].scoreB(j,i);
 	            //   double scR =  ( Constants.suppressR() ? 1.0 : this.emissions[i].score(hmm_state.probR()));
 	              double weight = emStSp.getWeight(j);
-	                hmm_state.distribution[j] =  prob_j 
+	                distribution[j] =  prob_j 
 	                    * ems
 	                   // *this.emissions[i_data].score(j, probRState)
 	                    *weight;  //do we include the weight term???;
-	                sum+=hmm_state.distribution[j];
+	                sum+=distribution[j];
 	              //  if(Constants.CHECK && Double.isNaN(sum)) {
 	                //	throw new RuntimeException("!!");
 	               // }
@@ -323,27 +297,35 @@ public  double score(HaplotypeEmissionState data_state,int i_data) {
 
 
 
-public   int getBestIndex(HaplotypeEmissionState data_state,  int i, boolean sample, boolean log){
-     EmissionState hmm_state = this;
- 	double sum = hmm_state.calcDistribution(data_state, i,log);
+public  static int getBestIndex(EmissionState hmm_state, HaplotypeEmissionState data_state,  int i, boolean sample, boolean log, double[] distribution){
+     //EmissionState hmm_state = this;
+ 	double sum = EmissionState.calcDistribution(hmm_state, data_state, i,log, distribution);
    //  if(state_indices==null) return this.best_index[i];
     
-         int res =  (sample & !log) ? Constants.sample(hmm_state.distribution, sum) :
-             Constants.getMax(hmm_state.distribution);
+         int res =  (sample & !log) ? Constants.sample(distribution, sum) :
+             Constants.getMax(distribution);
        //  if(res==0){
        //      System.err.println("res ==0");
        //  }
          return res;
     
  }
-public   double score(HaplotypeEmissionState data_state , int i_hmm,boolean log) {
-	  EmissionState hmm_state = this;
-	   double sc =hmm_state.calcDistribution(data_state, i_hmm,log);
-	 
-    return sc;
+public   static double score(EmissionState hmm_state, HaplotypeEmissionState data_state , int i_hmm,boolean log, double[] distribution) {
+	 // EmissionState hmm_state = this;
+	return EmissionState.calcDistribution(hmm_state, data_state, i_hmm,log, distribution);
+   // return sc;
 }
   
 
+
+
+public double[] distribution() {
+	return new double[getEmissionStateSpace().size()];
+/*	if(distribution1 ==null){
+		distribution1 = new double[getEmissionStateSpace().size()];
+	}
+	return distribution1;*/
+}
 
 
 public final  int getBestIndex(int i) {
@@ -363,8 +345,8 @@ public void setFixedIndex(int i, int k) {
 //taken from LikelihoodData
 
 
-public  double[] distribution ;
-private int[] cn;
+public  double[] distribution2 ;
+//private int[] cn;
 
 /*{
     if(true) 
@@ -425,29 +407,30 @@ public final int length() {
  * @see lc1.dp.states.EmissState#score(lc1.dp.states.EmissionState, boolean)
  */
 
-public final  double[] score(HaplotypeEmissionState data_state, boolean logspace, boolean isLog){
-    double[] score = new double[data_state.noSnps()];
-    EmissionState hmm_state = this;
-   // JSONArray arr1 = obj.getJSONArray("107665_19");
-   // System.err.println(obj.has("107665_19"));
+public final  static double[] score( EmissionState hmm_state, HaplotypeEmissionState data_state, boolean logspace, boolean isLog, double[] score, double[] distribution){
     boolean matches = true;
-   // System.err.println(hmm_state.getName())
+  
     String[] arr = Constants.parentObj(data_state.getName());
     if(arr!=null){
     	matches = false;
     	for(int k=0; k<arr.length; k++){
     	matches =  matches || hmm_state.getName().startsWith(arr[k]);
     	}
+    }else if(Constants.parentobj!=null){
+    	String[] parentobj = Constants.parentobj;
+    	for(int j=0; j<parentobj.length; j++){
+    		String[] arr1 = Constants.parentObj(parentobj[j]);
+    		for(int k=0; k<arr1.length; k++){
+    			matches =  matches &&  !hmm_state.getName().startsWith(arr1[k]);
+    		}
+    	}
     }
 		 if(!matches){
 		Arrays.fill(score, logspace ? Double.NEGATIVE_INFINITY : 0);  
 	  }else{
-   // int len = this.getEmissionStateSpace().size();
-   // EmissionState indi = this; 
     for(int i=0; i<score.length; i++){
-           double  sc =hmm_state.score(data_state, i,isLog); //switch
+           double  sc =EmissionState.score(hmm_state, data_state, i,isLog, distribution); //switch
         score[i] = logspace ? Math.log(sc) : sc ;
-      
         if(Constants.CHECK && Double.isNaN(score[i])){
             throw new RuntimeException("!!" +sc+" "+logspace);
      
@@ -465,16 +448,6 @@ public int dataIndex(int i){
 }
 // state is hmm state
 
-
-
-public void addCountSynchDT(Double[] phenValue, double d, int i) {
-  for(int k=0; k<phenValue.length; k++){
-      if(phenValue[k]!=null){
-      this.addCountDT(phenValue[k], k, d, i);
-      } 
-  }
-    
-}
 /*public static HaplotypeEmissionState getEmissionState(PhasedDataState obj, boolean replaceNWithUnknown, double pseudo,int[] se){
     EmissionStateSpace emStSp = Emiss.getEmissionStateSpace(obj.noCopies()-1);
     if(emStSp.copyNumber.size()==1) {
@@ -794,10 +767,7 @@ public  void fillLikelihood(Locreader mid, List<Integer> loc) {
 
 
 
-	public ProbabilityDistribution[][] emissionsDatatype() {
-		// TODO Auto-generated method stub
-		return null;
-	}
+	
 
 
 

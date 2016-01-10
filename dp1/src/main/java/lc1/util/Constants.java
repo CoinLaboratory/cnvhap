@@ -30,10 +30,9 @@ import java.util.regex.Pattern;
 import jxl.Cell;
 import jxl.Sheet;
 import jxl.Workbook;
+import lc1.dp.data.representation.IntegerEmiss;
 import lc1.dp.model.CompoundMarkovModel;
 import lc1.dp.states.State;
-import lc1.stats.ProbabilityDistribution2;
-import lc1.stats.SimpleExtendedDistribution1;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
@@ -41,8 +40,6 @@ import org.apache.commons.cli.OptionBuilder;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.Parser;
 import org.apache.commons.cli.PosixParser;
-import org.json.JSONArray;
-import org.json.JSONObject;
 
 public class Constants {
 	public static double samplePermute = 0;
@@ -521,26 +518,70 @@ public static Map<String, String[]> parentObj = null;
 public static Set<List<Comparable>>parentstates = new HashSet<List<Comparable>>();
 public static Set<String> parentObj1 = null;
 public static String[] parentObj(String string){
+	//String[] str = parentObj.get("F509");
 	 return parentObj==null || !parentObj.containsKey(string) ? null :  parentObj.get(string);		
 }
-
+public static boolean ordered(Comparable[] list){
+	//if(true) return true;
+	int v = ((IntegerEmiss)list[0]).v;
+	for(int k=1; k<list.length; k++){
+		int v1 = ((IntegerEmiss)list[k]).v;
+		if(v1<=v) return false;
+		v = v1;
+	}
+	return true;
+}
 public static boolean allow(Comparable[] list) {
-	return parentstates.contains(Arrays.asList(list));
+	int nocop = countp1.length;
+	int nocop2 = (int) nocop/2;
+	Arrays.fill(countp1, false);
+	Arrays.fill(countp2, false);
+	boolean mark = false;
+	
+	for(int k=0; k<list.length; k++){
+		int v = ((IntegerEmiss)list[k]).v-1;
+		
+		if(v>=nocop){
+			if(k<nocop2){
+				mark = true;
+			}
+			countp2[v-nocop] = true;
+		}
+		else {
+			if(k>=nocop2) mark = true;
+
+			countp1[v] = true;
+		}
+	}
+//	mark = false;
+	int s1 = sum(countp1);
+	int s2 = sum(countp2);
+	
+	if(s1==nocop && s2 ==0  && ordered(list) || s2 == nocop && s1 == 0 && ordered(list) ||s1 == nocop2 && s2 ==nocop2 && !mark ) {
+		return true;
+	}
+	else  {
+		return false;
+	}
+//	return parentstates.contains(Arrays.asList(list));
 }
 
+static boolean[] countp1, countp2;
 
-public static boolean limitTransByParent() {
-	// TODO Auto-generated method stub
-	return parentobj!=null;
-}
 public static boolean parentObjContains(String name) {
 	return parentObj1!=null && parentObj1.contains(name);
 }
+
 public static void parentObj(List<String> samples){
+	
 	char[] ch = Constants.modify0[0];
 	int nostates = ch.length;
 	int nocop = Constants.noCopies()[0];
 	int torep = nocop/nostates;
+	
+	countp1 = new boolean[nocop];
+	countp2 = new boolean[nocop];
+	
 	if(parentobj==null || nostates==1) return;
 	boolean oneperstate = nostates == nocop * parentobj.length;
 	if(!oneperstate && Math.abs(Math.IEEEremainder(nocop, nostates)) >1e-5) throw new RuntimeException("!!");
@@ -576,7 +617,7 @@ public static void parentObj(List<String> samples){
 			}
 		}
 	}
-	if(parentobj!=null){
+	if(parentobj!=null && false){
 		List<String> strs = new ArrayList<String>();
 		
 		if(Math.abs(Math.IEEEremainder(ch.length, 2)) >1e-5) throw new RuntimeException("!!");
@@ -2154,11 +2195,31 @@ public static double switchU = 1e10;
 			modifyFrac2 = new double[len];
 			modifyFrac3 = new double[len];
 			modifyFracStart = new double[len];
-			Arrays.fill(modifyFrac0, 1.0 / (double) len);
+			for(int k=0; k<len; k++){
+				double cn = Math.max(1e-2, Double.parseDouble(Constants.modify0[0][k]+""));
+				
+				//System.err.println(cn);
+				double r =cn/Constants.backgroundCount1;
+				double logr = Math.log(r);
+				double abslogr = -Math.abs(logr);
+				
+				double v = Math.pow(1.1,abslogr);
+				modifyFrac0[k] = v;
+				modifyFrac1[k] = v;
+				modifyFrac2[k] = v;
+				modifyFrac3[k] = v;
+				modifyFracStart[k] = v;
+			}
+			Constants.normalise(modifyFrac0);
+			Constants.normalise(modifyFrac1);
+			Constants.normalise(modifyFrac2);
+			Constants.normalise(modifyFrac3);
+			Constants.normalise(modifyFracStart);
+		/*	Arrays.fill(modifyFrac0, 1.0 / (double) len);
 			Arrays.fill(modifyFrac1, 1.0 /(double) len);
 			Arrays.fill(modifyFrac2, 1.0 /(double) len);
 			Arrays.fill(modifyFrac3, 1.0 / (double) len);
-			Arrays.fill(modifyFracStart, 1.0 / (double) len);
+			Arrays.fill(modifyFracStart, 1.0 / (double) len);*/
 			//System.err.println(Constants.sum(modifyFrac0));
 		}
 		// return i==0 ?

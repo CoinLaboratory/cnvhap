@@ -348,8 +348,8 @@ public    class PairMarkovModel extends CompoundMarkovModel {
      
       
     }
-    
-   
+  
+	  
   
  /*  protected void makeEquivalenceClasses(Iterator<List<CompoundState>> it){
        this.equivalenceClasses.clear();
@@ -444,8 +444,25 @@ final int[] from1, to1;
       //  if(Constants.CHECK && sc > 1.0){
        // 	throw new RuntimeException("!!");
         //}
+       /* if(this.correction!=null){
+        	if(to!=0){
+        	int ind = 1+endIndex-this.getState(to).adv;
+        	double corr = this.correction[ind][from];
+        	sc = sc*corr;
+        	}
+        }*/
         return sc;
     }
+    
+  //  double[][] correction;
+    /*
+    @Override
+   protected void validateTransAt(int i, int k, double sum) {
+    	if(correction==null) correction = new double[this.noSnps][this.modelLength()];
+	    // TODO Auto-generated method stub
+    	correction[i+1][k] = 1.0/sum;
+    	
+	}*/
     
  /*   protected  List getStateSpaceEquivalents(Comparable em){
         return ((ComparableArray)em).decompose(true);

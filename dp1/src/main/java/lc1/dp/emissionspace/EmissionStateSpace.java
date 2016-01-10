@@ -349,7 +349,9 @@ public Integer getHapl(String st){
     
     public boolean exclude(ComparableArray list) {
         if(list.get(0) instanceof Emiss && list.size()>1){
-            if(Math.abs(((AbstractEmiss)list.get(0)).noCopies() -((AbstractEmiss)list.get(1)).noCopies()) >1) return true;
+            if(Math.abs(((AbstractEmiss)list.get(0)).noCopies() -((AbstractEmiss)list.get(1)).noCopies()) >1) {
+            	return true;
+            }
             
         }
         return false;
@@ -466,12 +468,12 @@ public int getRealCN(ComparableArray compA){
     public EmissionStateSpace(){
        // this.noCopies = noCopies;
     }
-        public void init(List<Comparable> list){
+        public void init(List<Comparable> list, boolean states){
             this.defaultList = this.haplopairList;
             Collections.sort(list, new Comparator<Comparable>(){
 
 				@Override
-				public int compare(Comparable arg0, Comparable arg1) {
+				public int compare(Comparable arg0, Comparable arg1) { 
 					if(arg0 instanceof ComparableArray){
 						if(arg1 instanceof ComparableArray){
 							int n1 = ((ComparableArray)arg0).numLevels();
@@ -529,12 +531,14 @@ public int getRealCN(ComparableArray compA){
             this.haploPairToGeno = new int[this.haplopairList.size()];
             this.haploPairToCN = new int[this.haploSize()];
             this.haploPairToBCount = new int[this.haploSize()];
+            if(!states){
             map(genoToHaplo, genoToHaplos, haploList, stateSpaceToGenotypeIndex, gsm);
             map1(copyNoIndexToGeno,  genotypeList,stateSpaceToCopyNumber, gsm, this.copyNumber);
          
         
             map(this.genoToHaploPair,null,  haplopairList, stateSpaceToGenotypeIndex, gsm);
             map(haploPairToHaplo,haploPairToHaplos, haploList, this.stateSpaceToHaploPairIndex, hsm);
+            
             for(int i=0; i<this.haplopairList.size(); i++){
                 Comparable hpli = this.haplopairList.get(i);
                 String hplis = this.getGenotypeString(hpli);
@@ -547,6 +551,7 @@ public int getRealCN(ComparableArray compA){
                     this.haploToHaploPair[hPToHi[j]] = i;
                 }
             }
+           
             //map(this.haploPairToGeno, null, this.genotypeList, this.stateSpaceToHaploPairIndex);
             
             for(int i=0; i<this.genoToHaploPair.length; i++){
@@ -586,7 +591,7 @@ public int getRealCN(ComparableArray compA){
                 }
               
             }
-          
+            }
             if( Constants.annotate()){
                 StringBuffer sw = new StringBuffer();
                 sw.append("emission state space");

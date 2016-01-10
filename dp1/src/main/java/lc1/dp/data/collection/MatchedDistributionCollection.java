@@ -143,14 +143,14 @@ import cern.jet.random.engine.DRand;
 			 double cellularity, File dir, int maxCN,int maxCN1, int noprobes,HaplotypeEmissionState ref, Double[] ratiosL, List<String> indiv) {
 			// TODO Auto-generated constructor stub
 			this.index = (short)index;
-			mdf = indiv.size()>1 && Constants.trainCellularity()==1 ? new MultidimmaxSingle(this): new Multidimmax(this);
+			mdf = indiv.size()>1 && Constants.trainCellularity()==1  ? new MultidimmaxSingle(this): new Multidimmax(this);
 			
 			this.indiv = new ArrayList<String>(indiv);
 			this.indiv.remove("pool");
 			this.indiv.remove(Constants.reference());
 			this.numsamples = this.indiv.size();
 			System.err.println("indiv: "+Arrays.asList(this.indiv));
-			this.cellularity = mdf.add("cellularity", Constants.initialCellularity[0], 0.001, 1.0, numsamples, trainCellularity>=1);
+			this.cellularity = mdf.add("cellularity", Constants.initialCellularity[0], 0.001, 1.0, numsamples, trainCellularity>=1 && trainCellularity <3);
 			if(Constants.plasma()){
 				this.ratio = mdf.add("ratio", Constants.initialCellularity[1], 0.01, 1.0, 1, true);
 			}else{

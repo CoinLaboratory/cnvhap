@@ -530,12 +530,11 @@ public void paint0(){
              // c1 = Color.black;
            }
            vg.setColor(c1);
-           ProbabilityDistribution[][] emDT = 
-               ((EmissionState)hmm.getState(j+1)).emissionsDatatype();
-           ProbabilityDistribution distDT = phenIndexToPaint >=0 && emDT!=null && emDT.length>phenIndexToPaint ? emDT[phenIndexToPaint][i] : null;
-           if(distDT==null ){
+         
+         //  ProbabilityDistribution distDT = phenIndexToPaint >=0 && emDT!=null && emDT.length>phenIndexToPaint ? emDT[phenIndexToPaint][i] : null;
+        //   if(distDT==null ){
                fillOval(x_start, y_start, shape_j, 0, 360);
-           }
+          /* }
            else{
                double[] counts = distDT.getCount(angle1);
                for(int k=0; k<angle.length; k++){
@@ -544,7 +543,7 @@ public void paint0(){
                    double t = k ==angle.length-1 ? 360 : angle[k+1];
                    fillOval(x_start, y_start, shape_jk, angle[k], (t-angle[k]));
                }
-           }
+           }*/
           
               
          // vg.fillOval(x_start, y_start, shape_j,shape_j);
