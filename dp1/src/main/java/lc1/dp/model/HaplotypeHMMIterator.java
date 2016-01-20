@@ -27,7 +27,7 @@ int i=0;
 final double[] init;
 //final EmissionStateSpace emStSp;
  int numF;
-final char[][] modify; 
+final String[][] modify; 
 //final double[][] meanvarskew;
 final double[] modifyFrac, modifyFracStart;
 //1.0 means that all emissions are 1.0 for a particular category
@@ -38,7 +38,7 @@ final double[] modifyFrac, modifyFracStart;
 final List<Integer> locs;
 final DataCollection datac;
 public HaplotypeHMMIterator(String name, int noSites, int count,  DataCollection datac, int numF, int[] mode,
-        char[][] modify, double[] modifyFrac, 
+        String[][] modify, double[] modifyFrac, 
         double[] modifyFracStart,
         ProbabilityDistribution[] numLevels, List<String> model){
     this.noSites = noSites;

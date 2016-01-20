@@ -51,6 +51,15 @@ import cern.jet.random.engine.DRand;
 				return  "";
 			}
 		}
+		@Override
+		public void addCollection(AbstractDistributionCollection dc1) {
+			MatchedDistributionCollection dc = (MatchedDistributionCollection)dc1;
+			super.addCollection(dc);
+			this.backCNall =(Double[]) Constants.join(this.backCNall, dc.backCNall).toArray(new Double[0]);
+			this.refCount = (Double[]) Constants.join(this.refCount,dc.refCount).toArray(new Double[0]);
+			this.pool.emissions = (PseudoDistribution[]) Constants.join(this.pool.emissions, dc.pool.emissions).toArray(new PseudoDistribution[0]);
+			//throw new RuntimeException("!!");
+		}
 		
 		static class BetaBinom {
 			 double alpha, beta, trials;
@@ -63,9 +72,27 @@ import cern.jet.random.engine.DRand;
 	             //int k = (int) Math.rint(x);
 	             
 	 //    if (k < 0 | k > trials) return 0;
-	     
-	     return (Gamma.logGamma(k+alpha)+Gamma.logGamma(trials-k+beta)+Gamma.logGamma(alpha+beta)+Gamma.logGamma(trials+2)) - 
+				 if( alpha < 1e-10){
+			    	 return Double.NEGATIVE_INFINITY;
+			    	/*  double res1 =Gamma.logGamma(k+alpha);
+			    	  double res2 = Gamma.logGamma(trials-k+beta);
+			    	  double res3 = Gamma.logGamma(alpha+beta);
+			    	  double res4 = Gamma.logGamma(trials+2);
+			    	  double res5 = Math.log(trials+1);
+			    	  double res6 = Gamma.logGamma(alpha+beta+trials);
+			    	  double res7 = Gamma.logGamma(alpha);
+			    	  double res8 = Gamma.logGamma(beta);
+			    	  double res9 = Gamma.logGamma(k+1);
+			    	  double res10 = Gamma.logGamma(trials-k+1);
+			    	 throw new RuntimeException("os na");*/
+			     }
+	     double res = (Gamma.logGamma(k+alpha)+Gamma.logGamma(trials-k+beta)+Gamma.logGamma(alpha+beta)+Gamma.logGamma(trials+2)) - 
 	             (Math.log(trials+1)+Gamma.logGamma(alpha+beta+trials)+Gamma.logGamma(alpha)+Gamma.logGamma(beta)+Gamma.logGamma(k+1)+Gamma.logGamma(trials-k+1));
+	  /* if(Double.isNaN(res)){
+		   throw new RuntimeException("!!");
+	   }*/
+	     	return res;
+	     
 	 }
 	
 			
@@ -150,7 +177,7 @@ import cern.jet.random.engine.DRand;
 			this.indiv.remove(Constants.reference());
 			this.numsamples = this.indiv.size();
 			System.err.println("indiv: "+Arrays.asList(this.indiv));
-			this.cellularity = mdf.add("cellularity", Constants.initialCellularity[0], 0.001, 1.0, numsamples, trainCellularity>=1 && trainCellularity <3);
+			this.cellularity = mdf.add("cellularity", Constants.initialCellularity[0], 0.05, 0.999999, numsamples, trainCellularity>=1 && trainCellularity <3);
 			if(Constants.plasma()){
 				this.ratio = mdf.add("ratio", Constants.initialCellularity[1], 0.01, 1.0, 1, true);
 			}else{
@@ -209,10 +236,13 @@ import cern.jet.random.engine.DRand;
 			if(trainPool)mdf.updateBounds();
 			for(int i =0; i<refCount.length;i++){
 				refCount[i] = ((IlluminaDistribution)ref.emissions[i]).b().doubleValue();
-				pool.emissions[i] = new BackgroundDistribution(maxCN, refCount[i],backCNall[i], pool.getEmissionStateSpace(), indiv.size());
+				pool.emissions[i] = new BackgroundDistribution(maxCN, refCount[i],backCNall[i], pool.getEmissionStateSpace(), indiv.size() - (indiv.indexOf(Constants.reference)>=0 ? 1:0));
 			}
 			this.noprobes = noprobes;
 			this.totnormal =((IlluminaRDistribution)ref.emissions[0]).r().doubleValue();
+			if(Double.isInfinite(totnormal)) {
+				throw new RuntimeException("!!!");
+			}
 			mdf.print();
 			
 		}
@@ -309,13 +339,19 @@ import cern.jet.random.engine.DRand;
 					//System.err.println("\n");
 				}
 				if(max_index>0){
-			   
+					
 				if(trainPool){
 					mdf.updateBounds();
 				}
 				  
 				   mdf.minimize();	
-				  
+				   if(!Constants.useAvgDepth() && ratio.length==1){
+						
+			 	ratio[0] =  this.average/this.average_count;
+			 	ratio[0]  = Math.max(0.1, ratio[0]);
+			 	ratio[0] = Math.min(10, ratio[0]);
+			 	System.err.println("new ratio is "+ratio[0]);
+					}
 				}
 			
 				
@@ -437,13 +473,21 @@ import cern.jet.random.engine.DRand;
 			
 			//List<Double> countref = new ArrayList<Double>();
 			//List<Double> countratio = new ArrayList<Double>();
-			
+			private  boolean included=false;
 			private final double countnormal;
 		  private double backCN= Constants.maxPloidy1();
 			
 			BinomialDistr1(int cn, double refCount, double backCN){
 				this.cn = cn;
 				this.rcn = (double)cn/Constants.backgroundCount1(0);
+				double[] includeRCN = Constants.includeRCN();
+				if(includeRCN==null) included = true;
+				else{
+				for(int k=0; k<includeRCN.length; k++){
+					if(Math.abs(rcn - includeRCN[k])<0.001) included = true;
+				}
+				}
+			
 				this.countnormal =refCount;
 				this.backCN = backCN;
 			}
@@ -454,6 +498,7 @@ import cern.jet.random.engine.DRand;
 			}
 			
 			public double eval(){
+				if(!included) return 0;
 				double lp=0;
 				for(int k =0; k<countRk.size(); k++){
 					//this.setRefCount(countref.get(k), this.countratio.get(k));
@@ -505,11 +550,14 @@ import cern.jet.random.engine.DRand;
 			    	
 			    }else{
 			    	//if(true){
-			    	bb.set((mult*countnormal+1)/betaDownWeight, ((totnormal-mult*countnormal)+1)/betaDownWeight,n);
+			    	//should we add one?
+			    	bb.set((mult*countnormal)/betaDownWeight, ((totnormal-mult*countnormal))/betaDownWeight,n);
 	//		    	bb.setBeta(
 	//		    	bb.setTrials((int) Math.round(n));
 			    	double v =  bb.getDensity(k);
-			    //	System.err.println(rcn+" "+v);
+			    	/*if(mult==0){
+			    	System.err.println(rcn+" "+v);
+			    	}*/
 			    	return v;
 			    	//}
 			    /*	 double maxv = Double.NEGATIVE_INFINITY;
@@ -532,7 +580,7 @@ import cern.jet.random.engine.DRand;
 	
 			
 			public void addCount(double lrr, double baf, double value) {
-				average += value * this.cn;
+				average += value * (this.cn/Constants.backgroundCount1);
 				average_count +=value;
 				this.countRk.add(lrr); this.countRki.add(baf);
 				//this.val.add(value);this.countref.add(countnormal);this.countratio.add(this.ratio1);
@@ -770,7 +818,10 @@ import cern.jet.random.engine.DRand;
 				for(int j=0; j <numsamples; j++){//numsamples
 					this.sample_index1 = j;
 					for(int kk=0; kk<=maxCN; kk++){//noCN
-						lp+=dists.bin[j][kk].eval();// dist.get(k).eval();
+						
+							
+								lp+=dists.bin[j][kk].eval();// dist.get(k).eval();
+							
 					}
 				}
 			}

@@ -447,7 +447,8 @@ public class SimpleDataCollection extends DataCollection {
     	double cnt=0;
     	double bcnt =0;
     	if(gl_ind<0){
-    		int gt_ind = this.headsLowerCase.indexOf("gt");
+    		int gt_ind = this.headsLowerCase.indexOf("gt") ;
+    		if(gt_ind<0) gt_ind = this.headsLowerCase.indexOf("genotype");
     		if(gt_ind <0) return super.calcBaf(l);
     		else{
     			for(int k=0; k<Math.min(l.size(), Constants.includeFirstInBAF()); k++){

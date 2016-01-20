@@ -455,8 +455,10 @@ public class HaplotypeEmissionState extends EmissionState {
 //    		   double p = ;
   //  		   double q = 1-p;
     	   double[] init2 ;//=  ? init : init1;
+    	   double bafi = DataCollection.datC.baf(i);
+    	   if(Double.isNaN(bafi)) bafi = 0.5; 
     	   if(prO ==null || !prO) {
-    		   binom.setProbabilityOfSuccess(DataCollection.datC.baf(i));
+    		   binom.setProbabilityOfSuccess(bafi);
     		//   System.err.println(i+" "+DataCollection.datC.baf(i));
     		   init2 = new double[init[0].length];
     		   for(int k=0; k<init2.length; k++){
@@ -467,7 +469,7 @@ public class HaplotypeEmissionState extends EmissionState {
     	   else{
     		   init2 = init1[di];
     	   }
-    	   if(true)Arrays.fill(init2, 1.0/(double)init2.length);  // this sets default to uniform
+    	   if(Constants.useUniformEmissionPrior())Arrays.fill(init2, 1.0/(double)init2.length);  // this sets default to uniform
     	   int index1 = Constants.getMax(init2);
            emissions[i] = 
         	   init2[index1]>0.9999 ? new IntegerDistribution(index1,emStSp) : 

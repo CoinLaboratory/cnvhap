@@ -58,7 +58,6 @@ import lc1.dp.states.HaplotypeEmissionState;
 import lc1.dp.states.PairEmissionState;
 import lc1.dp.states.PhasedDataState;
 import lc1.ensj.PedigreeDataCollection;
-import lc1.possel.PlotLD;
 import lc1.stats.IlluminaDistribution;
 import lc1.stats.IlluminaRDistribution;
 import lc1.stats.IntegerDistribution;
@@ -72,6 +71,9 @@ import lc1.util.ApacheCompressor;
 import lc1.util.CompressDir;
 import lc1.util.Constants;
 import lc1.util.PhenoGroup;
+import lc1.util.StringAsZipLike;
+import lc1.util.ZipFileAccess;
+import lc1.util.ZipFileLike;
 
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipFile;
@@ -813,7 +815,7 @@ protected int getNumberDataTypes() {
     public void reverse(){
     	   //     this.maf.reverse();
     	        Collections.reverse(this.loc);
-    	        this.dc.reverse();
+    	       if(dc!=null) this.dc.reverse();
     	        for(int i=0; i<loc.size(); i++){
     	            loc.set(i,-1 *loc.get(i));
     	        }
@@ -832,10 +834,17 @@ protected int getNumberDataTypes() {
     	            nxt.reverse();
     	        }
     	    }
-    public void addCollection(DataCollection datC, int offset){
-    	if(dc!=null) this.dc.addCollection(datC.dc);
-    	int offset1 = offset - datC.loc.get(0) + loc.get(loc.size()-1);
-    
+    public void addCollection(DataCollection datC, Integer offset){
+    	if(dc!=null) {
+    		this.dc.addCollection(datC.dc);
+    	}
+    	int offset1 = offset ==null ? 0 : offset - datC.loc.get(0) + loc.get(loc.size()-1);
+    	for(Iterator<Integer> it = datC.chrToMaxIndex.keySet().iterator(); it.hasNext();){
+    		Integer key = it.next();
+    		Integer val = datC.chrToMaxIndex.get(key);
+    		datC.chrToMaxIndex.put(key, val+loc.size());
+    	}
+    this.chrToMaxIndex.putAll(datC.chrToMaxIndex);
     	for(int k=0; k< datC.loc.size(); k++){
     		this.loc.add(datC.loc.get(k)+offset1);
     		this.snpid.add(datC.snpid.get(k));
@@ -3601,8 +3610,8 @@ public class WritePhased{
     	
     	//int ind = getIndex(key);
     	  if(dat==null){
-          	System.err.println("warning is null "+key);
-          	return;
+          	throw new RuntimeException("warning is null "+key);
+          //	return;
           }
            dat.print(pw, expand, mark , toDrop, alleleA, alleleB, datL.emissions) ;
           double[] unc = null;//dat.getUncertainty(dataL.get(dat.getName()));
@@ -4324,7 +4333,7 @@ public  double[] uncertaintyVitPhase(String key){
     return get(uncertaintyVitPhase, key);
 }
 
-public   void setData(String key, PIGData dat, HaplotypeEmissionState datL, PIGData datvit, HaplotypeEmissionState datvitL, double[] certainty){
+public  synchronized void setData(String key, PIGData dat, HaplotypeEmissionState datL, PIGData datvit, HaplotypeEmissionState datvitL, double[] certainty){
     dat.setName(key);
     datL.setName(key);
     this.data.put(key, dat);
@@ -4681,7 +4690,7 @@ public static int firstGreaterThanOrEqual(List<Integer>loc, int readPos){
 
 String[] header;
 int lrr_index=0;
-List<Integer> chrToMaxIndex = null;  //if using 'all' this keeps track of maximum co-ord for each chrom
+Map<Integer, Integer> chrToMaxIndex = null;  //if using 'all' this keeps track of maximum co-ord for each chrom
 
 List<String> headsLowerCase;
 List<String> header_snp;
@@ -4922,7 +4931,7 @@ DataProjection dp;
 public  DataCollection (File f, short index, int no_copies, final int[][] mid,File bf, Collection<String> snp_ids_to_restrict) throws Exception{
 //	System.err.println(Constants.print(mid[0]));
 	 this.chrom = f.getName().split("\\.")[0];//.split("_")[0];
-	
+	if(f.getName().endsWith(".counts")) chrom = "all";
 	if(f.exists()){
 		
 		System.err.println("specified file exists: opening "+f.getName());
@@ -5021,22 +5030,33 @@ public  DataCollection (File f, short index, int no_copies, final int[][] mid,Fi
      avgDepth = new ArrayList();
  
     List<Integer> ploidy = new ArrayList<Integer>();
-
-    ZipFile zf = new ZipFile(f);
-    String ent_name = ((ZipEntry)zf.getEntries().nextElement()).getName();
-   String f_name = f.getName().split("\\.")[0];
-   String pref = "";// ent_name.startsWith(f_name) ? f_name+"/" : "";
-   //String pref =  ent_name.startsWith(f_name) ? f_name+"/" : "";
-   pref = "";
+    List<String> headers = null;
+    String pref = "";
+	ZipFile zf  = null;  List<String> firstline = null; 
+	  BufferedReader  buildF = null; 
+    if(f.getName().endsWith(".zip")){
+    zf= new ZipFile(f);
+    buildF =  bf==null ? null : getBuildReader(f.getParentFile(), bf,zf);
+    	String ent_name = ((ZipEntry)zf.getEntries().nextElement()).getName();
+    	String f_name = f.getName().split("\\.")[0];
+    	// ent_name.startsWith(f_name) ? f_name+"/" : "";
+    	//String pref =  ent_name.startsWith(f_name) ? f_name+"/" : "";
+    	pref = "";
 //   pref = "";
         this.abGenos = hasABGenos(zf);
-      //  loc1 = new ArrayList<Integer>();
         BufferedReader name_bf = ApacheCompressor.getBufferedReader(zf, pref+"Name");
         if(name_bf==null){
         	name_bf = new BufferedReader(new FileReader(new File(f.getParentFile(),pref+"Name")));
         }
-         List<String> headers=  ApacheCompressor.getIndiv(name_bf,  null);
+       headers=  ApacheCompressor.getIndiv(name_bf,  null);
+    }else if(f.getName().endsWith(".counts")){
+    	headers = Arrays.asList("DP\nchr\tstart\tend\tsnpid\format\nsample".split("\n"));//#CHROM  ID      START   END     FORMAT
+    	 buildF =  getBuildReader(f.getParentFile(), bf,zf);
+    	
+    	firstline = Arrays.asList(buildF.readLine().split("\t"));
+    }
          header = headers.get(0).split("\t");
+         
           headsLowerCase = Arrays.asList(header);
          for(int j=0; j<headsLowerCase.size(); j++){
         	 headsLowerCase.set(j, headsLowerCase.get(j).toLowerCase());
@@ -5071,7 +5091,10 @@ public  DataCollection (File f, short index, int no_copies, final int[][] mid,Fi
       File samplesFile = new File(f.getParentFile(), "Samples");
          if(samplesFile.exists()){
          indiv = ApacheCompressor.getIndiv(samplesFile, sample_id);
-         }  else{
+         }else if(firstline!=null){
+        	 indiv = firstline.subList(firstline.indexOf("FORMAT")+1, firstline.size());
+         }
+         else{
         	 indiv = ApacheCompressor.getIndiv(zf, pref+"Samples", sample_id);
          }
          if(indiv.size()==0){
@@ -5098,7 +5121,7 @@ public  DataCollection (File f, short index, int no_copies, final int[][] mid,Fi
         
          
          int plo_id = header_sample.indexOf("ploidy");
-         if(plo_id>0){
+         if(plo_id>0 && zf !=null){
         	 List<String> pl = ApacheCompressor.getIndiv(zf,pref+"Samples", plo_id);
         	 for(int k_=0; k_<dToInc.size(); k_++){
         		 int k = dToInc.get(k_);
@@ -5113,36 +5136,7 @@ public  DataCollection (File f, short index, int no_copies, final int[][] mid,Fi
          }
          //code to deal with average depth for each subject which
          //is read from the samples file (column named avgdepth)
-        int avgDepthCol = header_sample.indexOf("avgdepth");
-       
-        if(avgDepthCol<0){
-        	avgDepthCol = header_sample.indexOf("info_1");
-        }
-       
-      
-        {
-        	List<String> ad ;
-        	//File samplesFile = new File(f.getParentFile(), "Samples");
-        	if(samplesFile.exists()){
-        		ad  = ApacheCompressor.getIndiv(samplesFile);//,pref+"Samples");
-        	}else{
-        		ad = ApacheCompressor.getIndiv(zf,pref+"Samples");
-        	}
-        	 for(int k_=0; k_<dToInc.size(); k_++){
-        		 int k = dToInc.get(k_);
-	       		String[] str = ad.get(k).split("\\s+");//split(":");
-	       		int avgDepthCol1 = avgDepthCol;
-	       		if(avgDepthCol1>=0){
-	       			avgDepth.add(Double.parseDouble(str[avgDepthCol1]));
-	       		}
-	       		else if(avgDepthCol1<0 && str.length>header_sample.size()){ avgDepthCol1 = header_sample.size();
-	       		 	avgDepth.add(Double.parseDouble(str[avgDepthCol1]));
-	       		}else{
-	       			avgDepth.add(ploidy.get(k).doubleValue());
-	       		}
-	       		
-	    	 }
-        }
+        
        
        
         /* this is to deal with repeats
@@ -5239,7 +5233,7 @@ public  DataCollection (File f, short index, int no_copies, final int[][] mid,Fi
       List<String> chr = new ArrayList<String>();
       // if(bf!=null) {
         	  
-        	   BufferedReader  buildF = bf==null ? null : getBuildReader(f.getParentFile(), bf,zf);
+        	 
         	   int[] allel = new int[] {indexOf(header_snp,new String[] {"A","AlleleA","REF", "alleleA"}),
         			   indexOf(header_snp, new String[] {"B", "AlleleB","ALT","alleleB"})};
         	   int strand_id = Constants.strand(index)==null ? indexOf(header_snp,new String[] {"strand","anc_eq_ref"}) : -1;
@@ -5317,7 +5311,7 @@ public  DataCollection (File f, short index, int no_copies, final int[][] mid,Fi
     }*/
     BufferedReader br = DataCollection.getBufferedReader(new File(f.getParentFile(), pref+"Samples.txt"));
     List<String> headerS = this.header_sample;
-    if(br==null){
+    if(br==null && zf !=null){
     	br = DataCollection.getBufferedReader(new File(f.getParentFile().getParentFile(), pref+"Samples.txt"));
         if(br==null){
         	ZipArchiveEntry entry  = zf.getEntry(pref+"Samples");
@@ -5329,7 +5323,7 @@ public  DataCollection (File f, short index, int no_copies, final int[][] mid,Fi
         	 headerS =  Arrays.asList(br.readLine().split("\t"));
         }
     }
-    else{
+    else if(br!=null){
        headerS =  Arrays.asList(br.readLine().split("\t"));
   }
     //this.readPhenotypes(br, headerS, inclFile,indiv);
@@ -5359,16 +5353,21 @@ public  DataCollection (File f, short index, int no_copies, final int[][] mid,Fi
     int cumR = Constants.cumulativeR(index);
     int max = (int) Math.floor((float)this.length/(float)cumR)*cumR;
     if(max==0) throw new RuntimeException("for this size region set cumR to one");
+    int prev_i = -1;
+    double prevc=0;
+    double[] res = new double[2];
+    ZipFileAccess zf2 = zf ==null ? new StringAsZipLike(bf, this.snpid.get(0), this.snpid.get(snpid.size()-1)): new ZipFileLike(zf);
     for(int i=0; i<max; i++){
     	
     	 if(geno_id>=0 && alleleA.size()<=i && ! this.abGenos) {
-    		 this.addAlleles(i, ApacheCompressor.getIndiv(zf, snpid.get(i), geno_id),
+    		 this.addAlleles(i, zf2.getIndiv(snpid.get(i), geno_id),
     				 b_ind<0 ? null : ApacheCompressor.getIndiv(zf, snpid.get(i), b_ind)
     		 );
     	 }
     	
     	try{
     		String sno = this.snpid.get(i);
+    	//	System.err.println(sno)
     		if(sno==null) throw new RuntimeException("is null");
     		if(Constants.removeIndels() && i< this.alleleA.size() && (alleleA.get(i).equals('I') || alleleA.get(i).equals('D'))){
     			System.err.println("excluded "+this.snpid().get(i)+" "+alleleA.get(i));
@@ -5376,7 +5375,21 @@ public  DataCollection (File f, short index, int no_copies, final int[][] mid,Fi
     			baf.add(Double.NaN);
     		}else{
     		try{
-    		probeOnly[i] = process(pref+sno,(int) Math.floor((float)i/(float)cumR),zf, ploidy,dToInc,missing, lrrVals);
+    			double diff = i==0 ? 0 : this.loc.get(i) - this.loc.get(i-1);
+    	    	int new_i = (int) Math.floor((float)i/(float)cumR);
+    	        Constants.decode(this.loc.get(i), res,false);
+    	        double currentchrom = res[0];
+    	    	if(Math.abs(currentchrom-prevc)<1e-6 || cumR ==1 || new_i!=prev_i){
+    	    		probeOnly[i] = process(pref+sno,new_i,zf2, ploidy,dToInc,missing, lrrVals);
+    	    		
+    	    	}else{
+    	    		System.err.println("excluded "+i);//+" "+alleleA.get(i));
+        			//failed.add(i);
+        			baf.add(Double.NaN);
+    	    	}
+    	    	prev_i = new_i;
+    	    	prevc = currentchrom;
+    		
     		}catch(Exception exc){
     			failed.add(i);
     			baf.add(Double.NaN);
@@ -5412,6 +5425,19 @@ public  DataCollection (File f, short index, int no_copies, final int[][] mid,Fi
         
      }
     
+    
+   
+    int avgDepthCol = header_sample.indexOf("avgdepth");
+    
+    if(avgDepthCol<0){
+    	avgDepthCol = header_sample.indexOf("info_1");
+    }
+  
+   
+    
+    	zf2.getAvgDepth(pref, avgDepthCol, dToInc, samplesFile, ploidy, header_sample, avgDepth);
+   
+    
     if(cumR>1){
     	//need to collapse snpid, loc, etc
     	int rem = this.snpid.size() % cumR;
@@ -5434,6 +5460,11 @@ public  DataCollection (File f, short index, int no_copies, final int[][] mid,Fi
     	}
     	todrop = new TreeSet<Integer>();
     }
+    
+    
+    
+    
+    
     this.indiv =sublist( indiv,dToInc);
     todrop.addAll(findLowDepth());
     todrop.addAll(this.findLowBAF());
@@ -5447,7 +5478,7 @@ public  DataCollection (File f, short index, int no_copies, final int[][] mid,Fi
 	  }
      double[] scaleLoc = Constants.scaleLoc();
      if(scaleLoc!=null){
-    	 chrToMaxIndex = new ArrayList<Integer>();
+    	 chrToMaxIndex = new HashMap<Integer, Integer>();
  		
  		
  		
@@ -5455,10 +5486,10 @@ public  DataCollection (File f, short index, int no_copies, final int[][] mid,Fi
     		 double start = loc.get(i);
     			double a1 = ((double)start/scaleLoc[1]);
 	            int chr1 = (int)Math.floor(a1)-1; // problem if negative 
-	            while(chrToMaxIndex.size()<=chr1){
+	          /*  while(chrToMaxIndex.size()<=chr1){
 	     			chrToMaxIndex.add(0);
-	     		}
-	          chrToMaxIndex.set(chr1, i);
+	     		}*/
+	          chrToMaxIndex.put(chr1, i);
     	 }
      }
     
@@ -5495,7 +5526,7 @@ public  DataCollection (File f, short index, int no_copies, final int[][] mid,Fi
      if(Constants.median_correction(index) && !(chrom.startsWith("X") || chrom.startsWith("Y"))){
          this.applyMedianCorrection(zf,dToInc);
      }
-     this.applyVarianceThreshold(zf, 
+     if(zf!=null) this.applyVarianceThreshold(zf, 
     		 Constants.standardiseVariance(index) 
     		 && !(chrom.startsWith("X") || chrom.startsWith("Y")), dToInc,sample_id);
   if(length!=loc.size()) {
@@ -5506,7 +5537,7 @@ public  DataCollection (File f, short index, int no_copies, final int[][] mid,Fi
   this.setMinMaxRValues();
  
    //this.calculateMaf(true);
-   zf.close();
+   if(zf!=null) zf.close();
   
     Logger.global.info("free memory "+Runtime.getRuntime().freeMemory());
     this.dropIndiv(toDelete.toArray(new String[0]));
@@ -6235,6 +6266,14 @@ public  void readBuildFile(ZipFile zf, String prefix, BufferedReader br, String 
     }*/
    outer: for(int i=0;(st = br.readLine())!=null; i++){
         String[] str = st.split("\t+");
+        if(zf==null && chrom1.equals("chrall")){
+        	String str1 = Constants.recode(new String[] {str[0], str[2],str[3]});
+        	str[3] = str[0]+"_"+str[1];
+        	str[0] = "all";
+        	
+        	str[1] = str1;
+        	str[2] = str1;
+        }
         if(i==0 && chr_index>=0 && ! str[chr_index].startsWith("chr") && chrom1.toLowerCase().startsWith("chr")){
         	chrom = chrom1.substring(3);
         }
@@ -6258,7 +6297,10 @@ public  void readBuildFile(ZipFile zf, String prefix, BufferedReader br, String 
      int pind =chr_id.startsWith("chrpcs") ? -1 :  Math.max(chr_id.indexOf('p'), chr_id.indexOf('q'));
      if(pind>=0) chr_id = chr_id.substring(0,pind);
 //      if(chr_id.endsWith("p")) chr_id = chr_id.substring(0)
-        if( (chr_id.equals(chrom_nop) || chr_id.equals(chrom)) 		
+   //  if(str[loc_index]==null ||  (!chr_id.equals(chrom_nop) && !chr_id.equals(chrom))){
+   // 	 System.err.println('h');
+    // }
+        if(str[loc_index]!=null &&  (chr_id.equals(chrom_nop) || chr_id.equals(chrom)) 		
    ){
             int no = loc_index<0 ? i*Constants.lengthMod() : Integer.parseInt(str[loc_index]);
             for(int k=0; k<fromTo.length; k++){
@@ -6266,7 +6308,7 @@ public  void readBuildFile(ZipFile zf, String prefix, BufferedReader br, String 
                 if(no >= fromTo[k][0] ){
                 	if( no <= fromTo[k][1]){
                 	
-                		  if(zf.getEntry(prefix+id)!=null ){
+                		  if(zf==null || zf.getEntry(prefix+id)!=null ){
                 	 if(!Constants.excludeMultiAllelicSites() ||maf_index==null ||  ((maf_index[0]<0 || str[maf_index[0]].indexOf(',')<0)  
                 			 && (maf_index[1] <0 || str[maf_index[1]].indexOf(',')<0 ))){       	
                 	String snp = str[snp_index];
@@ -6282,7 +6324,6 @@ public  void readBuildFile(ZipFile zf, String prefix, BufferedReader br, String 
                 	
                 	this.process(str, i, no, loc_index, maf_index, chr_index, strand_index, snp_index, l, chr, majorAllele, alleleB, forward, bin_index);
                 	// process(str,i);
-                  
                     	
                   
                  //   System.err.println(no);
@@ -6321,7 +6362,7 @@ private boolean excludeFromTo(int[][] fromTo, int no) {
 }
 /** returns if it is a probeOnly probe */
 
-protected  Boolean process(String snpid, int i,ZipFile zf,
+protected final  Boolean process(String snpid, int i,ZipFileAccess zf,
 		List<Integer> ploidy, 
 		List<Integer> sampToInc, double[] missing, double[] lrr) throws Exception {
 
@@ -6329,11 +6370,11 @@ protected  Boolean process(String snpid, int i,ZipFile zf,
      //    System.err.println("reading "+snp_id);
          List<String> l = null;
          String snp_id = process(snpid);
-       l = ApacheCompressor.getIndiv(zf, snp_id, null);
+       l = zf.getIndiv( snp_id, null);
        if(l==null){
-    	   l = ApacheCompressor.getIndiv(zf, snp_id+".txt", null);
+    	   l = zf.getIndiv(snp_id+".txt", null);
     	   if(l==null){
-        	   l = ApacheCompressor.getIndiv(zf, snp_id+".txt.gz", null);
+        	   l = zf.getIndiv( snp_id+".txt.gz", null);
            }
        }
         

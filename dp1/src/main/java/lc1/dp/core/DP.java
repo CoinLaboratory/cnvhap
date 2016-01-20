@@ -5,8 +5,10 @@ import java.io.FileOutputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.logging.SimpleFormatter;
@@ -29,6 +31,8 @@ import lc1.stats.PseudoDistribution;
 import lc1.stats.SimpleDistribution;
 import lc1.stats.StateDistribution;
 import lc1.util.Constants;
+
+import org.apache.commons.math.MathException;
 
 
 
@@ -83,12 +87,27 @@ public class DP{
         emissions = new double[modelLength][seqLength];
         this.emiss = new boolean[modelLength];
         this.adv = new int[modelLength];
-        this.distribution =   new double[((EmissionState)this.hmm.getState(1)).getEmissionStateSpace().size()] ;
+        //char[] ch = Constants.modify0[0];
+        Map<Integer, Integer>cn =new HashMap<Integer, Integer>();
     //    this.nonZero = new boolean[seqLength];
         for(int i=0; i<modelLength; i++){
            State st =  hmm.getState(i);
             emiss[i] =  st instanceof EmissionState;
             adv[i] = st.adv;
+           	if(emiss[i]){
+                EmissionStateSpace emstsp =  ((EmissionState)st).getEmissionStateSpace();
+                int nocop = ((EmissionState)st).noCop();
+                int sze = emstsp.size();
+           		cn.put(nocop,sze );
+           	}
+        }
+       Integer[] cn_array = cn.keySet().toArray(new Integer[0]);
+        this.distribution =  new double[1+cn_array[Constants.getMax(cn_array)]][];
+        for(int i=0; i<distribution.length; i++){
+        	if(cn.containsKey(i)){
+        
+        		distribution[i] =new double[cn.get(i)] ;
+        	}
         }
         Class clazz = complete ? ComplexTerm.class : Term.class;
         try{
@@ -224,7 +243,7 @@ public class DP{
       else return Math.log(hwep);
 }
 boolean inuse = false;
-final double[] distribution; 
+final double[][] distribution;  //different for each copy number 
 public final void  fillEmissions(boolean first ) {
       // if(hmm.trainEmissions() || first){
 	
@@ -240,7 +259,7 @@ public final void  fillEmissions(boolean first ) {
         	   boolean isLog = Constants.isLogProbs();
              //  double[] d  =   state.score((HaplotypeEmissionState)obj, logspace &!isLog,isLog); ///swap!!!
         	   double[] d = emissions[equiv[0]];
-               EmissionState.score(state, (HaplotypeEmissionState)obj,   logspace &!isLog,isLog, d, distribution); ///swap!!!
+               EmissionState.score(state, (HaplotypeEmissionState)obj,   logspace &!isLog,isLog, d, distribution[state.noCop()]); ///swap!!!
                for(int k=1; k<equiv.length; k++){
                    emissions[equiv[k]]  = d;
                }
@@ -270,7 +289,7 @@ public final void  fillEmissions(boolean first ) {
 	    		    	 int loc =DataCollection.datC.loc.get(i); 
 	    		    	 if(true) throw new RuntimeException("!! "+obj.getName()+" "+i+" "+loc);
 	    		    	 EmissionState emstate = ((EmissionState) hmm.getState(2));
-	    		    	EmissionState.calcDistribution(emstate, (HaplotypeEmissionState)obj, 2, Constants.isLogProbs(), distribution);
+	    		    	EmissionState.calcDistribution(emstate, (HaplotypeEmissionState)obj, 2, Constants.isLogProbs(), distribution[emstate.noCop()]);
 	    		       	   CompoundEmissionStateSpace emStSp =  
 		    		    		   Emiss.getSpaceForNoCopies(obj.noCop());
 //		    		    		   (CompoundEmissionStateSpace) ((HaplotypeEmissionState)this.obj).getEmissionStateSpace();
@@ -288,7 +307,7 @@ public final void  fillEmissions(boolean first ) {
 		    		  for(int j=0; j<this.modelLength; j++){
 		    			   if(emiss[j]){
 			    			//   double[] distribution = ((EmissionState) hmm.getState(j)).distribution();
-			    			   double sc = EmissionState.score(((EmissionState) hmm.getState(j)), (HaplotypeEmissionState) obj, i, Constants.isLogProbs(), distribution); ///switch!!
+			    			   double sc = EmissionState.score(((EmissionState) hmm.getState(j)), (HaplotypeEmissionState) obj, i, Constants.isLogProbs(), distribution[emstate.noCop()]); ///switch!!
 			    			   emissions[j][i] = logspace ? Math.log(sc) : sc;
 	;	    			   }
 	    		   }
@@ -399,7 +418,6 @@ protected void calcScoresBackward(){
 			double scale = Math.min(-min[0], thresholdMax-min[1]);
 			backwardTrace.scale(scale, i);
             logscale+=scale;
-			
 		}
         else if(min[1]> thresholdMax){
             double scale = 
@@ -560,15 +578,30 @@ protected void calcScoresBackward(){
           //initialise matrix
       
           for(int i=0; i<seqLength; i++){
+        	 boolean allzero =true;
               for(int j=1; j<modelLength;j++){
 //                  State j = it.next();
   //                if(j==hmm.MAGIC) continue;
                //   logger.info(j);
-                  this.viterbi(j, i, this.emiss[j]  ? emissions[j][i] : this.nullEms);
+                 double sc1 =  this.viterbi(j, i, this.emiss[j]  ? emissions[j][i] : this.nullEms);
+                 if(sc1>Double.NEGATIVE_INFINITY) allzero = false;
+              }
+              if(allzero){
+            	  for(int j=1; j<modelLength; j++){
+            		  if(emiss[j]){
+            			  double sc1 = emissions[j][i];
+            			  if(Double.isNaN(sc1)) throw new RuntimeException("should not be NA in emission matrix");
+            			  else if(sc1>Double.NEGATIVE_INFINITY) allzero = false;
+            		  }
+            	  }
+            	  if(allzero) throw new RuntimeException("all emission states have Negative Infinity at position"+i);
+            	  throw new RuntimeException("alll zer "+i);
               }
           }
           //AbstractTermination automatic - magic index at state seqLength -1 
           forwardTrace.overall = this.viterbi(0,seqLength-1 , this.nullEms);
+          sc[0] =forwardTrace.overall;
+          if(Double.isInfinite(forwardTrace.overall)) throw new RuntimeException("!! is infinite");
          // logger.info(forwardTrace.overall);
           return forwardTrace.overall;
       }
@@ -723,11 +756,13 @@ private State  getBestEmission(int i){
 }
 
 
-   private  double[] getOverallScore(){
+   private  void getOverallScore(double[] sc){
     	 double scoreForward = Math.log(forwardTrace.overall)-forwardTrace.getLogScale(seqLength-1);
     	 double scoreBackward = Math.log( backwardTrace.overall)-backwardTrace.getLogScale(0);
         if(Double.isNaN(scoreForward) || Double.isNaN(scoreBackward) || Double.isInfinite(scoreBackward)) throw new RuntimeException("is nan "+forwardTrace.overall+" "+forwardTrace.getLogScale(seqLength-1)+" "+backwardTrace.overall+" "+backwardTrace.getLogScale(0)+" "+this.protName);
-    	 return new double[]{scoreForward,scoreBackward};
+    	sc[0] = scoreForward;
+    	sc[1] = scoreBackward;
+       // return new double[]{scoreForward,scoreBackward};
     }
     
    
@@ -751,7 +786,8 @@ private State  getBestEmission(int i){
        }
     
     public StateDistribution getPosterior( int i, StateDistribution id){
-    	   Arrays.fill(id.dist, 0.0);
+    	id.reset();
+//    	   Arrays.fill(id.dist, 0.0);
     	if(logspace){
     		
     		StatePosEmission spe = this.statePath.getStatePosForSeqIndex(i);
@@ -837,7 +873,7 @@ private State  getBestEmission(int i){
                //  System.err.println("best "+state_j);
                  obj_i = 
                       //   Constants.fillGaps() ? 
-                                EmissionState.getBestIndex(state_j, (HaplotypeEmissionState) obj,i, sample, Constants.isLogProbs(),distribution) ;
+                                EmissionState.getBestIndex(state_j, (HaplotypeEmissionState) obj,i, sample, Constants.isLogProbs(),distribution[state_j.noCop()]) ;
                            //      : obj.getBestIndices()[i]
                         
              }
@@ -928,23 +964,25 @@ private State  getBestEmission(int i){
     
     Double logprob = null;
     StatePath statePath;
+    double[] sc = new double[2];
     public double search(boolean incBackward, boolean complete) {
+    	Arrays.fill(sc,0);
     	if(logspace){ ///do viterbi training if emissions are in log-space
-    		double sc =  this.calcScoresViterbi();
+    		 sc[0] =  this.calcScoresViterbi();
     		statePath = this.getStatePath(false);
-    		logprob = sc;
-    		return sc;
+    		logprob = sc[0];
+    		return sc[0];
     	}else{
 		 	   calcScoresForward(complete);
 		 	  if(incBackward) calcScoresBackward();
-		 	   double[] sc = getOverallScore();
+		 	  getOverallScore(sc);
 		    
 		      // if(Constants.CHECK){
 		       if(Math.abs(sc[0]-sc[1])>1e-7 || Double.isNaN(sc[0]) || Double.isNaN(sc[1])){
-		    	   calcScoresForward(complete);
-		    	   if(incBackward) calcScoresBackward();
-		    	   double[] sc1 = getOverallScore();
-		           if(incBackward) throw new RuntimeException("these should match "+sc[0]+" "+sc[1]+" vs "+sc1[0]+" "+sc1[1]+"\n");
+		    	 //  calcScoresForward(complete);
+		    	  // if(incBackward) calcScoresBackward();
+		    	   getOverallScore(sc);
+		           if(incBackward) throw new RuntimeException("these should match "+sc[0]+" "+sc[1]+"\n"); // vs "+sc1[0]+" "+sc1[1]+"\n");
 		     //  }
 		       }
 		    logprob = sc[0];
@@ -978,15 +1016,19 @@ double viterbi(int j, int i, double emiss)  {
         if(term ==null) continue;
                   score =Math.log(hmm.getTransitionScore1(j2, j, i))+
                         +term.score();
-            
+                 
                 if(score>max){
                     max = score;
                     max_j = j2;
                     max_i = i-adv;
+                   // if(Double.isInfinite(score)){
+                  	//  throw new RuntimeException("inf "+term.score);
+                    //}
                 }
     }
    
     double result = max;
+    
     forwardTrace.setTrace(j,i, max_j, max_i, result+emiss);
     return result;
 }

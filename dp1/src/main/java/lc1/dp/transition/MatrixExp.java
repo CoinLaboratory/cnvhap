@@ -138,7 +138,7 @@ public class MatrixExp  implements Serializable{
 					}
 				}
 			}
-		//	System.err.println("here");
+			System.err.println("here");
 		//	changed = true;
 		
 			
@@ -444,7 +444,8 @@ public class MatrixExp  implements Serializable{
 		return res;
 	}
 		public void setDistance(double distance){
-			if(Math.abs(distance-this.distance)<0.01 && ! changed) return;
+			if(Math.abs(distance-this.distance)<2 && ! changed) return;
+			System.err.println("setting distance "+distance+" vs "+this.distance);
 			this.distance = distance;
 			for(int i=0; i<D.rows(); i++){
 				double mui = eig.get(i);
@@ -478,7 +479,7 @@ public class MatrixExp  implements Serializable{
 			
 			changed = false;
 			fixM();
-				if(Constants.CHECK ) {
+				if(true || Constants.CHECK ) {
 					
 					this.validate();
 					this.validate(M);

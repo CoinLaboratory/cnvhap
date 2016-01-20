@@ -211,6 +211,9 @@ public  double score(HaplotypeEmissionState data_state,int i_data) {
     //EmissionState hmm_state = this;
  	EmissionStateSpace emStSp = 	hmm_state.getEmissionStateSpace();
  	double sum=0;
+ 	if(Constants.CHECK && emStSp.size()!=distribution.length) {
+ 		throw new RuntimeException("problem");
+ 	}
   /* if(hmm_state.distribution==null){
          hmm_state.distribution = new double[emStSp.size()];
          hmm_state.cn = new int[hmm_state.distribution.length];
@@ -221,6 +224,9 @@ public  double score(HaplotypeEmissionState data_state,int i_data) {
      Arrays.fill(distribution, log ? Double.NEGATIVE_INFINITY: 0.0);
      for(int j=0; j<distribution.length; j++){
              double prob_j =hmm_state.score(j,i);
+             if(Constants.CHECK && Double.isNaN(prob_j)){
+            	 throw new RuntimeException("NA emission probability");
+             }
              if(prob_j>0){
                double ems =  
              	Constants.joint ?

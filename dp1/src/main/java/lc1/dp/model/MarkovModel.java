@@ -234,10 +234,10 @@ public abstract class MarkovModel implements Serializable {
             return name;
        }
    public double getTransitionScore1(int from, int to, int positionOfToEmission){
-	   if(!this.allowTransitions && from!=to&& from!=0 && to!=0) {
-		   return 0;
-	   }
-	   else 
+	  // if(!this.allowTransitions && from!=to&& from!=0 && to!=0) {
+	//	   return 0;
+	 //  }
+	  // else 
 		   return getTransitionScore(from,to,positionOfToEmission);
    }
    public abstract double getTransitionScore(int from, int to, int positionOfToEmission);
@@ -547,7 +547,7 @@ public Iterator<int[]> equivalenceClasses(){
 	public State getState(Comparable comparable) {
 		return this.getState(((IntegerEmiss)comparable).v.intValue());
 	}
-	public boolean allowTransitions = true;
+	private boolean allowTransitions = true;
 	public void allowTransitions(boolean b) {
 		// TODO Auto-generated method stub
 	//	System.err.println(b);

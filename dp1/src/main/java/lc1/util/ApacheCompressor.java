@@ -498,7 +498,7 @@ public static List<String> getIndiv(BufferedReader nxt,  Integer column) throws 
    public static List<String> getIndiv(ZipFile f, String entryName, Integer column) throws Exception{
 	    return getIndiv(f,entryName, column, Constants.splString());
    }
-   
+  
    
    
    public static List<String> getIndiv(ZipFile f, String entryName, Integer column, String spl) throws Exception{

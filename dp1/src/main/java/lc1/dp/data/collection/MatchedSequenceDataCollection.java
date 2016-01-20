@@ -11,6 +11,7 @@ import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 
+import lc1.dp.illumina.AbstractDistributionCollection;
 import lc1.dp.states.EmissionState;
 import lc1.dp.states.HaplotypeEmissionState;
 import lc1.dp.states.IlluminaNoBg;
@@ -213,7 +214,6 @@ public final void makeDistributions(int index) {
 	
 	
 	
-	
 protected Collection<? extends Integer> findLowDepth() {
 	boolean mknewRef = Constants.makeNewRef();
 	double[] tot = null;
@@ -244,6 +244,7 @@ protected Collection<? extends Integer> findLowDepth() {
         if(Constants.useAvgDepth()){
 			totD = (Double) this.avgDepth.get(indiv.indexOf(nme));
 			totD = totD *(genomeLength/Constants.downsample(1));
+			
 //		    System.err.println(totD+" "+nme);
 		}else{
 			for(int k=0; k<ems.length; k++){

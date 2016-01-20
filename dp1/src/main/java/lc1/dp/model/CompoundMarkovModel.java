@@ -57,7 +57,7 @@ public abstract class CompoundMarkovModel extends MarkovModel{
 			}
 			sum+=nocops[i];
 		}
-		return  new CompoundEmissionStateSpace(em, onlyRepeats, Constants.parentobj!=null, false);
+		return  new CompoundEmissionStateSpace(em, onlyRepeats, Constants.parentobj!=null);
   }
   @Override
   public boolean converged(){

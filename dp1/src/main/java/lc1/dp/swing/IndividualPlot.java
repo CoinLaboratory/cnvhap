@@ -6,11 +6,14 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Font;
+import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Polygon;
 import java.awt.Rectangle;
 import java.awt.Shape;
 import java.awt.Stroke;
+import java.awt.font.FontRenderContext;
+import java.awt.font.GlyphVector;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.Rectangle2D;
@@ -151,6 +154,8 @@ final static int type_index =0; //which type 0 is CN, 1 is B
     public static  Font font101 = new Font("SansSerif", Font.PLAIN,(int) Math.round(3*Constants.shapeSize1()));
 
     public static  Font font4 = new Font("SansSerif", Font.PLAIN, (int) Math.round(4*Constants.shapeSize1()));
+    public static  Font font110 = new Font("SansSerif", Font.PLAIN,(int) Math.round(2*Constants.shapeSize1()));
+
     final int noSnps;
     BaumWelchTrainer bwt;
     List<Integer> location;
@@ -886,7 +891,7 @@ public XYSeriesCollection[] getBSeriesCollection(int k){
    /** i is index of individual
      * stateDistribution has the distribution over genotypes
      *  */
-    public void addedInformation(StateDistribution emissionC, int ll, int i, PseudoDistribution dist, int k, HaplotypeEmissionState sta){
+    public void addedInformation(StateDistribution emissionC, int ll, int i, PseudoDistribution dist, int k, HaplotypeEmissionState sta, double[][] distribution){
         double x =location.get(i).doubleValue();
         if(singlechrom) x = Constants.decode(x, pos, this.singlechrom)/1e6;
         
@@ -917,7 +922,7 @@ public XYSeriesCollection[] getBSeriesCollection(int k){
         double sumNonMix = Constants.allowComponent() ?  Sampler.getProbOverStates(emissionC, bwt.hmm, sta,i,prob,0) : 0;
         
        
-        double sum = 	Sampler.getProbOverStates(emissionC, bwt.hmm, sta, i,prob, Constants.isLogProbs(), sta.distribution());
+        double sum = 	Sampler.getProbOverStates(emissionC, bwt.hmm, sta, i,prob, Constants.isLogProbs(), distribution);
         if(!Constants.allowComponent) sumNonMix = sum;
 //        double sumNonMix = Constants.allowComponent() ? Sampler.getProbOverStates(emissionC, bwt.hmm, sta, i,prob) : sum;//,0);	
      //    double[] prob_b = new double[current_b.getSeriesCount()];
@@ -1280,6 +1285,18 @@ public XYSeriesCollection[] getBSeriesCollection(int k){
 	    	 shapes[i] = getShape(rot.createTransformedShape(shapes[i-1]), Constants.shapeSize());
 	     }
 	  }
+	  /*if(Constants.useCNAsShape()){
+		  Font f = new Font("SansSerif", Font.PLAIN, Constants.shapeMult()*(int) Constants.shapeSize());
+		    // Optionally change font characteristics here
+		    // f = f.deriveFont(Font.BOLD, 70);
+
+		    FontRenderContext frc = Graphics.getFontMetrics(f).getFontRenderContext();
+		    GlyphVector v = f.createGlyphVector(frc, new char[] { c });
+		    return v.getOutline();
+		  for(int i=0; i<shapes.length; i++){
+			  shapes[0] = (new Character(i)).
+		  }
+	  }*/
 	  // shapes[5] = 
    }
 /*<<<<<<< .mine
@@ -1391,13 +1408,17 @@ public XYSeriesCollection[] getBSeriesCollection(int k){
                 Color colors = ca[noCop];
                int noB = emStSp.getBCount(i);
                // Color colors = ca[i];
-                
+             
                 renderer[kk].setSeriesPaint(i, colors);
                 renderer[kk].setSeriesFillPaint(i,colors);
               if(!(renderer[kk] instanceof XYBarRenderer) ) renderer[kk].setSeriesShape(i,
             		 shapeSize[kk]==null   ? sha[noB]: new Ellipse2D.Float(-10f,-10f,20f,20f));
             			 //this.getShape(sha[noB],shapeSize[kk] ));
-              
+              if(Constants.plotCNAsShape()){
+            	  FontRenderContext frc =getFontMetrics(this.font110).getFontRenderContext();
+         		    GlyphVector v = font110.createGlyphVector(frc,  (emStSp.getCN(i)+"").toCharArray());
+         		   renderer[kk].setSeriesShape(i,v.getOutline());
+              }
               //  ik++;
             }
             }
@@ -2026,6 +2047,7 @@ lowIndex, true, jG.getSize().width)[0];
             Integer l = (Integer)obj[1];
             StateDistribution dist = (StateDistribution) obj[0];
             Integer i = (Integer)obj[2];
+            double[][] distribution = (double[][]) obj[7];
             HaplotypeEmissionState sta = (HaplotypeEmissionState) bwt.data[l];
             PseudoDistribution dist1 = sta.emissions[i];
             PseudoDistribution distr = dist1 instanceof MixtureDistribution ? ((MixtureDistribution)dist1).dist[0] : dist1;
@@ -2036,14 +2058,14 @@ lowIndex, true, jG.getSize().width)[0];
         	   for(int ii=0; ii<l1.size(); ii++){
         		   PseudoDistribution distr1 = l1.get(ii);
         		   if(distr1 instanceof PseudoMixture){
-                	   addedInformation(dist, l, i, ((PseudoMixture)distr1).dist[0], 0, sta);
+                	   addedInformation(dist, l, i, ((PseudoMixture)distr1).dist[0], 0, sta, distribution);
         		   }
-        		   else addedInformation(dist, l, i, distr, ii, sta);
+        		   else addedInformation(dist, l, i, distr, ii, sta, distribution);
         	   }
            }else if(distr instanceof PseudoMixture){
-        	   addedInformation(dist, l, i, ((PseudoMixture)distr).dist[0], 0, sta);
+        	   addedInformation(dist, l, i, ((PseudoMixture)distr).dist[0], 0, sta, distribution);
            }else{
-        	   addedInformation(dist, l, i, distr, 0, sta);
+        	   addedInformation(dist, l, i, distr, 0, sta, distribution);
            }
         }
         else if(nme.equals("finished")){

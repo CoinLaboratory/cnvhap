@@ -198,8 +198,8 @@ public abstract class HaplotypeHMM extends MarkovModel implements Comparable {
 		List<State> st = new ArrayList<State>(this.states);
 		this.states.clear();
 		int[][] m = new int[st.size()][];
-		char[] ch = new char[num1];
-		char[] mod0 = Constants.modify(0);
+		String[] ch = new String[num1];
+		String[] mod0 = Constants.modify(0);
 		int k = 1;
 		m[0] = new int[] { 0 };
 		this.states.add(st.get(0));
@@ -222,7 +222,7 @@ public abstract class HaplotypeHMM extends MarkovModel implements Comparable {
 		for (int jk = 1; jk < states.size(); jk++) {
 			in[jk - 1] = jk;
 		}
-		Constants.modify0 = new char[Constants.inputDir.length][ch.length];
+		Constants.modify0 = new String[Constants.inputDir.length][ch.length];
 		Arrays.fill(Constants.modify0,ch);
 //		System.arraycopy(src, srcPos, dest, destPos, k)ch;
 		// HaplotypePanel1.calcStatEm();
@@ -234,7 +234,7 @@ public abstract class HaplotypeHMM extends MarkovModel implements Comparable {
 	}
 
 	public HaplotypeHMM(String name, int numFounders, int noSnps,
-			double[] init1, EmissionStateSpace emStSp1, char[][] codes,
+			double[] init1, EmissionStateSpace emStSp1, String[][] codes,
 			List<Integer> locs, Boolean[] probeOnly,
 			ProbabilityDistribution[] numLevels) {
 		super(name, noSnps);
@@ -245,19 +245,19 @@ public abstract class HaplotypeHMM extends MarkovModel implements Comparable {
 			statesByCn[i] = new ArrayList<EmissionState>();
 		}
 		double thresh = 1e-8;
-		char[] codesSum ;
+		String[] codesSum ;
 		if (codes == null) {
-			codes = new char[1][numFounders];
-			Arrays.fill(codes[0], 'a');
+			codes = new String[1][numFounders];
+			Arrays.fill(codes[0], "a");
 			codesSum = codes[0];
 		}else{
-			codesSum = new char[numFounders];
+			codesSum = new String[numFounders];
 			boolean hasA = false;  
 			for(int k=0; k<numFounders; k++){
 				codesSum[k] = codes[0][k];
 				for(int j=1; j<codes.length; j++){
 					if(codes[j][k]!=codes[0][k]){
-						codesSum[k] = 'a';
+						codesSum[k] = "a";
 						hasA = true;
 					}
 				}
@@ -268,7 +268,7 @@ public abstract class HaplotypeHMM extends MarkovModel implements Comparable {
 			throw new RuntimeException("!!");
 
 		for (int j = 0; j < codesSum.length; j++) {
-			Integer i = codesSum[j]=='a' ? null : Integer.parseInt(codesSum[j] + "");
+			Integer i = codesSum[j].equals("a") ? null : Integer.parseInt(codesSum[j].trim());
 			List<EmissionState> statesByCn_i = i==null ? null : statesByCn[i];
 
 			EmissionStateSpace emStSp = i==null ?  Emiss.mergedSpace:
@@ -624,12 +624,16 @@ public abstract class HaplotypeHMM extends MarkovModel implements Comparable {
 		Emiss.EmissionStateSpaceForNoAlleles ems = Emiss.emiss;
 		EmissionStateSpace emstsp1 = ems.mergedSpace;
 		//int i1 = emstsp1.get(Emiss.b());
-		List<Comparable> list = Arrays.asList(new Comparable[] {Emiss.b()});
+		Comparable emissb = Emiss.b();
+		List<Comparable> list = null;
+		if(emissb!=null){
+		list = Arrays.asList(new Comparable[] {emissb});
 		//EmissionStateSpace emstsp1 = ((CompoundEmissionStateSpace)Emiss.emiss.mergedSpace).getMembers()[0];
 		for(int i1=0; i1<list.size(); i1++){
 			Comparable compa = list.get(i1);
 			sb.append("\t");
 			sb.append(proc(emstsp1.getHaploString(compa)));
+		}
 		}
 		for(int j=1; j<this.modelLength(); j++){
 			 sb.append("\t");
@@ -668,6 +672,7 @@ public abstract class HaplotypeHMM extends MarkovModel implements Comparable {
 					states_[i1] = state;
 					stsp1[i1] = state.getEmissionStateSpace();
 				}
+				if(emissb!=null){
 				for(int i2=0; i2<list.size(); i2++){
 					double sum=0;
 					sb.append("\t");
@@ -694,6 +699,7 @@ public abstract class HaplotypeHMM extends MarkovModel implements Comparable {
 						double maxd2 = pr[max2];
 						sb.append(";"+(max2+1)+"="+String.format("%5.3g", maxd2).trim());
 					}
+				}
 				}
 			}
 			

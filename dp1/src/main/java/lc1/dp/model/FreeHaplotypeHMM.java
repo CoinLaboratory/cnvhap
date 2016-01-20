@@ -100,7 +100,7 @@ import lc1.util.CopyEnumerator;
   }*/
   /** u[0] is for emissions, u[1] for within group transitions and u[2] for between group transitions */
 public FreeHaplotypeHMM(String name, int numFounders, int noSnps,   double[] init,  EmissionStateSpace emStSp, Object []clazz, List<Integer> locs, 
-        Double[] r, Double[] exp_p1, char[][] mod, double[] rel, double[]rel_start,
+        Double[] r, Double[] exp_p1, String[][] mod, double[] rel, double[]rel_start,
         boolean correlateR, Boolean[] probeOnly, ProbabilityDistribution[]  numLevels)  {
       super(name, numFounders, noSnps,   init, emStSp, mod, locs,  
     		  probeOnly,numLevels);

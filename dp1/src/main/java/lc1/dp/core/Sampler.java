@@ -8,6 +8,7 @@ import java.io.FileReader;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
@@ -337,7 +338,7 @@ public class Sampler {
    }
    
   public static  double getProbOverStates(StateDistribution emissionC,
-           MarkovModel hmm, HaplotypeEmissionState obj, int i, double[] res, boolean log, double[] dist) {
+           MarkovModel hmm, HaplotypeEmissionState obj, int i, double[] res, boolean log, double[][] dist1) {
 	   EmissionStateSpace emstsp =Emiss.getSpaceForNoCopies(obj.noCop());
        Arrays.fill(res,  0.0);
        double sum = 0;
@@ -345,13 +346,14 @@ public class Sampler {
            double p = emissionC.dist[j];
            EmissionState state_j = (EmissionState) hmm.getState(j);
            if(p>0){
+        	   double[] dist = dist1[state_j.noCop()];
           	 // double[] dist = state_j.distribution();
                sum+=HaplotypeEmissionState.calcDistribution(obj, (EmissionState) state_j, i,  p,log, dist);
                EmissionStateSpace emstsp1 = state_j.getEmissionStateSpace();
                for(int k=0; k<dist.length; k++){
             	   int haploPair = emstsp.get(emstsp1.get(k)).intValue();
             	   int geno = emstsp.getGenoForHaplopair(haploPair);
-             	  res[geno]+=dist[k];
+             	   res[geno]+=dist[k];
                }
            }
        }
@@ -423,10 +425,28 @@ public class Sampler {
    //int modelCount=0;;
    boolean unwrapToSample = Constants.unwrapForSampling();
   
+ 
+   private CompoundMarkovModel[] makeSamplingHMMs(List<CompoundMarkovModel> models){
+	   CompoundMarkovModel[] m= new CompoundMarkovModel[models.size()];
+	   for(int k=0; k<m.length; k++){
+		   CompoundMarkovModel hmm =(CompoundMarkovModel)models.get(k);
+	       if(  unwrapToSample){
+	           while(hmm instanceof WrappedModel){
+	            hmm = ((WrappedModel)hmm).getHMM();
+	           } 
+	       }
+	       else if(hmm instanceof CachedHMM ){
+	           ((CachedHMM)hmm).refresh();
+	       }
+	       m[k] = hmm;
+	   }
+	   return m;
+   }
+   
    final List<AssociationCalculator>[][] ac;
    final HWECalculator[] hwe_calc;
 List<EmissionStateSpace> stateEm1 = new ArrayList<EmissionStateSpace>();
-   public Callable sampleFromHMM(final int j1, final EmissionState dat1, final int noSamples, final List models, final File sampleDir) throws Exception{
+   public Callable sampleFromHMM(final int j1, final EmissionState dat1, final int noSamples, final CompoundMarkovModel[] models, final File sampleDir) throws Exception{
 	  return new Callable(){
 		   
 	   public Object call(){
@@ -441,15 +461,8 @@ List<EmissionStateSpace> stateEm1 = new ArrayList<EmissionStateSpace>();
        //  no_samples++;
        String key = dat1.getName();
        int nocop = dat1.noCop();
-         CompoundMarkovModel hmm =(CompoundMarkovModel)models.get(nocop-1);
-       if(  unwrapToSample){
-           while(hmm instanceof WrappedModel){
-            hmm = ((WrappedModel)hmm).getHMM();
-           } 
-       }
-       else if(hmm instanceof CachedHMM ){
-           ((CachedHMM)hmm).refresh();
-       }
+         CompoundMarkovModel hmm =models[nocop-1];
+     
        
        if(ac!=null && ac[nocop-1]!=null){
     	   for(int ii=0; ii<ac[nocop-1].length; ii++){
@@ -474,9 +487,14 @@ List<EmissionStateSpace> stateEm1 = new ArrayList<EmissionStateSpace>();
        DP dp = (DP) dp_pool.get(data.noCopies(key)-1).getObj(j1);
        dp.setData(dat1,j1);
        dp.reset(true);  
-       
+       try{
         if(!sample) dp.searchViterbi();
         else  dp.search(true, sample);
+       }catch(Exception exc){
+    	   System.err.println("prob with "+dat1.getName());
+    	   exc.printStackTrace();
+    	   System.exit(0);
+       }
      //   int len=1;
         Object[][] os1 =  !sample && Constants.numRep()<=1 ? null : getOutputStream(sampleDir, key) ;
         CompoundEmissionStateSpace emStSp =Emiss.getSpaceForNoCopies(nocop);
@@ -631,6 +649,7 @@ List<EmissionStateSpace> stateEm1 = new ArrayList<EmissionStateSpace>();
         }catch(Exception exc){
         	System.err.println("problem with "+j1);
         	exc.printStackTrace();
+        	System.exit(0);
         }
 	    return null;
 	   }
@@ -714,6 +733,7 @@ public void sampleFromHMM(final List models, final int noSamples, int modelCount
           //  if(bwt[ik2]==null) continue;
     	   List<String> keys =data.indiv();
     	   List tasks = new ArrayList<Callable>();
+    	   CompoundMarkovModel[] models1 = makeSamplingHMMs(models);
            outer: for(//int ik1 =0; ik1<bwt[ik2].size(); ik1++){
                    Iterator<String> it = keys.iterator(); it.hasNext();){
         	   String key = it.next();
@@ -721,13 +741,14 @@ public void sampleFromHMM(final List models, final int noSamples, int modelCount
              EmissionState emst =   data.dataL.get(key);
         //       Logger.global.info("sampling "+modelCount+" "+emst.getName());
              try{
-           tasks.add(sampleFromHMM(index, emst, noSamples, models, sampleDir));// pw_rep);
+           tasks.add(sampleFromHMM(index, emst, noSamples, models1, sampleDir));// pw_rep);
              }catch(Exception exc){
             	 exc.printStackTrace();
              }
            index+=1;
           }
-    	   BaumWelchTrainer.involeTasks(tasks,true);
+    	 //  Collections.reverse(tasks);
+    	   BaumWelchTrainer.involeTasks(tasks,false);
        if(Constants.bufferCompress()){
     	   data.printcompressed(keys);
        }

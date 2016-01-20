@@ -1228,7 +1228,7 @@ CNVHap.cnvf.setTab(s);
               if(marks!=null){
               for(Iterator<Integer> it = marks.iterator(); it.hasNext();){
             	  double rate = (((FreeHaplotypeHMM)this.hapHMM).trans.getRate(it.next()));
-            	   logger.info("rate "+"\t "+String.format("%5.3g\t%5.3g mb", new Object[] {rate,(-1*Math.log(1-rate)/Constants.probCrossOverBetweenBP)/1e6}));
+            	   logger.info("rate"+"\t "+String.format("%5.3g\t%5.3g mb", new Object[] {rate,(-1*Math.log(1-rate)/Constants.probCrossOverBetweenBP)/1e6}));
               }
               }
             //  time = t1;
@@ -1513,6 +1513,7 @@ public  static void writeHMM(List phmms, File textHMMOutput, DataCollection data
        sb.append("%8s ");
        sb2.append("%8.2g ");
     }
+   Logger.global.info("printing hmm to file  "+textHMMOutput);
   // SimpleExtendedDistribution[] phh = ((PairMarkovModel)((WrappedModel)phmm).unwrapModel()).probHomoIsHemi;
    PrintWriter hmmpw = new PrintWriter(new BufferedWriter(new FileWriter(new File(textHMMOutput, "hmm.txt"))));
    //if(name!=null && name.length>0) hmmpw.println("name     "+String.format(sb.toString(), name));

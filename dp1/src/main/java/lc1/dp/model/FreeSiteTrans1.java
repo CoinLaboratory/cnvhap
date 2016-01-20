@@ -732,7 +732,13 @@ public static void makeStateToGroupTrans(int[] stateToGroup, int[] stateToWithin
         }
         else dir1 =  new Dirichlet(rel1, u_glob);
       //  if(dir1!=null && dir1.dist.length!=no_states) throw new RuntimeException("!!");
-        
+        if(Constants.onlyGlobalTrans() && globalTrans!=null){
+        	for(int i=1; i<transProbs.length; i++){
+        		//this.globalTrans.mat.setDistance(this.getDist(i));
+        		this.transProbs[i] = globalTrans;
+        	}
+        }
+        else{
             for(int i=1; i<transProbs.length; i++){
             	if(globalTrans!=null){
             	this.globalTrans.mat.setDistance(this.getDist(i));
@@ -787,5 +793,6 @@ public static void makeStateToGroupTrans(int[] stateToGroup, int[] stateToWithin
              //  if(Constants.CHECK && dir1!=null) validate(transProbs[i], rel1.length, i);
             }
         }
+	}
 
 }

@@ -25,6 +25,8 @@ public class DPPool extends MyObjectPool{
 	}
 	@Override
 	 public synchronized void returnObj(Object j) throws Exception{
+      
+
 	        Object obj = this.inuse.remove(j);
 	        ((DP)obj).inuse = false;
 	        this.returnObject(obj);

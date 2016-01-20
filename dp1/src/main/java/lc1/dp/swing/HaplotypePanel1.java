@@ -903,7 +903,7 @@ public final ColorAdapter ca;
   }*/
   final HapPanel hapP;
   final NamePanel1 nameP;
-  public void addedInformation(StateDistribution emissionC, int ll, int i){
+  public void addedInformation(StateDistribution emissionC, int ll, int i, double[][] distribution){
       LogoPanel lp =  this.hapP.getCurrentGPanel(ll);   
       JTextField lp_name = nameP.getCurrentGPanelName(ll);
 	  double[] cert_i =  lp.cert;
@@ -938,7 +938,7 @@ public final ColorAdapter ca;
         	  }
         	  else{
         	  double[] prob =  PairEmissionState.pool.getObj(Emiss.getSpaceForNoCopies(sta.noCop()).genoListSize());
-           	 Sampler.getProbOverStates(emissionC, bwt.hmm, sta, i,prob, Constants.isLogProbs(), sta.distribution());
+           	 Sampler.getProbOverStates(emissionC, bwt.hmm, sta, i,prob, Constants.isLogProbs(), distribution);
               int maxind = Constants.getMax(prob);
               cert_i[i] = prob[maxind];
               PairEmissionState.pool.returnObj(prob);
@@ -1006,7 +1006,7 @@ public final ColorAdapter ca;
           Integer l = (Integer)obj[1];
           StateDistribution dist = (StateDistribution) obj[0];
           Integer i = (Integer)obj[2];
-            addedInformation(dist, l, i);
+            addedInformation(dist, l, i,(double[][])obj[7]);
            // update(i);
       }
  

@@ -24,14 +24,22 @@ public class MyObjectPool extends StackObjectPool{
         super(;
     }*/
     public  synchronized Object getObj(Object j) throws Exception{
+    	return getObj(j, false);
+    }
+    public  synchronized Object getObj(Object j, boolean allow) throws Exception{
     	//System.err.println("getting1 "+j+ " "+inuse.size());
         Object res = inuse.get(j);
         if(res==null){
+        
         	if(this.getNumActive()>= this.max || this.inuse.size()>=max){
         		throw new RuntimeException("need to return first "+j+" "+inuse.size()+" "+getNumActive()+" "+max);
         	}
+        
             inuse.put(j,res = this.borrowObject());
+        }else if(allow){
+        	res= this.borrowObject();
         }
+        
        if(print) Logger.global.info("getting1 "+j+ " "+inuse.size()+ " "+res.getClass());
         return res;
     }

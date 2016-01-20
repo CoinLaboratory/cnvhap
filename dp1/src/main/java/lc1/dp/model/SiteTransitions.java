@@ -232,7 +232,8 @@ public abstract class SiteTransitions implements Serializable,UnivariateFunction
         	 
         	 new FreeExpTransitionProbs(Constants.modifyFrac(0),  Constants.expModelIntHotSpot1(0),this.r[0][0]);
          this.initial = (MatrixExp) globalTrans.mat.clone();
-         }
+       //  if(true) this.glo
+          }
          
         		// if((transMode0[i]==3 || transMode0[i]==4)){
                 	// if(Constants.expModelIntHotSpot1(i).length!=(Constants.modify0.length+1)) throw new RuntimeException("mismatch between expModelIntHotSpot1 and modify0");
@@ -369,6 +370,9 @@ public abstract class SiteTransitions implements Serializable,UnivariateFunction
     		         start[0] = 1.0;
     		      double[] probs = new double[start.length];
     		      fillProbs(transProbs[0], probs, start);
+    		      if(this.globalTrans!=null && Constants.onlyGlobalTrans()){
+    		    	  
+    		      }else{
     			   for(int i=1; i<transProbs.length; i++){
     				   for(int update_index=0; update_index<r.length; update_index++){
     				   double d = -1*(loc.get(i)-loc.get(i-1));
@@ -384,11 +388,11 @@ public abstract class SiteTransitions implements Serializable,UnivariateFunction
     		                  if(globalTrans==null){
     		                	if(Constants.updateAlpha())  logLAll+=  probs_.transferAlpha(pseudoTrans, alpha_overall, allFree ? 2 : 0);
     		                	if(Fastphase.marks==null || Fastphase.marks.contains(i)){
-    		                		logLAll+= probs_.transfer(pseudoCExp2, alpha_overall, allFree ? 2 : 0);
+    		                		logLAll+= probs_.transfer(pseudoCExp2, null, allFree ? 2 : 0);
     		                	}
     		                  }else{
     		                  
-    		                   logLAll+= probs_.transferQ(pseudoCExp2, 1e10, 0, this.globalTrans.mat, allFree ? 2: 0,d,index);
+    		                   logLAll+= probs_.transferQ(pseudoCExp2, 1e10, 0, this.globalTrans.mat, allFree ? 2: 1,d,index);
     		                  }
     		           //  if(true)  {
     		           // 	   Logger.global.info(i+" RATE "+((FreeRateTransitionProbs)probs_).logrelativeRate);
@@ -398,7 +402,7 @@ public abstract class SiteTransitions implements Serializable,UnivariateFunction
     	                         fillProbs(transProbs[i], probs, start);
     		                     //  transProbs[i].logProb();
     		                }
-    			   
+    		      }
     			   if(Constants.measureGlobal() ){
     			// rateDistribution.maximise();
     				   
@@ -544,9 +548,18 @@ public static void fillProbs(AbstractTransitionProbs abstractTransitionProbs,
           else if(indexOfToEmission==0 && from!=0) return 0;
           else{
               AbstractTransitionProbs tp =  this.transProbs[indexOfToEmission];
-              double d = tp==null ? 0 :  tp.getTransition(from, to);
+              if(tp!=null){
+            	  if(indexOfToEmission>1 && this.globalTrans!=null){
+              double dist = this.loc.get(indexOfToEmission) - this.loc.get(indexOfToEmission -1);
+           //   System.err.println(dist);
+              this.globalTrans.mat.setDistance(dist);
+            	  }
+              return tp.getTransition(from, to);
+              }else return 0;
+              
+//              double d = tp==null ? 0 :  
             
-              return  d;
+             // return  d;
           }
      }
      

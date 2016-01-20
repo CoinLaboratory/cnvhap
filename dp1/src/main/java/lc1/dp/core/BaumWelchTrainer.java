@@ -48,6 +48,7 @@ public class BaumWelchTrainer {
         public static void involeTasks(List l, boolean seq) throws Exception{
            if(!seq && Constants.numThreads()>1) {
         	   es.invokeAll(l);
+        	 
         	  // es.awaitTermination(10000, TimeUnit.MILLISECONDS);
         	//   Thread.currentThread().sleep(10000);
            }
@@ -62,6 +63,7 @@ public class BaumWelchTrainer {
                }
             }
            }
+       //    l.clear();
         }
       //  
    public MarkovModel hmm;
@@ -211,6 +213,9 @@ public class BaumWelchTrainer {
     public DP dp(int j) throws Exception{
         return (DP) this.dp.getObj(j);
     }
+    public DP dp(int j, boolean allow) throws Exception{
+        return (DP) this.dp.getObj(j, allow);
+    }
     public void addTransitionProbSum(DP dp1, int j) throws Exception{
    	 int index = ((HaplotypeEmissionState)this.data[j]).dataIndex();
      double weight = this.weight(index);
@@ -254,11 +259,61 @@ public static final boolean print = false;
   
   public Callable expectationStep(final int j1, final double[] pseudo, final boolean last, final boolean updateEmissions){
        Callable run = new Callable(){
-           public Object call(){
-               try{
-            	  
+    	   
+    	   public Object call(){
+    		   try{
+    			   DP  dp1= dp(j1);
+    			   
+    			   try{
+    			   this.call1(dp1);
+    			   }catch(Exception exc){
+    				 /*  DP  dp2= dp(j1, true);
+    				   try{
+    				   this.call1(dp2);
+    				   }catch(Exception exc2){
+    					   exc2.printStackTrace();
+    					   System.exit(0);
+    				   }
+    				   double[] sc1 = dp1.sc;
+    				   double[] sc2 = dp2.sc;
+    				  
+    				   double diffa = Math.abs(sc1[0] - sc1[1]);
+    				   double diffb = Math.abs(sc2[0] - sc2[1]);
+    				   double diff1 = Math.abs(sc1[0] - sc2[0]);
+    				   double diff2 = Math.abs(sc1[1] - sc2[1]);
+    				   compare(dp1.forwardTrace, dp2.forwardTrace);
+    				   compare(dp1.backwardTrace, dp2.backwardTrace);*/
+    				   exc.printStackTrace();
+    				   System.exit(0);
+    			   }
+    			   dp.returnObj(j1);
+    		   }catch(Exception exc){
+    			   exc.printStackTrace();
+    			  
+    		   }
+    		   return logprob[j1];
+    		  
+    	   }
+    	   
+           private void compare(TraceMatrix forwardTrace, TraceMatrix forwardTrace2) {
+        	   double diffo = Math.abs(forwardTrace.overall - forwardTrace2.overall);
+        	   if(diffo>1e-7){
+					System.err.println(diffo);
+				}
+			for(int i=0; i<forwardTrace.trace.length; i++){
+				for(int j=0; j<forwardTrace.trace[i].length; j++){
+					double diff = Math.abs(forwardTrace.trace[i][j].score - forwardTrace2.trace[i][j].score);
+				if(diff>1e-7){
+					System.err.println(diff);
+				}
+				}
+			}
+			
+		}
+
+		public DP call1(DP dp1) throws Exception{
              //  double time=  System.currentTimeMillis();
-         DP  dp1= dp(j1);
+            	//   
        //  if(backgroundDP!=null && j1==0){
        // 	 dp1 =backgroundDP;
       //   }
@@ -272,6 +327,7 @@ public static final boolean print = false;
               
        //  }
       //   System.err.println("doing "+j1);
+     
        logprob[j1] =  dp1.search(true, false);
             if(print)     Logger.global.info("done "+j1);
        Object[] tmp = new Object[]{j1, dp1};
@@ -288,16 +344,8 @@ public static final boolean print = false;
                    exc.printStackTrace();
                    System.exit(0);
                }
-               dp1.inuse = false;
-               dp.returnObj(j1);
-               }catch(Exception exc){
-                   exc.printStackTrace();
-                
-                   System.err.println("problem with "+j1);
-                   System.exit(0);
-               }
              
-               return logprob[j1];
+               return dp1;
            }
           
        };
@@ -435,7 +483,7 @@ public static final boolean print = false;
     final static boolean ML = false;
   
     public void addEmissionProbSum(DP dp1, Integer ll, boolean last, boolean updateEmissions) throws Exception{
-        Object[] tmp = new Object[7];
+        Object[] tmp = new Object[8];
         Arrays.fill(tmp, null);
         tmp[1] = ll;
    
@@ -485,6 +533,7 @@ public static final boolean print = false;
           tmp[4] = data[ll].getName();
           tmp[5] = data[ll].noCop();
           tmp[6] = data[ll].name;
+          tmp[7] = dp1.distribution;
           this.firePropertyChange("emiss", null, tmp);
           //this.dataIndex(i);
          // for(int ik=0; ik<this.hmmplots.size(); ik++){
@@ -508,7 +557,7 @@ public static final boolean print = false;
                   if(val>Constants.bwThresh()){
                 	  int index = ((HaplotypeEmissionState)this.data[ll]).dataIndex();
                 	 // Constants.pseudoMod1(index);
-                      EmissionState.addCount(k,(HaplotypeEmissionState) data[ll],  val,i, weight(index), Constants.isLogProbs(), dp1.distribution);
+                      EmissionState.addCount(k,(HaplotypeEmissionState) data[ll],  val,i, weight(index), Constants.isLogProbs(), dp1.distribution[k.noCop()]);
                  }
               }
           }

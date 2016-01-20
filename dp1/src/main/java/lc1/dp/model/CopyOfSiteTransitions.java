@@ -518,7 +518,7 @@ double[] x = new double[1000];
     	    		double[] pseudoCExp2 = pseudoCExp;
     	    		if(allFree){
     	    			for(int i1=0; i1< pseudoCExp2.length; i1++){
-    	    			pseudoCExp2[i1] = pseudoCExp[i1]/(double) Constants.expandCN('1');	
+    	    			pseudoCExp2[i1] = pseudoCExp[i1]/(double) Constants.expandCN("1");	
     	    			}
     	    		}
     		//	 logLAll = 0;

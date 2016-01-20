@@ -20,6 +20,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 import java.util.concurrent.Callable;
 import java.util.logging.Logger;
 
@@ -389,11 +390,9 @@ public static DataCollection read(final File dir) throws Exception{
     	try{
        final int i = i1;
        final int[] kb = Constants.restrictKb(i1);
-       final int[][] mid_ = new int[mid1_.length][];
-       for(int i2=0; i2<mid1_.length;  i2++){
-       	mid_[i2]  = new int[]{ Math.max(0, mid1_[i2][0] - kb[0]),
-       Math.min(Integer.MAX_VALUE, mid1_[i2][1]+kb[1])};
-     }
+       final int[][] mid_ = getMid_(mid1_, kb);
+       
+       
     //   final int i2 = i3;
      // tasks.add(new Callable(){
       //  	public Object call(){
@@ -413,7 +412,7 @@ public static DataCollection read(final File dir) throws Exception{
         Collection<String> snpidrest = null;//groupSNPs.get(groups[i]);
         
         
-        File buildF = chrom[kk].equals("pheno") ? null : new File(inp[i].getParentFile(), Constants.build(i));
+        File buildF = chrom[kk].equals("pheno") ? null :(inp[i].getName().endsWith(".zip") ?   new File(inp[i].getParentFile(), Constants.build(i)) : inp[i]);
         if(format[i].startsWith("geno1")) {
             resu = new SimpleDataCollection1(inp[i],(short)i, no_copies[i], mid,buildF, snpidrest);
        //     EmissionState emst = res[0].dataLvalues().next();
@@ -499,7 +498,69 @@ public static DataCollection read(final File dir) throws Exception{
 //            resu =  new DepthDataCollection(inp[i],(short)i, no_copies[i], mid, buildF);
     }
         else if(format[i].startsWith("matcheddepth")){
+        	if(Constants.extraChrom!=null){
+        		File f = new File(Constants.extraChrom[0]);
+        		if(f.exists()){
+        			Map<Integer, String> l = new TreeMap<Integer, String>();
+        			try{
+        				BufferedReader br = new BufferedReader(new FileReader(f));
+        				String st = "";
+        				String chr= null;
+        				String start=null; String end = null;
+        				char arm = 'q';
+        				while((st = br.readLine())!=null){
+        					String[] str = st.split("\\s+");
+        					String armi = str[3];
+        					if(armi.charAt(0)!=arm){
+        						
+        						
+        						if(chr!=null){
+        							if(Integer.parseInt(chr)<=22){
+        								String str1 = "all;"+chr+","+start+";"+chr+","+end;
+        								System.err.println(str1);
+        							l.put(Integer.parseInt(chr)+arm, str1);}
+        						}
+        						arm = armi.charAt(0);
+        						chr = str[0].substring(3).replace("X", "23").replace("Y",  "24");
+        						start = str[1];
+        					
+        						
+        					}
+        					end = str[2];
+        				}
+        				br.close();
+        				Constants.extraChrom = l.values().toArray(new String[0]);
+        			}catch(Exception exc){
+        				exc.printStackTrace();
+        			}
+        		}
+        		else if(Constants.extraChrom[0].equals("all")){
+        			String[] ec = new String[22];
+        			for(int k=0; k<ec.length; k++){
+        				ec[k] = "all;"+(k+1)+",0mb;"+(k+1)+",300mb";
+        			}
+        			Constants.extraChrom = ec;
+        		}
+        		 int[][]   mid_1 = getMid_(Constants.mid_(new String[][] {Constants.extraChrom[0].split(";")}), kb);
+        		 int[][] mid_i = calculateRegion(new int[][] {mid_1[kk]}, chrom[kk], Constants.regionsToInclude(i1), Constants.regionsToExclude(i1));
+            	resu = new MatchedSequenceDataCollection(inp[i],(short)i, no_copies[i], mid_i,buildF, snpidrest);
+            	//Fastphase.marks = new HashSet<Integer>();
+            	//if(Constants.reverse[0]) resu.reverse();
+            	for(int jj=1; jj<Constants.extraChrom.length; jj++){
+            		//Fastphase.marks.add(resu.length);
+            		  mid_1 = getMid_(Constants.mid_(new String[][] {Constants.extraChrom[jj].split(";")}), kb);
+            		  mid_i = calculateRegion(new int[][] {mid_1[kk]}, chrom[kk], Constants.regionsToInclude(i1), Constants.regionsToExclude(i1));
+                	try{
+            		DataCollection resu1 = new MatchedSequenceDataCollection(inp[i],(short)i, no_copies[i], mid_i,buildF, snpidrest);
+            		resu.addCollection(resu1,null);
+                	}catch(Exception exc){
+                		exc.printStackTrace();
+                	}
+            	}
+        	}
+            	else{
         	resu =  new MatchedSequenceDataCollection(inp[i],(short)i, no_copies[i], mid, buildF, snpidrest);
+            	}
 //            resu =  new DepthDataCollection(inp[i],(short)i, no_copies[i], mid, buildF);
     }
         else if(format[i].startsWith("HLA")){
@@ -742,7 +803,20 @@ public static DataCollection read(final File dir) throws Exception{
 //result.trim(Constants.maxIndiv(0));
     return result;
 }
-    private static boolean contains(Node node, String next, DataCollection[] res) {
+    private static int[][] getMid_(int[][] mid1_, int[] kb) {
+    	int[][] mid_ = new int[mid1_.length][];
+        for(int i2=0; i2<mid1_.length;  i2++){
+        	mid_[i2]  = new int[]{ Math.max(0, mid1_[i2][0] - kb[0]),
+        Math.min(Integer.MAX_VALUE, mid1_[i2][1]+kb[1])};
+        	
+      }
+       
+        return mid_;
+}
+
+
+
+	private static boolean contains(Node node, String next, DataCollection[] res) {
 	if(node.isLeaf()){
 		return res[Integer.parseInt(node.getIdentifier().getName())].dataL.containsKey(next);
 	}

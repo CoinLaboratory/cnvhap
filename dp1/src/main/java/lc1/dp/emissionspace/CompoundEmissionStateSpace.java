@@ -169,11 +169,11 @@ public class CompoundEmissionStateSpace extends EmissionStateSpace{
    CompoundEmissionStateSpace(){
 	   
    }
-   public CompoundEmissionStateSpace(final EmissionStateSpace[] stateSpaces, boolean onlyRepeats, boolean limitparents, boolean states){
+   public CompoundEmissionStateSpace(final EmissionStateSpace[] stateSpaces, boolean onlyRepeats, boolean limitparents){
      //   super( noCop);
         this.members = stateSpaces;
         Logger.global.info("compound of "+stateSpaces.length);
-        init(initStateSpace(stateSpaces, onlyRepeats, limitparents), states);
+        init(initStateSpace(stateSpaces, onlyRepeats, limitparents));
       this.typeIndices = new int[stateSpaces.length];
       for(int i=0; i<typeIndices.length; i++){
     	  typeIndices[i] = i;
@@ -203,12 +203,12 @@ public class CompoundEmissionStateSpace extends EmissionStateSpace{
             }
         }
         }
-        if(!states){
+        /*if(!states){
         SortedSet<Integer> s = new TreeSet<Integer>();
         for(int i=0; i< this.haploPairToHaplo.length; i++){
             s.add(haploPairToHaplo[i].length);
         }
-        }
+        }*/
   
     }
  

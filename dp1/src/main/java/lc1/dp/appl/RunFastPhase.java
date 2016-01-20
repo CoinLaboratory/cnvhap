@@ -318,7 +318,7 @@ static String[] tag_pheno = new String[] {"chisq_state", "armitage_state","odds_
                     Constants.transMode(0), Constants.modify0, Constants.modifyFrac(0),
                     Constants.modifyFracStart(), originalData.numLevels(), null);
            if(false){
-        	   char[][] modify1 = Constants.modify1; 
+        	   String[][] modify1 = Constants.modify1; 
         	  
         	   double[] modFrac1St = new double[modify1.length];
         	   Arrays.fill(modFrac1St, 1.0/(double)modFrac1St.length);
@@ -341,7 +341,7 @@ static String[] tag_pheno = new String[] {"chisq_state", "armitage_state","odds_
         }
         }
         else{
-            BaumWelchTrainer.es.invokeAll(tasks);
+            BaumWelchTrainer.involeTasks(tasks, true);
         }
       }
     

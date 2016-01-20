@@ -464,8 +464,9 @@ public class FreeTransitionProbs1  extends AbstractTransitionProbs implements Se
             }
         }
         pw.println("\nin");
-        Integer fixed = transitionsOut[0].fixedInteger();
-        if(fixed!=null){
+     
+        if(transitionsOut[0]!=null){
+        	   Integer fixed = transitionsOut[0].fixedInteger();
         	pw.print(fixed);
         }else{
         SimpleExtendedDistribution distr = new SimpleExtendedDistribution

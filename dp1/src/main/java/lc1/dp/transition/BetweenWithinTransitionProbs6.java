@@ -135,7 +135,7 @@ public BetweenWithinTransitionProbs6(
 					
 					if(transWithin[i]==null){
 						try{
-					    if((i>0 && Constants.modify(0)[i-1]=='0' && Constants.svnTransM()!=0) || grpsize==1){
+					    if((i>0 && Constants.modify(0)[i-1].equals("0") && Constants.svnTransM()!=0) || grpsize==1){
 					    	int grpsize1 = this.groupToState[i1].length;
 					    	this.transWithinGroups[i][i1] = new FreeTransitionProbs1(grpsize, this.getSampler(grpsize1, 0.5,
 					    			Constants.expand_init_prior(4),false));

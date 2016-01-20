@@ -22,7 +22,7 @@ public class CompoundEmissionStateSpace2 extends CompoundEmissionStateSpace {
 			) {
 		  this.members = stateSpaces;
 		  Logger.global.info("compound of "+stateSpaces.length);
-	        init(initStateSpace(stateSpaces, onlyRepeats, false),false);
+	        init(initStateSpace(stateSpaces, onlyRepeats, false));
 	      
 	        haploToMember = new int[haploList.size()][];
 	        haploToTypeIndex = new int[haploList.size()][];

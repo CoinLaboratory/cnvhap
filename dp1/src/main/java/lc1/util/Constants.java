@@ -43,6 +43,7 @@ import org.apache.commons.cli.PosixParser;
 
 public class Constants {
 	public static double samplePermute = 0;
+	public static final boolean useweight = false;
 	
 	public static Boolean[] cnvP = new Boolean[]{null};
 	public static Boolean cnvP(int i){
@@ -404,69 +405,71 @@ public static int maxCoordDiff(){
 		}
 
 	}
-
-	public static int[][] mid() {
-		if(mid.length==1 && mid[0][0].indexOf(";")>=0){
-			String[][] midn = new String[mid[0].length][];
+  public static int[][] mid(){
+	  return mid_(mid);
+  }
+	public static int[][] mid_(String[][] midr) {
+		if(midr.length==1 && midr[0][0].indexOf(";")>=0){
+			String[][] midn = new String[midr[0].length][];
 		for(int k=0; k<midn.length; k++){
 		
-			midn[k] = mid[0][k].split(";");
+			midn[k] = midr[0][k].split(";");
 		}
-		mid = midn;
+		midr = midn;
 		}
-		String[][] orig = mid;
-		if (mid == null)
+		String[][] orig = midr;
+		if (midr == null)
 			return null;
 		
 		
 		String[][] mid1;
-		if (mid[0].length == 1) {
-			mid1 = new String[1][mid.length];
+		if (midr[0].length == 1) {
+			mid1 = new String[1][midr.length];
 
-			for (int i = 0; i < mid.length; i++) {
-				mid1[0][i] = mid[i][0];
+			for (int i = 0; i < midr.length; i++) {
+				mid1[0][i] = midr[i][0];
 			}
 
-			mid = mid1;
+			midr = mid1;
 		}
-		int index =  mid[0][0].indexOf('_');
+		int index =  midr[0][0].indexOf('_');
 		/////neww
 		index = -1;
-		Logger.global.info("here "+mid[0][0]+" "+index);
+		Logger.global.info("here "+midr[0][0]+" "+index);
 		if (index>=0){
 			
-			String[][] midn = new String[mid[0].length][3];
-			for(int k=0; k<mid[0].length; k++){
-				midn[k] = mid[0][k].split("\\_");
+			String[][] midn = new String[midr[0].length][3];
+			for(int k=0; k<midr[0].length; k++){
+				midn[k] = midr[0][k].split("\\_");
 			}
-			mid = midn;
+			midr = midn;
 		}
-		int[][] mid_ = new int[mid.length][2];
-		for (int i = 0; i < mid.length; i++) {
-			System.err.println("mid is "+Arrays.asList(mid[i]));
-			if(mid[i].length==2 && (mid[i][1].startsWith("p") || mid[i][1].startsWith("q"))){
+		int[][] mid_ = new int[midr.length][2];
+		for (int i = 0; i < midr.length; i++) {
+			System.err.println("mid is "+Arrays.asList(midr[i]));
+			if(midr[i].length==2 && (midr[i][1].startsWith("p") || midr[i][1].startsWith("q"))){
 				try{
 					String ip = Constants.inputDir(i);
 				int cent = Constants.getKaryoFile(new File(ip));
-				if(mid[i][1].equals("p")){
-					mid[i] = new String[] {mid[i][0], "0", (cent-10)+""};
+				if(midr[i][1].equals("p")){
+					midr[i] = new String[] {midr[i][0], "0", (cent-10)+""};
 					
-				}else if(mid[i][1].equals("q")){
-					mid[i] = new String[] {mid[i][0], (cent+10)+"", ""+(Integer.MAX_VALUE-1)};
+				}else if(midr[i][1].equals("q")){
+					midr[i] = new String[] {midr[i][0], (cent+10)+"", ""+(Integer.MAX_VALUE-1)};
 				}else{
-					mid[i] = new String[] {mid[i][0],0+"", ""+(Integer.MAX_VALUE-1)};
+					midr[i] = new String[] {midr[i][0],0+"", ""+(Integer.MAX_VALUE-1)};
 				}
 				}catch(Exception exc){
 					exc.printStackTrace();
 				}
 			}
-			mid_[i][0] = convert(mid[i][1], Constants.scaleLoc!=null && mid[i][0].equals("all"));
-			mid_[i][1] = mid[i].length == 2 ? mid_[i][0] : convert(mid[i][2], Constants.scaleLoc!=null && mid[i][0].equals("all"));
+			mid_[i][0] = convert(midr[i][1], Constants.scaleLoc!=null && midr[i][0].equals("all"));
+			mid_[i][1] = midr[i].length == 2 ? mid_[i][0] : convert(midr[i][2], Constants.scaleLoc!=null && midr[i][0].equals("all"));
 		}
 		if (chrom == null) {
 			chrom = new String[mid_.length];
 			for (int i = 0; i < mid_.length; i++) {
-				chrom[i] = mid[i][0];
+				chrom[i] = midr[i][0];
 			}
 		}
 		return mid_;
@@ -574,7 +577,7 @@ public static boolean parentObjContains(String name) {
 
 public static void parentObj(List<String> samples){
 	
-	char[] ch = Constants.modify0[0];
+	String[] ch = Constants.modify0[0];
 	int nostates = ch.length;
 	int nocop = Constants.noCopies()[0];
 	int torep = nocop/nostates;
@@ -750,8 +753,8 @@ public static File getClusterFile(int index){
 	// simulation params
 
 	public static int[] noCopies = new int[] { 2 }; // no copies for x
-	public static char[][] modify0 = null;											// chromosome data
-	public static char[][] modify1 = null;// new double[] {0.0};
+	public static String[][] modify0 = null;											// chromosome data
+	public static String[][] modify1 = null;// new double[] {0.0};
 	//public static char[] modify1 = null;
 	public static double[] modifyFrac0 = null;
 	public static double[] modifyFrac2 = new double[] {0.1,0.8,0.1};
@@ -1397,7 +1400,7 @@ public static void resetIndices(){
 	public static String[] originalNames() {
 		return originalInput;
 	}
-
+public static int maxCN = 2;
 	public static void parseInner(Option opt, Options options, int column,
 			int index, String repControl, CommandLine paramsa, CommandLine paramsb) throws Exception {
 		String argName = opt.getLongOpt();
@@ -1435,10 +1438,29 @@ public static void resetIndices(){
 			String val = opt.getValue();
 			String[] vals = opt.getValues();
 			if(argName.equals("modify0")){
+				if(vals==null || vals[0] .equals( "null")){
+					 vals = new String[] {"0","",""+(int) Math.floor(Constants.maxCN*Constants.backgroundCount1)};
+				}
+				for(int k=vals.length-1; k>=0; k--){
+					if(vals[k].length()==0){
+						int left = Integer.parseInt(vals[k-1]);
+						int right = Integer.parseInt(vals[k+1]);
+						if(right<=left+1) throw new RuntimeException("!!!");
+						int extra = (right-left-1);
+						
+						String[] vals1 = new String[extra];
+					//	System.arraycopy(vals, 0, vals1, 0, left);
+					//	System.arraycopy(vals, right, vals1, right + extra, vals.length-right);
+						for(int kj=0; kj<extra; kj++){
+							vals1[kj] = (new Integer(left + kj+1)).toString(); 
+						}
+						vals = insert(vals, k, vals1);
+					}
+				}
 				String[] inputDir = Constants.inputDir;
 				
 				if(val.indexOf(';')<0){
-				   String str1 = Arrays.asList(vals).toString().replaceAll(",",";");
+				   String str1 = Arrays.asList(vals).toString().replaceAll(",",";").replaceAll("\\s+", "");
 				   str1 = str1.substring(1,str1.length()-1);
 				   vals = new String[inputDir.length];
 				   Arrays.fill(vals, str1);
@@ -1473,7 +1495,14 @@ public static void resetIndices(){
 		
 	}
 
-	
+	/** makes a new list */
+	private static String[]  insert(String[] vals, int k, String[] vals1) {
+		List<String> valsl = Arrays.asList(vals);
+		List<String>newl = new ArrayList<String>(valsl.subList(0, k));
+		newl.addAll( Arrays.asList(vals1));
+		newl.addAll(valsl.subList(k+1, valsl.size()));
+		return newl.toArray(new String[0]);
+	}
 	private static void parseDataParams(String val, CommandLine paramsa,CommandLine paramsb)  throws Exception{
 		{
 			 {
@@ -2152,7 +2181,7 @@ public static double switchU = 1e10;
 	/*
 	 * public static double[] stateProbOfNull() { return stateProbOfNull; }
 	 */
-	public static char[] modify(int i) {
+	public static String[] modify(int i) {
 		if (i <modify0.length)
 			return modify0[i];
 		else
@@ -2160,7 +2189,7 @@ public static double switchU = 1e10;
 
 		// transMode[i]<5 ?1.0 : transMode[i]==5 ? 0 : -1;
 	}
-	public static char[] modify1(int i) {
+	public static String[] modify1(int i) {
 		if (i <modify1.length)
 			return modify1[i];
 		else
@@ -2195,15 +2224,22 @@ public static double switchU = 1e10;
 			modifyFrac2 = new double[len];
 			modifyFrac3 = new double[len];
 			modifyFracStart = new double[len];
+			int backg = (int) Math.floor(Constants.backgroundCount1/2.0);
 			for(int k=0; k<len; k++){
-				double cn = Math.max(1e-2, Double.parseDouble(Constants.modify0[0][k]+""));
+				String mod0k = Constants.modify0[0][k].trim();
+				int cn1 = Integer.parseInt(mod0k);
+				double cn = Math.max(1e-2, cn1);
 				
 				//System.err.println(cn);
 				double r =cn/Constants.backgroundCount1;
 				double logr = Math.log(r);
 				double abslogr = -Math.abs(logr);
 				
-				double v = Math.pow(1.1,abslogr);
+				double v = Math.pow(1,abslogr);
+				double rem = Math.IEEEremainder(cn1, backg);
+			if(rem!=0){
+					//v =v/1e10;  //0;//v/1e5;//v/1000;///1e100;//v/1e35;
+				}
 				modifyFrac0[k] = v;
 				modifyFrac1[k] = v;
 				modifyFrac2[k] = v;
@@ -2533,6 +2569,7 @@ public static double switchU = 1e10;
 	}
 
 	public static String inputFile(int i, int j) {
+		if(inputDir(i).endsWith(".counts")) return inputDir(i);
 		return inputDir(i)+"/" + Constants.chrom(j) + ".zip";
 	}
 	
@@ -2559,12 +2596,12 @@ public static double switchU = 1e10;
 		if (maxCopies == null) {
 			int val = 1;
 			// int val_min =1;
-			char[][] c = Constants.modify0;
+			String[][] c = Constants.modify0;
 			for(int k=0; k<c.length; k++){
 			for (int i = 0; i < c[k].length; i++) {
 				try{
-					if(c[k][i]!='a'){
-				int v = Integer.parseInt(c[k][i] + "");
+					if(!c[k][i].equals("a")){
+				int v = Integer.parseInt(c[k][i]);
 				if (v > val) {
 					val = v;
 				}
@@ -4433,10 +4470,10 @@ public static boolean trainGlobal =false;
 	public static boolean[] regressVariance = new boolean[] {false, false}; //[r b]
 	public static boolean[] regressMean = new boolean[] {true, true}; //[r b]
 
-	public static int expandCN(char i) {
+	public static int expandCN(String i) {
 		int k=0; 
 		for(;k<Constants.modify(0).length; k++){
-			if(modify(0)[k]==i){
+			if(modify(0)[k].equals(i)){
 			 return Constants.expand[k];	
 			}
 		}
@@ -4733,7 +4770,7 @@ public static boolean run2 = false;
 	public static double hmmBubblePow = 0.25;
 
 
-	public static int[] alleles ;
+	public static int[] alleles = new int[] {2} ;
 	public static double hmmBubblePow() {
 		// TODO Auto-generated method stub
 		return hmmBubblePow;
@@ -4764,6 +4801,9 @@ public static boolean run2 = false;
 	}*/
 	private static AbstractDataParams getDataParams(File ff, String[] sheet)  throws Exception{
 		return ff.getName().endsWith(".xls") ? new DataParams(ff, sheet) : new CSVDataParams(ff);
+	}
+	public static int maxAlleles(){
+		return alleles[Constants.getMax(alleles)];
 	}
 	public static int alleles(int i) {
 		return alleles[i];
@@ -5187,7 +5227,7 @@ public static boolean trainEmissions = true;
 		
 		if(Constants.useDataAsModel!=null && Constants.modify0[0].length<=Constants.useDataAsModel.length){
 			for(int k=0; k<Constants.modify0.length; k++){
-				char[] mod0 = new char[Constants.useDataAsModel.length];
+				String[] mod0 = new String[Constants.useDataAsModel.length];
 				Arrays.fill(mod0, Constants.modify0[k][0]);
 				Constants.modify0[k] = mod0;
 				Constants.modifyFrac0 = new double[mod0.length];
@@ -5544,7 +5584,7 @@ return muteAlpha;
 
 
 	
-
+     
 	
 	//returns single number for chrom, pos position
 	public static double recode(double[] vec){
@@ -5554,28 +5594,64 @@ return muteAlpha;
 		pos1 =  Math.round(((pos1/scaleLoc[0])+chr)*scaleLoc[1]);
 		return pos1;
 	}
+	static List<String> chroms = Arrays.asList(("1:2:3:4:5:6:7:8:9:10:11:12:13:14:15:16:17:18:19:20:21:22:X:Y"
+			//+":GL000191.1:GL000192.1:GL000193.1:GL000194.1:GL000195.1:GL000196.1:GL000197.1:GL000198.1:GL000199.1:GL000200.1" 
+			//+":GL000201.1:GL000202.1:GL000203.1:GL000204.1:GL000205.1:GL000206.1:GL000207.1:GL000208.1:GL000209.1:GL000210.1:GL000211.1" 
+			//+":GL000212.1:GL000213.1:GL000214.1:GL000215.1:GL000216.1:GL000217.1:GL000218.1:GL000219.1:GL000220.1:GL000221.1:GL000222.1" 
+			//+":GL000223.1:GL000224.1:GL000225.1:GL000226.1:GL000227.1:GL000228.1:GL000229.1:GL000230.1:GL000231.1:GL000232.1:GL000233.1" 
+			//+":GL000234.1:GL000235.1:GL000236.1:GL000237.1:GL000238.1:GL000239.1:GL000240.1:GL000241.1:GL000242.1:GL000243.1:GL000244.1" 
+			//+":GL000245.1:GL000246.1:GL000247.1:GL000248.1:GL000249.1:MT"
+			).split(":"));
+	static int nochroms = chroms.size();
+	public static int allowChrom(String chr){
+		return  chroms.indexOf(chr.replaceAll("chr",""));
+	//	int chr = .indexOf(chr1);
+	}
 	public static String recode(String[] vec){
-		
-		double  chr = Double.parseDouble(vec[0]);//floor(as.numeric(vec[1]))
+		//String chr1 = vec[0].replaceAll("chr","");
+		int chr = allowChrom(vec[0]);
+		if(chr<0){
+			return null;
+		}
+		chr++;
+		double toadd=0;
+	//	System.err.println(chroms.size());
+	    if(chr>24){
+	    	
+	    	if(chr==nochroms){
+	    		//System.err.println("chr is 26" + vec[0]);
+	    		chr=26;
+	    	}else{
+	    		toadd = (chr-25)*1e6; //assumes all the GL and MT chroms have max length 1mb;
+	    		chr = 25;
+	    	}
+	    }
 		double pos1 =0;
 		if(vec.length==1){
-			pos1 = Math.round(((0/scaleLoc[0])+chr)*scaleLoc[1]);
+			pos1 = Math.round(((0+toadd/scaleLoc[0])+chr)*scaleLoc[1]);
 		}else{
-		double fac = 1e6;
+		double fac = 1;
 		String num1 = vec[1].toLowerCase().replaceAll("mb|kb", "");//vec[1].substring(0,1)+"."+vec[1].substring(1);
 		if(vec[1].toLowerCase().indexOf("mb")>=0) fac = 1e6;
-		if(vec[1].toLowerCase().indexOf("kb")>=0) fac = 1e3;
-		double  pos2 =Double.parseDouble(num1)*fac;// as.numeric(vec[2])
+		else if(vec[1].toLowerCase().indexOf("kb")>=0) fac = 1e3;
+		double  pos2 =Double.parseDouble(num1)*fac + toadd;// as.numeric(vec[2])
 		pos1 =  Math.round(((pos2/scaleLoc[0])+chr)*scaleLoc[1]);
 		}
+		//if(pos1<0) throw new RuntimeException( "neg coord");
 		return "" + ((int)Math.round(pos1));
 	}
 	//converts single number back into chrom/pos 
 	public  static double decode(double x, double[] res, boolean single){
 			if(scaleLoc==null ) return x;
-	  double x1=x/scaleLoc[1];
+	  double x1=(x)/scaleLoc[1];
 	  double chr = Math.floor(x1);
 	  double pos = (x1-chr)*scaleLoc[0];
+	  
+	    if(Math.abs(chr-25)<1e-6){
+	    	double toadd = Math.floor(pos/1e6);
+	    	chr = chr+toadd;
+	    	pos = pos - toadd*1e6;
+	    }
 	  res[0] = chr;
 	  res[1] = pos;
 	  return single ? pos : chr+pos/1e9;
@@ -5597,7 +5673,7 @@ return muteAlpha;
 		// TODO Auto-generated method stub
 		return includeFirstInBAF;
 	}
-	public static int initialSeparation = 100000;
+	public static int initialSeparation = 1000000;
 	public static int initalSeparation() {
 		return initialSeparation;
 	}
@@ -5660,9 +5736,33 @@ return muteAlpha;
 	}
 	
 	public static double backgroundCount1 = 2;
+	public  static boolean useUniformEmissionPrior = false;
 	public static double backgroundCount1(int i) {
 		// TODO Auto-generated method stub
 		return backgroundCount1;
+	}
+	public static boolean useUniformEmissionPrior() {
+		// TODO Auto-generated method stub
+		return useUniformEmissionPrior;
+	}
+	public static boolean onlyGlobalTrans = false;
+	public static boolean onlyGlobalTrans() {
+		// TODO Auto-generated method stub
+		return onlyGlobalTrans;
+	}
+	public static double[] includeRCN;// = new double[] {0.5,1.5,2.0, 2.5};
+	public static double[] includeRCN() {
+		// TODO Auto-generated method stub
+		return includeRCN; 
+	}
+	public static boolean plotCNAsShape = false;
+	public static boolean plotCNAsShape() {
+		// TODO Auto-generated method stub
+		return plotCNAsShape;
+	}
+	public static double cumDiffThresh = 0;
+	public static double cumDiffThresh() {
+		return cumDiffThresh;
 	}
 	
 	

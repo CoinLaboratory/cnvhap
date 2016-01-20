@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.SortedMap;
 import java.util.TreeMap;
+import java.util.logging.Logger;
 
 import lc1.dp.emissionspace.CompoundEmissionStateSpace;
 import lc1.dp.emissionspace.CompoundEmissionStateSpace2;
@@ -58,16 +59,16 @@ public class Emiss implements AbstractEmiss{
       }
 	 public  static Emiss a(){return ems[1];}
      public  static Emiss N(){return ems[0];}
-     public  static Emiss b(){return ems[2];}  
+     public  static Emiss b(){if(ems.length>2) return ems[2]; else return null;}  
      public static EmissionStateSpaceForNoAlleles emiss;// = new EmissionStateSpaceForNoAlleles[0];
    //  public static EmissionStateSpace[] mergedSpace = new EmissionStateSpace[Constants.alleles.length];
     // new EmissionStateSpace[datac instanceof MergedDataCollection? ((MergedDataCollection)datac).ldl.length : 1];
      static{
     		// List<Integer> allelesL = new ArrayList<Integer>();
-    		 int alleles = 2;//Constants.getMax(Constants.alleles);
-    		 
-         	ems = new Emiss[alleles+1];
-           	ems1 = new Emiss[alleles];
+    		 int alleles1 = Constants.maxAlleles();
+    		 Logger.global.info("alleles "+alleles1);
+         	ems = new Emiss[alleles1+1];
+           	ems1 = new Emiss[alleles1];
            	ems[0] = new Emiss('_',0, "_");
            	for(int i=1; i<ems.length; i++){
            		char ch =conv.get(i);
@@ -88,7 +89,7 @@ public class Emiss implements AbstractEmiss{
            	      }
            	      else{*/
            	    	//  allelesL.add(Constants.alleles[i]);
-           	    	  emiss = new EmissionStateSpaceForNoAlleles(alleles);
+           	    	  emiss = new EmissionStateSpaceForNoAlleles(alleles1);
           Emiss.ems = emiss.ems;
           Emiss.ems1 = emiss.ems1;
           Emiss.spaceByCN = emiss.spaceByCN;
@@ -168,7 +169,7 @@ public class Emiss implements AbstractEmiss{
               em[i] = getStateEmissionStateSpace(emStSp[i]);
           }
        //   if(emStSp.length==2)
-          stateEmissionStateSpace[1].put(numF, res = new CompoundEmissionStateSpace(em,false, false,false));
+          stateEmissionStateSpace[1].put(numF, res = new CompoundEmissionStateSpace(em,false, false));
       }
       return res;
    }
@@ -211,7 +212,7 @@ public class Emiss implements AbstractEmiss{
     				for(int i=0; i<stsp.length; i++){
     					stsp[i] = spaceByCN[numCopies[i]];
     				}
-    				val = allEqual ?new CompoundEmissionStateSpace(stsp,false, false, false) : new CompoundEmissionStateSpace2(stsp,false);
+    				val = allEqual ?new CompoundEmissionStateSpace(stsp,false, false) : new CompoundEmissionStateSpace2(stsp,false);
     			//}
     			spaceByCN2.set(numCopies, val);
     		}
@@ -250,11 +251,14 @@ public class Emiss implements AbstractEmiss{
         	for(int i=2; i<spaceByCN.length; i++){
         		EmissionStateSpace[] tmp = new EmissionStateSpace[i];
         		Arrays.fill(tmp, alleleSpace);
-        		spaceByCN[i] = new CompoundEmissionStateSpace(tmp,false, false, false);
+        		spaceByCN[i] = new CompoundEmissionStateSpace(tmp,false, false);
         	}
-        	String mod = new String(Constants.modify(0));
+        String[] mod = Constants.modify(0);
 
-        	boolean includeCopyZero = mod.indexOf('0')>=0; /// note, this was source of confusion before
+        	boolean includeCopyZero = false;
+        	for(int i=0; i<mod.length; i++){
+        		if(mod[i].equals("0")) includeCopyZero=true;
+        	}
 
         	
         	mergedSpace = new SimpleEmissionStateSpace(includeCopyZero ? spaceByCN :
@@ -262,7 +266,7 @@ public class Emiss implements AbstractEmiss{
         	for(int i=0; i<spaceByPloidy.length; i++){
         		EmissionStateSpace[] tmp = new EmissionStateSpace[i+1];
         		Arrays.fill(tmp, mergedSpace);
-        		spaceByPloidy[i] = new CompoundEmissionStateSpace(tmp,false,false, false);
+        		spaceByPloidy[i] = new CompoundEmissionStateSpace(tmp,false,false);
         	}
         }
         public  CompoundEmissionStateSpace getEmissionStateSpace(int i){

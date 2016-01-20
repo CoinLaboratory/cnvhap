@@ -16,8 +16,10 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
+import java.util.concurrent.Callable;
 import java.util.logging.Logger;
 
+import lc1.dp.core.BaumWelchTrainer;
 import lc1.dp.data.representation.AbstractEmiss;
 import lc1.dp.data.representation.ComparableArray;
 import lc1.dp.data.representation.Emiss;
@@ -79,9 +81,14 @@ public abstract class  EmissionStateSpace implements List<Comparable>, Serializa
 				 col[(int)bg] = Color.GRAY;
 				}
 			else{
-		 col= new Color[str.length];
-		
-		 for(int k=0; k<str.length; k++){
+	
+		  int step = (int) Math.floor(Constants.backgroundCount1/2.0);
+			 col= new Color[str.length*step];
+		 // color_muted  = new Color[this.size()];
+		  Arrays.fill(col, Color.gray);
+		 for(int k=0; k<str.length; k+=1){
+			 int k1 = step*k;
+			 
 			 if(str[k].startsWith("#")){
 				 
 				 for(int jj =0; jj<compArray.length; jj+=2){
@@ -89,14 +96,19 @@ public abstract class  EmissionStateSpace implements List<Comparable>, Serializa
 					 compArray[jj] =  Integer.parseInt(str[k].substring(1+2*jj, 1+2*jj+2),16) ;
 				 }
 				
-				 col[k] = new Color(compArray[0], compArray[1],compArray[2],compArray[3]);
+				 col[k1] = new Color(compArray[0], compArray[1],compArray[2],compArray[3]);
 			 }else{
 			 String[] str1 = str[k].split("~");
-			 col[k] =(Color) Color.class.getField(str1[0]).get(null);
+			 col[k1] =(Color) Color.class.getField(str1[0]).get(null);
 			 if(str1.length>1){
-				 col[k] = new Color(col[k].getColorSpace(), col[k].getRGBComponents(compArray1), Float.parseFloat(str1[1]));
+				 col[k1] = new Color(col[k1].getColorSpace(), col[k].getRGBComponents(compArray1), Float.parseFloat(str1[1]));
 				// System.err.println(col[k]);
 			 }
+			 }
+if(k>1){
+	for(int kj=step*(k-1)+1; kj<k1; kj++)
+		col[kj] = col[k1].darker();
+				 
 			 }
 		 }
 		 
@@ -133,9 +145,10 @@ public abstract class  EmissionStateSpace implements List<Comparable>, Serializa
 		  float[] compArray = new float[4];
 		  color  = new Color[this.size()];
 		  color_muted  = new Color[this.size()];
+		int step = 1;
 		 // SortedSet<Double> bafs = new TreeSet<Double>();
 		  try{
-		  for(int i=0; i<this.size(); i++){
+		  for(int i=0; i<this.size(); i+=step){
 			  //  shape[i] = IndividualPlot.shapes[emstsp.getBCount(i)];
 			   // b_alias[i] = emstsp.getGenoForHaplopair(i);
 			    color[i] = col[Math.min(col.length-1, getCN(i))];
@@ -406,9 +419,12 @@ public int getRealCN(ComparableArray compA){
         };
     }
     
-    private  static void map1(int[][] copyNumberToGeno, List<Comparable> genotypeList, 
-            Map<Comparable, Integer> stateSpaceToCNIndex, StringMethod sm, List<Integer> copyNumber
+    private  static Callable map1(final int[][] copyNumberToGeno,final  List<Comparable> genotypeList, 
+            final Map<Comparable, Integer> stateSpaceToCNIndex, final StringMethod sm, final List<Integer> copyNumber
            ){
+    	 return new Callable(){
+    		   
+  		   public Object call(){
         for(int i=0; i<copyNumberToGeno.length; i++){
             int cn = copyNumber.get(i);
             List<Integer> hapl = new ArrayList<Integer>();
@@ -431,15 +447,21 @@ public int getRealCN(ComparableArray compA){
             }
            
         }
+        return null;
+  		   }
+    	 };
         
     }
   
     /**fills in genoToHaplo
      * fills in genosToHaplos  (equivalent but with Comparable rather than index) can be null 
      *  */
-    private static void map(int[][] genoToHaplo, Comparable[][] genoToHaplos, List<Comparable> haploList, 
-            Map<Comparable, Integer> stateSpaceToGenotypeIndex, StringMethod sm
+    private static Callable map(final int[][] genoToHaplo, final Comparable[][] genoToHaplos, final List<Comparable> haploList, 
+           final  Map<Comparable, Integer> stateSpaceToGenotypeIndex, final StringMethod sm
            ){
+    	 return new Callable(){
+  		   
+    		   public Object call(){
         for(int i=0; i<genoToHaplo.length; i++){
             
             List<Integer> hapl = new ArrayList<Integer>();
@@ -463,12 +485,15 @@ public int getRealCN(ComparableArray compA){
             }
            
         }
+        return null;
+    		   }
+    	 };
         
     }
     public EmissionStateSpace(){
        // this.noCopies = noCopies;
     }
-        public void init(List<Comparable> list, boolean states){
+        public void init(List<Comparable> list){
             this.defaultList = this.haplopairList;
             Collections.sort(list, new Comparator<Comparable>(){
 
@@ -531,67 +556,102 @@ public int getRealCN(ComparableArray compA){
             this.haploPairToGeno = new int[this.haplopairList.size()];
             this.haploPairToCN = new int[this.haploSize()];
             this.haploPairToBCount = new int[this.haploSize()];
-            if(!states){
-            map(genoToHaplo, genoToHaplos, haploList, stateSpaceToGenotypeIndex, gsm);
-            map1(copyNoIndexToGeno,  genotypeList,stateSpaceToCopyNumber, gsm, this.copyNumber);
+           
+            	 try{
+            	List<Callable> tasks = new ArrayList<Callable>();
+            	tasks.add(map(genoToHaplo, genoToHaplos, haploList, stateSpaceToGenotypeIndex, gsm));
+            	tasks.add(map1(copyNoIndexToGeno,  genotypeList,stateSpaceToCopyNumber, gsm, this.copyNumber));
          
         
-            map(this.genoToHaploPair,null,  haplopairList, stateSpaceToGenotypeIndex, gsm);
-            map(haploPairToHaplo,haploPairToHaplos, haploList, this.stateSpaceToHaploPairIndex, hsm);
-            
-            for(int i=0; i<this.haplopairList.size(); i++){
-                Comparable hpli = this.haplopairList.get(i);
-                String hplis = this.getGenotypeString(hpli);
-                haploPairToGeno[i] = this.stateSpaceToGenotypeIndex.get( hplis);
-                       
-            }
-            for(int i=0; i<this.haploPairToHaplo.length; i++){
-                int[] hPToHi = this.haploPairToHaplo[i];
-                for(int j=0; j<hPToHi.length; j++){
-                    this.haploToHaploPair[hPToHi[j]] = i;
-                }
-            }
+            	tasks.add(map(this.genoToHaploPair,null,  haplopairList, stateSpaceToGenotypeIndex, gsm));
+            	tasks.add( map(haploPairToHaplo,haploPairToHaplos, haploList, this.stateSpaceToHaploPairIndex, hsm));
+            	tasks.add(new Callable(){
+
+					@Override
+					public Object call() throws Exception {
+						for(int i=0; i<haplopairList.size(); i++){
+			                Comparable hpli = haplopairList.get(i);
+			                String hplis = getGenotypeString(hpli);
+			                haploPairToGeno[i] = stateSpaceToGenotypeIndex.get( hplis);
+			                       
+			            }
+						return null;
+					}
+	            	
+	            });
+            	tasks.add(new Callable(){
+
+					@Override
+							public Object call() throws Exception {
+		            for(int i=0; i<haploPairToHaplo.length; i++){
+		                int[] hPToHi = haploPairToHaplo[i];
+		                for(int j=0; j<hPToHi.length; j++){
+		                    haploToHaploPair[hPToHi[j]] = i;
+		                }
+		            }
+		            return null;
+					}
+            	});
            
             //map(this.haploPairToGeno, null, this.genotypeList, this.stateSpaceToHaploPairIndex);
-            
-            for(int i=0; i<this.genoToHaploPair.length; i++){
-                int[] haploPairIndices = genoToHaploPair[i];
-               genoToHaploW[i] = new double[haploPairIndices.length];
-                for(int j=0; j<haploPairIndices.length; j++){
-                    Comparable comp1 =  haplopairList.get(haploPairIndices[j]);
-                    if(comp1 instanceof Emiss || comp1 instanceof IntegerEmiss){
-                        genoToHaploW[i][j] = 1.0;
-                    }
-                    else{
-                        boolean exclude = exclude((ComparableArray)comp1);
-                        if(exclude){
-                            genoToHaploW[i][j]  = Constants.exclude();
-                        }
-                        else genoToHaploW[i][j]  = 1.0;
-                      
-                    }
-                    this.haploPairIndexToWeight[haploPairIndices[j]] = genoToHaploW[i][j];
-                }
-                SimpleExtendedDistribution.normalise(genoToHaploW[i]);
-               
-            }
-            for(int i=0; i<this.haploSize(); i++){
-                Comparable comp = this.haploList.get(i);
+            	tasks.add(new Callable(){
+            		@Override
+					public Object call() throws Exception {
+            	
+			            for(int i=0; i<genoToHaploPair.length; i++){
+			                int[] haploPairIndices = genoToHaploPair[i];
+			               genoToHaploW[i] = new double[haploPairIndices.length];
+			                for(int j=0; j<haploPairIndices.length; j++){
+			                    Comparable comp1 =  haplopairList.get(haploPairIndices[j]);
+			                    if(comp1 instanceof Emiss || comp1 instanceof IntegerEmiss){
+			                        genoToHaploW[i][j] = 1.0;
+			                    }
+			                    else{
+			                        boolean exclude = exclude((ComparableArray)comp1);
+			                        if(exclude){
+			                            genoToHaploW[i][j]  = Constants.exclude();
+			                        }
+			                        else genoToHaploW[i][j]  = 1.0;
+			                      
+			                    }
+			                    haploPairIndexToWeight[haploPairIndices[j]] = genoToHaploW[i][j];
+			                }
+			                SimpleExtendedDistribution.normalise(genoToHaploW[i]);
+			               
+			            }
+			            return null;
+			            		}
+			            	});
+            	
+            	tasks.add(new Callable(){
+
+					@Override
+							public Object call() throws Exception {
+            for(int i=0; i<haploSize(); i++){
+                Comparable comp = haploList.get(i);
                 if(comp instanceof ComparableArray){
                     haploPairToCN[i] = ((ComparableArray)comp).noCopies(true);
-                   this.haploPairToBCount[i] =(int)  ((ComparableArray)comp).noB();
+                   haploPairToBCount[i] =(int)  ((ComparableArray)comp).noB();
                 }
                 else if(comp instanceof Emiss){
                     haploPairToCN[i] = ((Emiss)comp).noCopies();
-                    this.haploPairToBCount[i] =(int)  ((Emiss)comp).noB();
+                    haploPairToBCount[i] =(int)  ((Emiss)comp).noB();
                 }
                 else{
                 	haploPairToCN[i] = 2;
-                	  this.haploPairToBCount[i] = -100;
+                	 haploPairToBCount[i] = -100;
                 }
               
             }
+            return null;
+					}
+            	});
+           
+            BaumWelchTrainer.involeTasks(tasks, true);	
+            }catch(Exception exc){
+            	exc.printStackTrace();
             }
+            
             if( Constants.annotate()){
                 StringBuffer sw = new StringBuffer();
                 sw.append("emission state space");
@@ -777,7 +837,7 @@ public int getRealCN(ComparableArray compA){
              }
              else{
             	 try{
-            		 int nocop = Integer.parseInt(c);
+            		 int nocop = Integer.parseInt(c.trim());
             		 int[] ind = this.getGenoForCopyNo(nocop);
             		 for(int k=0; k<ind.length; k++){
             			 int[] haploPair = this.getHaplopairForGeno(ind[k]);
@@ -815,6 +875,7 @@ public int getRealCN(ComparableArray compA){
 			else return c+"";
 		}
 		public double getWeight(int haploPairIndex) {
+//			if(!Constants.useweight) return 1.0;
            return haploPairIndexToWeight[haploPairIndex];
         }
        int[] swtch = null;

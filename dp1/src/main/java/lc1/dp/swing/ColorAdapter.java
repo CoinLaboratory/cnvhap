@@ -22,15 +22,15 @@ public class ColorAdapter{
    
    public ColorAdapter(){
        this.transf = new HashMap<Integer, Integer>();
-       char[] c = Constants.modify(0);
+       String[] c = Constants.modify(0);
        if(c!=null){
        int cnt =2;
        for(int i=0; i<c.length; i++){
            
-           if(c[i]=='0' || c[i]=='-' || c[i] =='N' || c[i]=='_'){
+           if(c[i].equals("0") || c[i].equals("-") || c[i] .equals("N") || c[i].equals("_")){
                transf.put(i,0);
            }
-           else if(c[i]=='2' || c[i]=='3' || c[i]=='X' || c[i] =='Y' || c[i] =='Z') {
+           else if(c[i].equals("2") || c[i].equals("3") || c[i].equals("X") || c[i] .equals("Y") || c[i].equals("Z")) {
                transf.put(i,1);
            }
            else{
