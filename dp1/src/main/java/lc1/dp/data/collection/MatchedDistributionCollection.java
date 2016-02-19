@@ -5,6 +5,7 @@ import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.logging.Logger;
 
 import lc1.dp.data.representation.Emiss;
@@ -167,7 +168,7 @@ import cern.jet.random.engine.DRand;
 		
 	  //  List<BinomialDistr1> dist = new ArrayList<BinomialDistr1>();
 		public MatchedDistributionCollection(int index, 
-			 double cellularity, File dir, int maxCN,int maxCN1, int noprobes,HaplotypeEmissionState ref, Double[] ratiosL, List<String> indiv) {
+			 File dir, int maxCN,int maxCN1, int noprobes,HaplotypeEmissionState ref, Double[] ratiosL, List<String> indiv) {
 			// TODO Auto-generated constructor stub
 			this.index = (short)index;
 			mdf = indiv.size()>1 && Constants.trainCellularity()==1  ? new MultidimmaxSingle(this): new Multidimmax(this);
@@ -177,11 +178,17 @@ import cern.jet.random.engine.DRand;
 			this.indiv.remove(Constants.reference());
 			this.numsamples = this.indiv.size();
 			System.err.println("indiv: "+Arrays.asList(this.indiv));
-			this.cellularity = mdf.add("cellularity", Constants.initialCellularity[0], 0.05, 0.999999, numsamples, trainCellularity>=1 && trainCellularity <3);
+			double[] initialCell = new double[numsamples];
+			double[] initialRatio = new double[numsamples];
+			for(int i=0; i<this.indiv.size(); i++){
+				initialCell[i] = Constants.initialCellularity(this.indiv.get(i),0);
+				initialRatio[i] = Constants.initialCellularity(this.indiv.get(i),1);
+			}
+			this.cellularity = mdf.add("cellularity", initialCell, 0.05, 0.999999,  trainCellularity>=1 && trainCellularity <3);
 			if(Constants.plasma()){
-				this.ratio = mdf.add("ratio", Constants.initialCellularity[1], 0.01, 1.0, 1, true);
+				this.ratio = mdf.add("ratio", initialCell[0], 0.01, 1.0, 1, true);
 			}else{
-			this.ratio = mdf.add("ratio", Constants.initialCellularity[1], 0.5, 3.0, numsamples, trainCellularity>=2 && Constants.useAvgDepth());
+				this.ratio = mdf.add("ratio", initialRatio, 0.5, 3.0,  trainCellularity>=2 && Constants.useAvgDepth());
 			
 			}
 			
@@ -247,11 +254,14 @@ import cern.jet.random.engine.DRand;
 			
 		}
 		public Double b(Double b, Number r, int i, String name) {
+			return this.b(b,r,i,name,1);
+			}
+		public Double b(Double b, Number r, int i, String name, int cn) {
 		  double p = b/r.doubleValue();
 		  double p1 =refCount(i)/totnormal();
 		  double mult = p/p1;
 		  
-		 return inverseMult(mult, i,name);//(mult - (1-cellularity))* (ratio/cellularity);
+		 return inverseMult(mult, i,name)/cn;//(mult - (1-cellularity))* (ratio/cellularity);
 		}
 			
 		

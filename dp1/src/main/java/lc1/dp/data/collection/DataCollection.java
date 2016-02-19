@@ -1,5 +1,6 @@
  package lc1.dp.data.collection;
 //TO DO - fix HWE calculation
+import java.awt.Color;
 import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -1521,6 +1522,9 @@ public String getInfo(String tag, String key, int i, boolean style) throws Excep
     }
     public static BufferedReader getBufferedReader(File f) throws Exception{
         if(f.exists() && f.length()>0){
+        	if(f.getName().endsWith(".gz")){
+        		  return new BufferedReader(new InputStreamReader(new GZIPInputStream(new FileInputStream(f))));
+        	}
             return new BufferedReader(new FileReader(f));
         }
         else{
@@ -3316,40 +3320,101 @@ public Locreader getMergedDeletions(boolean extend, boolean deletion){
 class PrintAberations{
 	private PrintWriter pw;
 	private PrintWriter pw1;
+	private PrintWriter[] pw2;
+	private PrintWriter pw3;
+	private File[] f2;
+	private boolean[] delete;
 	//final int rep;
 	  String pst = new String("%-7s  %7s %7s %7s %7s  %7s %7s %7s");
-	    String pst1 = new String("%-7s  %7s %7d %7d %7d  %5.3g %7s %5.3g");
+	    String pst1 = new String("%-7s  %7s %7d %7d %7d  %5.3g %7d %5.3g");
+	    String pst2 = new String("%-7s %7d %7d %7s %7s %2s %7d %7d %7s");
 	 
 	    public PrintAberations(File parentFile) {
 	    	File cnvFile = new File(parentFile, "cnv");
 	    	File pointwise = new File(parentFile, "cnv1");
+	    	File bed = new File(parentFile, "bed");
+	    
 	   	   // this.rep =Emiss.getSpaceForNoCopies(Constants.backgroundCount()).copyNumber.size();
 	    	cnvFile.mkdir();
 	    	pointwise.mkdir();
+	    	bed.mkdir();
+	    	File bed1 = new File(bed, name);
+	    	bed1.mkdir();
 	    	try{
 	    	this.pw = new PrintWriter(new BufferedWriter(new FileWriter(new File(cnvFile, name+".txt"))));
 	    	  pw.println(String.format(pst, new Object[] { "Sample", "Chr", "FirstProbe", "LastProbe" ,"NbSnp" ,"length_min", "Type", "Avg_certainty"}));
 		   		
 	    	this.pw1 = new PrintWriter(new BufferedWriter(new FileWriter(new File(pointwise, name+".txt"))));
-	    	}catch(Exception exc){
+	    	pw2 = new PrintWriter[1+ (int) Constants.maxCopies()];///(int) Constants.backgroundCount1];
+	    	f2 = new File[pw2.length];
+	    	delete = new boolean[pw2.length];
+	    	Arrays.fill(delete, true);
+	    	//browser position chr7:127471196-127495720
+	    	//browser hide all
+	    	//track name="ItemRGBDemo" description="Item RGB demonstration" visibility=2 useScore=1
+	    	//itemRgb="On"
+	    	boolean singlechrom  =true;
+	    	int posa = Math.max(1, loc.get(0));
+	    	int posb = loc.get(loc.size()-1);
+	        String chrom = DataCollection.this.chrom;
+	    	if(Constants.scaleLoc()!=null){
+	    	double[] pos = new double[2];
+	    	int pos1 = (int)Math.floor(Constants.decode(posa, pos, false));
+	    	 posa = (int) pos[1];
+	    	int pos2 = (int) Math.floor(Constants.decode(posb, pos, false));
+	    	posb = (int) pos[1];
+	    	
+	    	if( pos1!=pos2){
+	    		singlechrom = false;
+	    	
+	    	}else{
+	    		chrom = pos1+"";
+	    	}
+	    	}
+	    	for(int k=0; k<pw2.length; k++){
+	    		double cn  =  ((double)k/Constants.backgroundCount1);
+	    		String CN =String.format(cn < 1 ? "%4.2g": "%5.3g",cn).trim();
+	    		f2[k] = new File(bed1, "CN_"+CN+".bed");
+		    	this.pw2[k] = new PrintWriter(new BufferedWriter(new FileWriter(f2[k])));
+		    	
+		    	if(singlechrom)pw2[k].println("browser position chr"+chrom+":"+posa+"-"+posb) ;//127471196-127495720");
+		    	pw2[k].println("browser hide all");
+		    	pw2[k].println("track name=CN_\""+CN+"\" description=CN_\""+CN+"\" visibility=2 useScore=1 itemRgb=\"On\"");
+		    	pw2[k].println();
+	    	}
+	    	File f2 = new File(bed1, "CN_all"+".bed");
+	    	pw3 = new PrintWriter(new BufferedWriter(new FileWriter(f2)));
+	    	if(singlechrom)pw3.println("browser position chr"+chrom+":"+posa+"-"+posb) ;//127471196-127495720");
+	    	pw3.println("browser hide all");
+	    	pw3.println("track name=CN_\"all"+"\" description=CN_\"all"+"\" visibility=2 useScore=1 itemRgb=\"On\"");
+	    	pw3.println();
+		    	}
+	    	catch(Exception exc){
 	    		exc.printStackTrace();
 	    	}
 			// TODO Auto-generated constructor stub
 		}
 		public void print(String key){
+			Color[] col;
 			double[] scaleLoc = Constants.scaleLoc();
 			List<Aberation> obj;
 			if(true){
 	    	  obj = getDeletedPositions(new int[] {0}, key,pw1, Constants.longThresh());
 	    	 HaplotypeEmissionState data_ = ((HaplotypeEmissionState)dataL.get(key));
+	    	
+	    	 EmissionStateSpace emStSp =Emiss.getSpaceForNoCopies(data_.noCop());
+	    	col=emStSp.getColor(false);
 	    	  Integer rep = data_.noCop();
-	    	   for(int i=1; i<=rep*Constants.maxCopies(); i++){
-	    		   if(i!=rep){
+	    	  int max = Constants.maxCopies();//(int) Math.ceil( Constants.maxCopies()/Constants.backgroundCount1);
+	    	   for(int i=1; i<=max; i++){
+	    		   if(i!=rep*(int)Constants.backgroundCount1){
 	    			   obj.addAll(getDeletedPositions(new int[] {i}, key,pw1, Constants.longThresh()));
 	    		   }
 	    	   }
 			}else{
 				 HaplotypeEmissionState data_ = ((HaplotypeEmissionState)dataL.get(key));
+				 EmissionStateSpace emStSp =Emiss.getSpaceForNoCopies(data_.noCop());
+			    	col=emStSp.getColor(false);
 				  Integer rep = data_.noCop();
 				int[] lt = new int[rep];
 				for(int k =0; k<rep; k++){
@@ -3367,9 +3432,10 @@ class PrintAberations{
 	    	   for(int i=0; i<obj.size(); i++){
 	    	        Aberation ab = obj.get(i);
 	    	        Object[] obj1 = new Object[8];
+	    	        Object[] obj2 = new Object[9];
 	    	      
 	    	        obj1[0] = ab.name;
-	    	       
+	    	        obj2[3] = ab.name;
 	    	        File dir = new File(Constants.outputDir());
 	    	        String chrom = Constants.chrom(0);
 	    	        int end_index = ab.end;
@@ -3382,6 +3448,7 @@ class PrintAberations{
 	    	            final double chr = Math.floor(a1);
 	    	        	start = (a1 -chr)*scaleLoc[0];
 	    	        	chrom = ((int)chr)+"";
+	    	        	chrom = chrom.replace("23",  "X").replace("24","Y");
 	    	        	int maxindex = chrToMaxIndex.get((int)chr-1);
 	    	        	if(end_index>=maxindex){
 	    	        		if(end_index>maxindex){
@@ -3405,6 +3472,11 @@ class PrintAberations{
 	  	    	        nextstart = (end_index+1 < loc.size()) ? loc.get(end_index+1) : loc.get(end_index) + (loc.get(end_index) - loc.get(end_index-1));
 	    	        }
 	    	        end = Constants.proportionOfDistanceToNextProbeToExtend()*nextstart  + (1-Constants.proportionOfDistanceToNextProbeToExtend())*end;
+		    	     obj2[0]  = "chr"+chrom;
+		    	     obj2[1] = (int) start;
+		    	     obj2[2] = (int) end;
+		    	     obj2[6] = (int) start;
+		    	     obj2[7] = (int) end;
 		    	     
 	    	        obj1[1] = chrom;
 	    	        obj1[2] = (int) start;
@@ -3417,20 +3489,54 @@ class PrintAberations{
 	    	        	throw new RuntimeException("end less than start");
 	    	        }
 	    	      //  obj1[5] = "0";
-	    	        obj1[6] = Constants.inversion() ? (ab.copy==0 ? "no_recomb" : ab.copy==1 ? "normal" : "inversion") : ab.copy+"";
+	    	        obj1[6] = Constants.inversion() ? (ab.copy==0 ? "no_recomb" : ab.copy==1 ? "normal" : "inversion") : ( (ab.copy));
+	    	     //   obj2[3] = name;//Constants.inversion() ? (ab.copy==0 ? "no_recomb" : ab.copy==1 ? "normal" : "inversion") : (int) (ab.copy)+"";
+	    	        obj2[8] = col[ab.copy].getRed()+","+ col[ab.copy].getGreen()+","+ col[ab.copy].getBlue();
 	    	        obj1[7] = ab.certainty;
+	    	        obj2[4] = (int) Math.round(ab.certainty*1000);
+	    	        obj2[5] = "+";
 	    	       String st = String.format(pst1, obj1);
+	    	       String st2 = String.format(pst2, obj2);
 	    	      // System.err.println(st);
 	    	        pw.println(st);
+	    	        pw2[ab.copy].println(st2);
+	    	        pw3.println(st2);
+	    	        delete[ab.copy] = false;
 	    	        
 	    	    }
-	    	   if(DataCollection.this.dc instanceof MatchedDistributionCollection){
-	    		   int indivk = indiv.indexOf(key);
-					pw.println("##Estimated cellularity:"+((MatchedDistributionCollection)dc).cellularity[indivk]);
-					pw.println("##Estimated ratio:"+((MatchedDistributionCollection)dc).ratio[indivk]);
-				    pw.println("##Version:"+2.0);
-				}
+	    	  
 	    }
+		public void close() {
+			
+			 if(DataCollection.this.dc instanceof MatchedDistributionCollection){
+				 StringBuffer cellratio = new StringBuffer("##cell;ratio\t");
+				// StringBuffer indivst = new StringBuffer("##indiv\t");
+				 pw.println("##Version:"+3.0);
+				// pw.println("##cellularity;ratio");
+				 List<String>indiv = indiv();
+					for(int k=0; k<indiv.size(); k++){
+	    		   int indivk = k;
+	    		   cellratio.append(indiv.get(k)+"="+((MatchedDistributionCollection)dc).cellularity[indivk]+";"+((MatchedDistributionCollection)dc).ratio[indivk]);
+				  //  indivst.append(indiv.get(k));
+				    if(k<indiv.size()-1){
+				    	cellratio.append(":");
+				    	//indivst.append(":");
+				    }
+				}
+					//pw.println(indivst.toString());
+				pw.println(cellratio.toString());
+			 }
+			  pw.close();
+			   pw1.close();
+			   pw3.close();
+			   for(int k=0; k<pw2.length; k++){
+			   if(pw2[k]!=null) pw2[k].close();
+			   
+			   if(delete[k]) {
+				   f2[k].delete();
+			   }
+			   }
+		}
 }
 /* (non-Javadoc)
  * @see lc1.dp.data.collection.DataC#printDeletedPositions(java.io.PrintWriter)
@@ -3440,8 +3546,8 @@ public final void printDeletedPositions(File f){
    for(Iterator<String> it =this.dataL.keySet().iterator(); it.hasNext();){
 	   pa.print(it.next());
    }
-   pa.pw.close();
-   pa.pw1.close();
+   pa.close();
+ 
 }
 
 
@@ -4478,8 +4584,7 @@ public void finishedPrinting(){
 	if(this.wp_states!=null)wp_states.close();
 	if(this.wp_mostlikely!=null)this.wp_mostlikely.close();
 	if(printAb!=null){
-		printAb.pw.close();
-		printAb.pw1.close();
+		printAb.close();
 	}
 	if(this.writeCompressGeno!=null){
 		writeCompressGeno.indiv.close();
@@ -4931,7 +5036,9 @@ DataProjection dp;
 public  DataCollection (File f, short index, int no_copies, final int[][] mid,File bf, Collection<String> snp_ids_to_restrict) throws Exception{
 //	System.err.println(Constants.print(mid[0]));
 	 this.chrom = f.getName().split("\\.")[0];//.split("_")[0];
-	if(f.getName().endsWith(".counts")) chrom = "all";
+	if(f.getName().endsWith(".counts") || f.getName().endsWith(".counts.gz")) {
+		chrom = "all";
+	}
 	if(f.exists()){
 		
 		System.err.println("specified file exists: opening "+f.getName());
@@ -5049,11 +5156,12 @@ public  DataCollection (File f, short index, int no_copies, final int[][] mid,Fi
         	name_bf = new BufferedReader(new FileReader(new File(f.getParentFile(),pref+"Name")));
         }
        headers=  ApacheCompressor.getIndiv(name_bf,  null);
-    }else if(f.getName().endsWith(".counts")){
+    }else if(f.getName().endsWith(".counts") || f.getName().endsWith(".counts.gz")){
     	headers = Arrays.asList("DP\nchr\tstart\tend\tsnpid\format\nsample".split("\n"));//#CHROM  ID      START   END     FORMAT
     	 buildF =  getBuildReader(f.getParentFile(), bf,zf);
-    	
-    	firstline = Arrays.asList(buildF.readLine().split("\t"));
+    	String fl = buildF.readLine();
+    	firstline = Arrays.asList(fl.split("\t"));
+    	headers.set(1, fl);
     }
          header = headers.get(0).split("\t");
          
@@ -5092,7 +5200,7 @@ public  DataCollection (File f, short index, int no_copies, final int[][] mid,Fi
          if(samplesFile.exists()){
          indiv = ApacheCompressor.getIndiv(samplesFile, sample_id);
          }else if(firstline!=null){
-        	 indiv = firstline.subList(firstline.indexOf("FORMAT")+1, firstline.size());
+        	 indiv = firstline.subList(Math.max(firstline.indexOf("FORMAT"), firstline.indexOf("END"))+1, firstline.size());
          }
          else{
         	 indiv = ApacheCompressor.getIndiv(zf, pref+"Samples", sample_id);
@@ -5254,14 +5362,19 @@ public  DataCollection (File f, short index, int no_copies, final int[][] mid,Fi
         	 
          int bin_id  = header_snp.indexOf("bins");
          int snpid_ = header_snp.indexOf("id");
+         int locid = 1;
+         if(header_snp.indexOf("START")>=0) locid = header_snp.indexOf("START");
+         if(header_snp.indexOf("start")>=0) locid = header_snp.indexOf("start");
          if(snpid_<0) snpid_ = header_snp.indexOf("snpid");
          if(snpid_<0) snpid_ = header_snp.indexOf("snpID");
-         if(snpid_ <0) throw new RuntimeException("no index of id in "+header_snp);
+         int chrind = header_snp.indexOf("chr");
+         if(chrind <0) chrind  = header_snp.indexOf("#CHROM");
+        // if(snpid_ <0) throw new RuntimeException("no index of id in "+header_snp);
             String chr_ = chrom;//Constants.chrom0().split("_")[0];
             if(chr_.indexOf("chr")<0) chr_ = "chr"+chr_;
              readBuildFile(zf, pref,buildF,chr_,mid,  
                      this.loc,   chr, this.snpid,this.alleleA, this.alleleB,this.strand,
-                     1, header_snp.indexOf("chr"), 
+                     locid, chrind, 
                      snpid_,strand_id,bin_id,
                            allel , snp_ids_to_restrict);
              
@@ -5379,7 +5492,7 @@ public  DataCollection (File f, short index, int no_copies, final int[][] mid,Fi
     	    	int new_i = (int) Math.floor((float)i/(float)cumR);
     	        Constants.decode(this.loc.get(i), res,false);
     	        double currentchrom = res[0];
-    	    	if(Math.abs(currentchrom-prevc)<1e-6 || cumR ==1 || new_i!=prev_i){
+    	    	if(Math.abs(currentchrom-prevc)<1e-6 || cumR ==1 || new_i!=prev_i || true){
     	    		probeOnly[i] = process(pref+sno,new_i,zf2, ploidy,dToInc,missing, lrrVals);
     	    		
     	    	}else{
@@ -5925,7 +6038,14 @@ protected List<Integer> getSamps() throws Exception{
     	if(ind>=0) dToInc.add(ind);
      }
     
-   
+   if(false && Constants.reference()!=null){ //make sure reference index is last
+	   Integer refind = indiv.indexOf(Constants.reference());
+	   int ind = dToInc.indexOf(refind);
+	   if(ind <dToInc.size()-1){
+		   dToInc.remove(ind);
+		   dToInc.add(refind);
+	   }
+   }
    if(dToInc.size()>indiv.size()  || dToInc.size()==0){
 	   
 	   throw new RuntimeException("!!\nd\n"+dToInc+"\nindiv\n"+indiv);  
@@ -6064,6 +6184,17 @@ public  Map<String,Double> readKaryotypes()  {
 		}
 		
 	});
+	if(karyofiles.length==0){
+		 dirp = new File(System.getProperty("user.dir"));
+		 karyofiles = dirp.listFiles(new FileFilter(){
+
+			@Override
+			public boolean accept(File pathname) {
+				return pathname.getName().indexOf("karyo")>=0 && pathname.getName().indexOf(Constants.build(0).split("\\.")[0])>0;
+			}
+			
+		});
+	}
 	if(singlechrom && Constants.annotateMB()>0){
 		for(int k=0; k<300; k+=Constants.annotateMB()){
 			karyo.put(k+"", Constants.recode(new double[] {pos1, (k*1e6)}));
@@ -6187,12 +6318,12 @@ public void addAlleles(int i, List<String> l, List<String>b){
 
 	
 }
-public void process(String[] str, int i,int no,  int loc_index, int[] maf_index,int chr_index, int strand_index,int snp_index,
-		List l, List chr, List majorAllele, List alleleB, List forward, int bin_index){
+public void process(String[] str, int i,int no,  int loc_index, int[] maf_index,int chr_index, int strand_index,int snp_index1,
+		List l, List chr, List majorAllele, List alleleB, List forward, int bin_index, String snp_id){
 	  l.add(loc_index<0 ? i : str[loc_index]);
       loc.add(no);
       if(chr_index>=0) chr.add(str[chr_index].startsWith("chr") ? str[chr_index].substring(3) : str[chr_index]);
-      snpid.add(str[snp_index]);
+      snpid.add(snp_id);
       if(maf_index!=null &&maf_index[0]>=0 && maf_index[1]>=0   && str.length>maf_index[0]){
     	  char ch0 = str[maf_index[0]].charAt(0);
     	  char ch1 = str[maf_index[1]].charAt(0);
@@ -6241,7 +6372,7 @@ public void process(String[] str, int i,int no,  int loc_index, int[] maf_index,
 public  void readBuildFile(ZipFile zf, String prefix, BufferedReader br, String chrom1, final int [][] fromTo,List<Integer> loc, List<String> chr,  List<String> snpid, 
         List<Character> majorAllele, List<Character> alleleB,
         List<Boolean> forward,
-        int loc_index, int chr_index, int snp_index, int strand_index, int bin_index, int[] maf_index,
+        int loc_index, int chr_index, int snp_index1, int strand_index, int bin_index, int[] maf_index,
         Collection<String> snp_ids_to_restrict) throws Exception{
     List<String> l = new ArrayList<String>();
   
@@ -6266,23 +6397,26 @@ public  void readBuildFile(ZipFile zf, String prefix, BufferedReader br, String 
     }*/
    outer: for(int i=0;(st = br.readLine())!=null; i++){
         String[] str = st.split("\t+");
+        String id = snp_index1 >= 0 ?  str[snp_index1] : str[chr_index]+"_"+str[loc_index];
         if(zf==null && chrom1.equals("chrall")){
-        	String str1 = Constants.recode(new String[] {str[0], str[2],str[3]});
-        	str[3] = str[0]+"_"+str[1];
-        	str[0] = "all";
+        	String str1 = Constants.recode(new String[] {str[chr_index], str[loc_index],str[loc_index+1]});
+        //	str[3] = str[0]+"_"+str[1];
+        	id = str[chr_index]+"_"+str[loc_index];
         	
-        	str[1] = str1;
-        	str[2] = str1;
+        	str[loc_index] = str1;
+        	str[loc_index+1] = str1;
+        
+        	str[chr_index] = "all";
         }
         if(i==0 && chr_index>=0 && ! str[chr_index].startsWith("chr") && chrom1.toLowerCase().startsWith("chr")){
         	chrom = chrom1.substring(3);
         }
-        if(snp_ids_to_restrict!=null && !snp_ids_to_restrict.contains(str[snp_index])){
+        if(snp_ids_to_restrict!=null && !snp_ids_to_restrict.contains(id)){
         	continue outer;
         }
        if(drop){
     	   for(int k=0; k<todrop.length; k++){
-    		   if(snp_index>=0 && str[snp_index].startsWith(todrop[k])){
+    		   if(id.startsWith(todrop[k])){
     			   continue outer;
     		   }
     	   }
@@ -6292,7 +6426,7 @@ public  void readBuildFile(ZipFile zf, String prefix, BufferedReader br, String 
     		   continue outer;
     	   }
        }
-       String id = str[snp_index];
+      
       String chr_id = str[chr_index];
      int pind =chr_id.startsWith("chrpcs") ? -1 :  Math.max(chr_id.indexOf('p'), chr_id.indexOf('q'));
      if(pind>=0) chr_id = chr_id.substring(0,pind);
@@ -6311,7 +6445,7 @@ public  void readBuildFile(ZipFile zf, String prefix, BufferedReader br, String 
                 		  if(zf==null || zf.getEntry(prefix+id)!=null ){
                 	 if(!Constants.excludeMultiAllelicSites() ||maf_index==null ||  ((maf_index[0]<0 || str[maf_index[0]].indexOf(',')<0)  
                 			 && (maf_index[1] <0 || str[maf_index[1]].indexOf(',')<0 ))){       	
-                	String snp = str[snp_index];
+                	String snp = id;
                 	  
                 	if(done.contains(snp) || done1.contains(no)) {
                 		Logger.global.warning("duplicate SNPS in "+name+" "+snp);
@@ -6322,7 +6456,7 @@ public  void readBuildFile(ZipFile zf, String prefix, BufferedReader br, String 
                 	done1.add(no);
                 	}
                 	
-                	this.process(str, i, no, loc_index, maf_index, chr_index, strand_index, snp_index, l, chr, majorAllele, alleleB, forward, bin_index);
+                	this.process(str, i, no, loc_index, maf_index, chr_index, strand_index, snp_index1, l, chr, majorAllele, alleleB, forward, bin_index, id);
                 	// process(str,i);
                     	
                   
@@ -6362,7 +6496,7 @@ private boolean excludeFromTo(int[][] fromTo, int no) {
 }
 /** returns if it is a probeOnly probe */
 
-protected final  Boolean process(String snpid, int i,ZipFileAccess zf,
+protected   Boolean process(String snpid, int i,ZipFileAccess zf,
 		List<Integer> ploidy, 
 		List<Integer> sampToInc, double[] missing, double[] lrr) throws Exception {
 

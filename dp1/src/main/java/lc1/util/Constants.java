@@ -41,6 +41,8 @@ import org.apache.commons.cli.Options;
 import org.apache.commons.cli.Parser;
 import org.apache.commons.cli.PosixParser;
 
+import com.sun.org.apache.xerces.internal.impl.xpath.regex.ParseException;
+
 public class Constants {
 	public static double samplePermute = 0;
 	public static final boolean useweight = false;
@@ -1401,6 +1403,8 @@ public static void resetIndices(){
 		return originalInput;
 	}
 public static int maxCN = 2;
+
+public static Map<String, String> set = new HashMap<String, String>();
 	public static void parseInner(Option opt, Options options, int column,
 			int index, String repControl, CommandLine paramsa, CommandLine paramsb) throws Exception {
 		String argName = opt.getLongOpt();
@@ -1491,7 +1495,13 @@ public static int maxCN = 2;
 		if(field.getName().equals("probeOnly")){
 			System.err.println("ḧ");
 		}
-		System.err.println("Set " + field.getName() + " : " + (getString(res)));
+		String toset = getString(res);
+		if(toset.indexOf("--")>=0) throw new RuntimeException( " misparsed "+ field.getName() + " : " + (toset));
+		System.err.println("Set " + field.getName() + " : " + (toset));
+		if(set.containsKey(field.getName())){
+			throw new RuntimeException("field is specified twice "+field.getName());
+		}
+		set.put(field.getName(), toset);
 		
 	}
 
@@ -1817,7 +1827,42 @@ public static int maxCN = 2;
 	public static CommandLine parse(String[] args, Options opti,
 			Integer column, int rep, String repControl, CommandLine params1) throws Exception {
 		Parser parser = new PosixParser();
-		final CommandLine params = parser.parse(opti, args, false);
+		 CommandLine params = null;
+		 try{
+		 params= parser.parse(opti, args, false);
+		// System.err.println(opti.hasOption("initialCellularity"));
+		// System.err.println(opti.hasOption("modify0"));
+		 for(int i=0; i<args.length; i++){
+			 args[i] = args[i].trim();
+			 int rem = (int) Math.IEEEremainder(i, 2);
+			// System.err.println(i+" "+args[i].length());
+			 if(args[i].trim().length()==0) {
+				 throw new RuntimeException("!!");
+			 }
+			 if(args[i].startsWith("--")){
+				 if(rem!=0) {
+					 throw new RuntimeException("there is a rogue character!! "+args[i]);
+				 }
+				 String argi = args[i].substring(2);
+				 //System.err.println(argi);
+				 if(params.hasOption(argi)){
+				 }else{
+					 throw new ParseException("did not read "+argi, 0);
+				 }
+			 }else{
+				 if(rem==0) {
+					Character ch = args[i].charAt(0);
+					int ik  = ch.getNumericValue(ch);
+					 throw new RuntimeException("there is a rogue character!! "+args[i]+" - "+ik);
+				 }
+				 
+			 }
+			 
+		 }
+		 }catch(ParseException exc){
+			 exc.printStackTrace();
+			 return null;
+		 }
 		if (params.hasOption("paramFile")) {
 			if (params.getOptionValue("paramFile").equals("many"))
 				return null;
@@ -2399,8 +2444,9 @@ public static double switchU = 1e10;
 
 						}
 					}
-					// System.err.println(f[i].getName());
+				
 					else {
+						// System.err.println(f[i].getName());
 						this.addOption(OptionBuilder
 								.withLongOpt(f[i].getName()).withDescription(
 										f[i].getName()).withValueSeparator(':')
@@ -2569,7 +2615,7 @@ public static double switchU = 1e10;
 	}
 
 	public static String inputFile(int i, int j) {
-		if(inputDir(i).endsWith(".counts")) return inputDir(i);
+		if(inputDir(i).endsWith(".counts") || inputDir(i).endsWith(".counts.gz")) return inputDir(i);
 		return inputDir(i)+"/" + Constants.chrom(j) + ".zip";
 	}
 	
@@ -5486,14 +5532,40 @@ public static boolean isLogProbs() {
 }
 public static double priorWeight = 1e5;
 
-public static double[] initialCellularity=new double[] {0.99,1.0};
+public static Map<String, double[]> initialCell = null;
+public static String[] initialCellularity = new String[] {"0.999;1.0"};
 public static double priorWeight() {
 	// TODO Auto-generated method stub
 	return priorWeight;
 }
-public static double[] initialCellularity() {
+public static double initialCellularity(String key, int i) {
 	// TODO Auto-generated method stub
-	return Constants.initialCellularity;
+	if(initialCell ==null){
+		initialCell = new HashMap<String, double[]>();
+		if(initialCellularity.length>0 && initialCellularity[0].indexOf("all")<0){
+			initialCell.put("all", new double[] {Double.parseDouble(initialCellularity[0]),Double.parseDouble( initialCellularity[1])});
+		}else{
+	
+		initialCell.put("all", new double[] {0.999,1.0});
+		for(int k=0; k<initialCellularity.length; k++){
+			String[] str = initialCellularity[k].split("=");
+			String key1 = "all";
+			String[] str2 = str;
+			if(str.length==2){
+				key1  = str[0];
+				str2 = str[1].split(";");
+			}
+			initialCell.put(key1,  new double[] {Double.parseDouble(str2[0]),Double.parseDouble(str2[1]) });
+		}
+		}
+	}
+	if(!initialCell.containsKey(key)){
+		key = key.replace('-', '_');
+		if(!initialCell.containsKey(key)){
+			key = "all";
+		}
+	}
+	return initialCell.get(key)[i];
 }
 public static double continueThresh = 0.5; //put to zero to keep singletons, and to not read through singletons
 public static double continueThresh() {
@@ -5594,17 +5666,21 @@ return muteAlpha;
 		pos1 =  Math.round(((pos1/scaleLoc[0])+chr)*scaleLoc[1]);
 		return pos1;
 	}
-	static List<String> chroms = Arrays.asList(("1:2:3:4:5:6:7:8:9:10:11:12:13:14:15:16:17:18:19:20:21:22:X:Y"
+	public static String[] chroms  = ("1:2:3:4:5:6:7:8:9:10:11:12:13:14:15:16:17:18:19:20:21:22:X:Y"
 			//+":GL000191.1:GL000192.1:GL000193.1:GL000194.1:GL000195.1:GL000196.1:GL000197.1:GL000198.1:GL000199.1:GL000200.1" 
 			//+":GL000201.1:GL000202.1:GL000203.1:GL000204.1:GL000205.1:GL000206.1:GL000207.1:GL000208.1:GL000209.1:GL000210.1:GL000211.1" 
 			//+":GL000212.1:GL000213.1:GL000214.1:GL000215.1:GL000216.1:GL000217.1:GL000218.1:GL000219.1:GL000220.1:GL000221.1:GL000222.1" 
 			//+":GL000223.1:GL000224.1:GL000225.1:GL000226.1:GL000227.1:GL000228.1:GL000229.1:GL000230.1:GL000231.1:GL000232.1:GL000233.1" 
 			//+":GL000234.1:GL000235.1:GL000236.1:GL000237.1:GL000238.1:GL000239.1:GL000240.1:GL000241.1:GL000242.1:GL000243.1:GL000244.1" 
 			//+":GL000245.1:GL000246.1:GL000247.1:GL000248.1:GL000249.1:MT"
-			).split(":"));
-	static int nochroms = chroms.size();
+			).split(":");
+	static List<String> chromsL;// = 
+	static int nochroms = chroms.length;
 	public static int allowChrom(String chr){
-		return  chroms.indexOf(chr.replaceAll("chr",""));
+		if(chromsL==null){
+			chromsL = Arrays.asList(chroms);
+		}
+		return  chromsL.indexOf(chr.replaceAll("chr",""));
 	//	int chr = .indexOf(chr1);
 	}
 	public static String recode(String[] vec){
@@ -5760,10 +5836,7 @@ return muteAlpha;
 		// TODO Auto-generated method stub
 		return plotCNAsShape;
 	}
-	public static double cumDiffThresh = 0;
-	public static double cumDiffThresh() {
-		return cumDiffThresh;
-	}
+	
 	
 	
 	

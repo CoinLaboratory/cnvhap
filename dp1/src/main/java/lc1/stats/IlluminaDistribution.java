@@ -147,7 +147,9 @@ public class IlluminaDistribution extends IlluminaRDistribution{
         return b;
     }
     
-
+    public Double b(int i, int cn) {
+    	return b(i);
+    }
     
 public Double b(int i) {
 	if(DataCollection.datC.dc instanceof MatchedDistributionCollection){

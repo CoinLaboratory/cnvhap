@@ -195,7 +195,7 @@ public class HaplotypeEmissionState extends EmissionState {
 							loci = chr+":"+pos;
 						}
 						pw.println(this.getName()+"\t"+loci+"\t"+cn+"\t"+prob);
-						if(ab==null & prob1>thresh1){
+						if(ab==null & prob1>=thresh1){
 							ab = new Aberation(this.getName(), i, cn);
 							count=1;
 							prod = prob;

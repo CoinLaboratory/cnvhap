@@ -2,30 +2,33 @@ package lc1.util;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileReader;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.zip.GZIPInputStream;
 
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 
 public class StringAsZipLike implements ZipFileAccess {
  public StringAsZipLike(File in, String first, String last) throws Exception {
-		this.f =new BufferedReader(new FileReader(in));
+		this.f =in.getName().endsWith(".gz") ? new BufferedReader(new InputStreamReader(new GZIPInputStream(new FileInputStream(in)))): new BufferedReader(new FileReader(in)) ;
 		currentline = f.readLine();
 		this.curr = currentline.split("\t");
-		snpind = Arrays.asList(curr).indexOf("ID");
+		locind = Arrays.asList(curr).indexOf("START");
 		chrind = Arrays.asList(curr).indexOf("#CHROM");
-		start = Arrays.asList(curr).indexOf("FORMAT")+1;
+		List<String> currL = Arrays.asList(curr);
+		start = currL.indexOf("FORMAT")>=0 ? currL.indexOf("FORMAT")+1 : currL.indexOf("END") + 1;
 		end = curr.length;
 		this.sum = new double[end - start];
-		while(!(curr[chrind]+"_"+curr[snpind]).equals(first)){
+		while(!(curr[chrind]+"_"+curr[locind]).equals(first)){
 			nextLine();
 		}
 		this.last = last;
 	}
-final int snpind, chrind;
+final int locind, chrind;
 final String last;
 final int start, end;
 BufferedReader f;
@@ -55,7 +58,11 @@ public  List<String> getIndiv(String entryName, Integer column) throws Exception
     return getIndiv(entryName, column, Constants.splString());
 }
 
-
+public void skip(String entryName) throws Exception{
+	while(!entryName.endsWith("_"+curr[locind]) || !entryName.startsWith(curr[chrind]+"_")) {
+		nextLine();
+	}
+}
 
 /* (non-Javadoc)
  * @see lc1.util.ZipFileAccess#getIndiv(java.lang.String, java.lang.Integer, java.lang.String)
@@ -63,9 +70,7 @@ public  List<String> getIndiv(String entryName, Integer column) throws Exception
 @Override
 public  List<String> getIndiv( String entryName, Integer column, String spl) throws Exception{
 	
-	while(!entryName.endsWith(curr[snpind]) || !entryName.startsWith(curr[chrind])) {
-		nextLine();
-	}
+	skip(entryName);
    return Arrays.asList(curr).subList(start, end);
 }
 /* (non-Javadoc)
@@ -74,11 +79,7 @@ public  List<String> getIndiv( String entryName, Integer column, String spl) thr
 @Override
 public  boolean getIndiv(String entryName, Integer column, String[] indiv) throws Exception{
 	
-	while(!entryName.equals(curr[snpind])) {
-		System.err.println("skipping "+curr[snpind]);
-		nextLine();
-	}
-	
+	skip(entryName);
 	System.arraycopy(curr, start, indiv, 0, indiv.length);
 	nextLine();
   return true;
@@ -94,10 +95,7 @@ public  BufferedReader getBufferedReader(String string) throws Exception{
 }
 private void read( String string, List<String> indiv,
        int k) throws Exception {
-	while(!string.equals(curr[snpind])) {
-		System.err.println("skipping "+curr[snpind]);
-		nextLine();
-	}
+	skip(string);
 	
 	
 	for(int i=0; i<indiv.size(); i++){
@@ -117,9 +115,12 @@ public void getAvgDepth(String pref, int avgDepthCol, List<Integer> dToInc,
 	}catch(Exception exc){
 		exc.printStackTrace();
 	}
-	for(int i=0; i<this.sum.length; i++){
-		avgDepth.add(sum[i]);
-	}
+	for(int k_=0; k_<dToInc.size(); k_++){
+		 int k = dToInc.get(k_);
+  		avgDepth.add(sum[k]);//.split("\\s+");//split(":");
+	 }
+	//	String[] str1 = ad.get(k).spl
+	
 	
 }
 

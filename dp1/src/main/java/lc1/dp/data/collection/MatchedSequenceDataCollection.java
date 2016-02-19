@@ -46,7 +46,7 @@ static double genomeLength = 1;//3.2e7;
 	*/
 	@Override    
 public final void makeDistributions(int index) {
-		double cellularity = Constants.initialCellularity()[0];
+		//double cellularity = Constants.initialCellularity()[0];
 		int maxCN = Constants.maxCopies()*Constants.maxPloidy();
 		int maxCN1 = Constants.maxCopies()*Constants.maxPloidy1;
 		//double[]  geno = (double[])this.avgDepth.get(0);
@@ -130,7 +130,7 @@ public final void makeDistributions(int index) {
 			}
 		}
 
-		this.dc = new MatchedDistributionCollection(index, cellularity,this.dir, maxCN, maxCN1,this.loc.size(), ref, ratio, this.indiv);
+		this.dc = new MatchedDistributionCollection(index, this.dir, maxCN, maxCN1,this.loc.size(), ref, ratio, this.indiv);
 		
 	/*	int len = this.indiv().size();
 		Boolean[] probeOnly1 = new Boolean[len];
@@ -218,6 +218,10 @@ protected Collection<? extends Integer> findLowDepth() {
 	boolean mknewRef = Constants.makeNewRef();
 	double[] tot = null;
 	HaplotypeEmissionState href =  ((HaplotypeEmissionState)this.dataL.get(refall)) ;
+	
+	if(href==null){
+		throw new RuntimeException("could not find "+refall+" in "+indiv());
+	}
 	 PseudoDistribution[] emsref= href.emissions ;
 	 if(mknewRef){
 		// mknewRef = true;

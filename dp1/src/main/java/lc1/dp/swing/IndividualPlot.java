@@ -130,7 +130,7 @@ final static int type_index =0; //which type 0 is CN, 1 is B
    static final  Dimension dim_ = new Dimension(width, height*2);
    static final  Dimension dimG = new Dimension(800, 800);
    static EmissionStateSpace[] stateEm=  new EmissionStateSpace[2];//null;
-   CompoundEmissionStateSpace emStSp;
+ final   CompoundEmissionStateSpace emStSp;
  EmissionStateSpace emStSp1;
  final MarkovModel hmm;
 //   final int[] b_alias;
@@ -2762,7 +2762,7 @@ st +DataCollection.datC.dc.getInfo(st);
              true   // tooltips		
     );
     ValueAxis va = cp.getChart().getXYPlot().getRangeAxis();
-    if(Constants.cumulativeR(0)<=1){
+  //  if(Constants.cumulativeR(0)<=1){
     va.setAutoRange(false);
     double minB = Constants.minB(ik);
     double maxB = Constants.maxB(ik);
@@ -2770,7 +2770,7 @@ st +DataCollection.datC.dc.getInfo(st);
     minB = minB - extra;
     maxB = maxB +extra;
     va.setRange(new Range(minB, maxB));
-    }
+    //}
     JFreeChart chart = cp.getChart();
     chart.getXYPlot().getRangeAxis().setTickLabelInsets(new RectangleInsets(5,5,5,5));
 /*    final NumberFormat nf =new DecimalFormat("0.00");

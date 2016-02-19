@@ -21,6 +21,7 @@ import lc1.stats.DepthDistribution;
 import lc1.stats.IlluminaRDistribution;
 import lc1.util.ApacheCompressor;
 import lc1.util.Constants;
+import lc1.util.ZipFileAccess;
 
 import org.apache.commons.compress.archivers.zip.ZipFile;
 
@@ -147,8 +148,9 @@ public class SequenceDataCollection extends LikelihoodDataCollection{
 	
 	@Override
 
-	protected  Boolean process(String snpid, int i,ZipFile zf,
+	protected  Boolean process(String snpid, int i,ZipFileAccess zf,
 			List<Integer> ploidy, List<Integer> sampToInc, double[] miss, double[] lrr) throws Exception {
+		
 		Arrays.fill(miss,0);
 		int counta_ind = this.indexOf1(headsLowerCase, "counta".split(":"));
 		int    countb_ind = this.indexOf1(headsLowerCase, "countb".split(":"));
@@ -159,11 +161,11 @@ public class SequenceDataCollection extends LikelihoodDataCollection{
 	     //    System.err.println("reading "+snp_id);
 	         List<String> l = null;
 	         String snp_id = process(snpid);
-	       l = ApacheCompressor.getIndiv(zf, snp_id, null);
+	       l = zf.getIndiv( snp_id, null);
 	       if(l==null){
-	    	   l = ApacheCompressor.getIndiv(zf, snp_id+".txt", null);
+	    	   l = zf.getIndiv(snp_id+".txt", null);
 	    	   if(l==null){
-	        	   l = ApacheCompressor.getIndiv(zf, snp_id+".txt.gz", null);
+	        	   l = zf.getIndiv( snp_id+".txt.gz", null);
 	           }
 	       }
 	        
@@ -529,7 +531,7 @@ public class SequenceDataCollection extends LikelihoodDataCollection{
 				                		done.add(snp);
 				                		done1.add(no);
 				                	}
-				                	this.process(str, i, no, loc_index, maf_index, chr_index, strand_index, snp_index, l, chr, majorAllele, alleleB, forward, bin_index);
+				                	this.process(str, i, no, loc_index, maf_index, chr_index, strand_index, snp_index, l, chr, majorAllele, alleleB, forward, bin_index, str[snp_index]);
 				                	// process(str,i);
 				                  
 				                 //   System.err.println(no);

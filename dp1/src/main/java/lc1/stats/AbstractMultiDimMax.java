@@ -49,6 +49,19 @@ public abstract void minimize();
 				return toadd;
 				
 			}
+	
+	public double[] add(String name, double[] d, double lower, double upper,
+			 boolean add) {
+				double[] toadd = new double[d.length];
+				double[] toaddlower = new double[d.length];
+				double[] toaddupper = new double[d.length];
+				System.arraycopy(d,0,toadd, 0,d.length);
+				Arrays.fill(toaddlower, lower);
+				Arrays.fill(toaddupper, upper);
+				if(add) this.add(name, toadd, toaddlower, toaddupper);
+				return toadd;
+				
+			}
 
 	public void updateBounds() {
 		 this.updateBounds(ratiosL_ind, 0);
