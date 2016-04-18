@@ -481,8 +481,8 @@ public class SimpleDataCollection extends DataCollection {
     		for(int i=0; i<st.length; i++){
     			double val =Double.parseDouble(st[i]); 
     			double d = pl ? Math.pow(10, val/-10.0): Math.pow(10, val);
-    		 cnt+=d;
-    		    bcnt+= i==0 ? 0 :( i==1 ? d/2.0 :d);
+    		 cnt+=d *(st.length-1);
+    		    bcnt+= i*d; //i==0 ? 0 :( i==1 ? d/2.0 :d);
     		}
     		
     		}
@@ -697,7 +697,11 @@ public class SimpleDataCollection extends DataCollection {
             		String[] genos = null;
             		if(ploidy==1) genos = new String[] {"A",null,"B"};
             		else if (ploidy==2) genos =  new String[] {"A,A","A,B","B,B"} ;
+            		else if(ploidy==4) genos = new String[] {"A,A,A,A","A,A,A,B","A,A,B,B","A,B,B,B","B,B,B,B"};
+            		else if(ploidy==6) genos = new String[] {"A,A,A,A,A,A","A,A,A,A,A,B","A,A,A,A,B,B","A,A,A,B,B,B","A,A,B,B,B,B","A,B,B,B,B,B","B,B,B,B,B,B"};
             		else throw new Exception("need to modify for diff ploidy");
+            		
+
             		//PseudoDistribution hwe = stsp.getHWEDist1(null);
             		double[] probs = new double[stsp.haplopairListSize()];
             		SimpleExtendedDistribution dist =new SimpleExtendedDistribution(probs, Double.POSITIVE_INFINITY);

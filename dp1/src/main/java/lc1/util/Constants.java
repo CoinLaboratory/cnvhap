@@ -1847,7 +1847,7 @@ public static Map<String, String> set = new HashMap<String, String>();
 				 //System.err.println(argi);
 				 if(params.hasOption(argi)){
 				 }else{
-					 throw new ParseException("did not read "+argi, 0);
+				//	 throw new ParseException("did not read "+argi, 0);
 				 }
 			 }else{
 				 if(rem==0) {
