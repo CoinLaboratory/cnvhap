@@ -104,6 +104,8 @@ public class CompressDirApache {
 	    	}
 	    }
 	    
+	    
+	    
 	    public void closeWriter(OutputStreamWriter osw) throws Exception{
 	    	if(osw==this.osw){
 	    	   osw.flush();

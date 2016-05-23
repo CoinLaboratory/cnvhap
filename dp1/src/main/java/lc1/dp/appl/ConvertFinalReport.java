@@ -5,8 +5,10 @@ import java.io.File;
 import java.io.FileFilter;
 import java.io.FileInputStream;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -147,13 +149,31 @@ public class ConvertFinalReport {
 			writeToFile = Boolean.parseBoolean(args[6]);
 			out.mkdir();
 			final List<SNP> snps = new ArrayList<SNP>();
-			String[] locs = read(new File(f, args[1]));
-			final String[] chroms = new String[locs.length];
-			final int[][] pos = new int[locs.length][];
-			
-			getSNPS(snpf, target, toexcludesnps, locs, snps, chroms,pos);
+			String[] locs1 = read(new File(f, args[1]));
+			final String[] chroms1 = new String[locs1.length];
+			final int[][] pos1 = new int[locs1.length][];
+			List[] snpsPerRegion = new List[locs1.length];
+			int numRegions = getSNPS(snpf, target, toexcludesnps, locs1, snps, chroms1,pos1,  snpsPerRegion);
+			PrintWriter newreg = new PrintWriter(new FileWriter(new File("new_regions.txt")));
+				final String[] locs = new String[numRegions];
+				final String[] chroms = new String[numRegions];
+				final int[][] pos = new int[numRegions][];
+				int j1=0;
+				for(int k=0; k< snpsPerRegion.length; k++){
+					if( snpsPerRegion[k].size()>0){
+						newreg.println(locs1[k]+  "\t"+snpsPerRegion[k].size()+"\t"+snpsPerRegion[k].toString());
+						locs[j1] = locs1[k];
+						chroms[j1] = chroms1[k];
+						pos[j1] = pos1[k];
+						j1++;
+					}
+					
+				}
+				newreg.close();
+			System.err.println(" regions "+Arrays.asList(locs));
 			System.err.println("SNPS: ");
 			System.err.println(snps.size());
+			//if(true) System.exit(0);
 			File[][] reports = getReports(f, prefix, numperrun);
 			if(reports.length==0){
 				Logger.global.info(f.getAbsolutePath());
@@ -436,7 +456,7 @@ public class ConvertFinalReport {
 	
 	
 	final static String splitstr = "\t";
-	static void  getSNPS(File snpsfile, File target, Pattern toexcludesnp,String[] locs, List<SNP> snps, String[] chroms, int[][]from) throws Exception{
+	static  int getSNPS(File snpsfile, File target, Pattern toexcludesnp,String[] locs, List<SNP> snps, String[] chroms, int[][]from,List[] snpsPerRegion ) throws Exception{
 		List<String> set = null;
 		
 		if(target.exists()){
@@ -469,6 +489,11 @@ public class ConvertFinalReport {
 		int chromind =head.indexOf("Chr");
 		int posind = head.indexOf("MapInfo");
 		int nameind = head.indexOf("Name");
+		
+		
+		for(int i=0; i<snpsPerRegion.length; i++){
+			snpsPerRegion[i] = new ArrayList<String>();
+		}
 		for(int k=0; (st = br.readLine())!=null ; k++){
 			if(toexcludesnp==null || !matches(toexcludesnp, st)){
 				String[] str  = st.split("\\s+");
@@ -480,6 +505,7 @@ public class ConvertFinalReport {
 						if(setind>=0){
 							SNP snp = new SNP(pos, str[nameind], k, setind, kk);
 							snps.add(snp);
+							snpsPerRegion[kk].add(str[nameind]);
 							continue inner;
 						}
 					//	System.err.println(snp);
@@ -491,6 +517,7 @@ public class ConvertFinalReport {
 			}
 		}
 		br.close();
+	
 		if(set != null){
 			Collections.sort(snps, new ConvertFinalReport.SNPComp(false));
 		}
@@ -498,7 +525,12 @@ public class ConvertFinalReport {
 		for(int k=0; k<snps.size(); k++){
 		System.err.println(snps.get(k));
 		}
-		
+		int cnt =0;
+		for(int i=0; i<locs.length; i++){
+			System.err.println(locs[i]+ "  "+snpsPerRegion[i]);
+			if(snpsPerRegion[i].size()>0) cnt++;
+		}
+		return cnt;
 	}
 	
 	//int sampleid = -1;

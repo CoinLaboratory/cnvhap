@@ -37,6 +37,7 @@ public class CompressDir {
 	    OutputStreamWriter osw;
 	    
 	    public File inDir;
+	    public File outFile;
 	    int len;
 	    
 	    public CompressDir(File f1) throws Exception{
@@ -46,7 +47,8 @@ public class CompressDir {
 	    	this.inDir = f;
 	    	inDir.mkdir();
 	    	len = inDir.getAbsolutePath().length()+1;
-	    	 dest = Compressor.getOS(new File(inDir.getParentFile(), inDir.getName()+".zip"));
+	    	outFile = new File(inDir.getParentFile(), inDir.getName()+".zip");
+	    	 dest = Compressor.getOS(outFile);
 	         checksum = new   CheckedOutputStream(dest, new Adler32());
 	         outS = new 
 	         ZipOutputStream(new 
@@ -142,13 +144,18 @@ public class CompressDir {
 			}
 		}
 		public void copy(ZipFile zf, String name) throws Exception {
+			copy(zf, name, null);
+		}
+		public void copy(ZipFile zf, String name, boolean[] include) throws Exception {
 			ZipEntry e = zf.getEntry(name);
 			OutputStreamWriter os = this.getWriter(name, false, e.getComment());
 			BufferedReader snps = new BufferedReader(new InputStreamReader(zf.getInputStream(e)));
 			String st = "";
-			while((st = snps.readLine())!=null){
-				os.write(st);
-				os.write("\n");
+			for(int i=0; (st = snps.readLine())!=null; i++){
+				if(include==null || include[i]){
+					os.write(st);
+					os.write("\n");
+				}
 			}
 			snps.close();
 			this.closeWriter(os);

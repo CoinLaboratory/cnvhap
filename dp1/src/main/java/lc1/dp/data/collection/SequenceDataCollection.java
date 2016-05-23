@@ -180,6 +180,7 @@ public class SequenceDataCollection extends LikelihoodDataCollection{
 	       this.minR.add(Double.MAX_VALUE);
 	       this.maxR.add(Double.MIN_VALUE);
 	       for(int j_=0;j_<sampToInc.size(); j_++){
+	    	   	double avgdepthj = avgDepth.size()==0 ? 0 : (Double)avgDepth.get(j_);
 	        	 int j = sampToInc.get(j_);
 
 	        	 if(l==null){
@@ -189,7 +190,7 @@ public class SequenceDataCollection extends LikelihoodDataCollection{
 	        	 else{
 		             String stri =l.get(j);
 		             String[] st =stri.trim().split("\\s+");
-		             Boolean po = this.process( indiv.get(j), header, st, i, ploidy.get(j),(Double)avgDepth.get(j_),j);
+		             Boolean po = this.process( indiv.get(j), header, st, i, ploidy.get(j),avgdepthj,j);
 		             if(this.lrr_index>=0){
 			        	 lrr[j_] = Double.parseDouble(st[lrr_index]);
 			         }

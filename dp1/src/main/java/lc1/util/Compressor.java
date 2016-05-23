@@ -611,6 +611,31 @@ public static List<String> getIndiv(BufferedReader nxt,  Integer column) throws 
         }
         return l;
     }
+    public static String join(String[] vals, String join){
+    	StringBuffer r = new StringBuffer();
+    	for(int i=0; i<vals.length; i++){
+    		r.append(vals[i]+(i<vals.length-1? join : "")); 
+    	}
+    	return r.toString();
+    }
+    public static List<String> readZipFrom(ZipFile zf, String name,	boolean[] include,String join) throws Exception {
+    	 BufferedReader br = new BufferedReader(new InputStreamReader(zf.getInputStream(zf.getEntry(name))));
+         String st;;// = br.readLine();
+         List<String> l = new ArrayList<String>();
+         int toinc = 0;
+         for(int i=0; i<include.length; i++) if(include[i]) toinc++;
+         String[] v1 = new String[toinc];
+         while((st = br.readLine())!=null){
+        	 String[] vals = st.split("\t");
+        	 int k=0;
+        	 for(int i=0; i<include.length; i++){
+        		 if(include[i])v1[k] = vals[i];
+        	 }
+             l.add(join(v1, join));
+         }
+         br.close();
+         return l;
+	}
     
     public static List<String> readZipFrom(ZipFile f, String name, boolean[] include) throws Exception{
         BufferedReader br = new BufferedReader(new InputStreamReader(f.getInputStream(f.getEntry(name))));

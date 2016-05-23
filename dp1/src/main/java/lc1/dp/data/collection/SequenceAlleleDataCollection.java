@@ -2,6 +2,7 @@ package lc1.dp.data.collection;
 
 import java.io.File;
 import java.util.Collection;
+import java.util.List;
 
 import lc1.dp.data.representation.Emiss;
 import lc1.dp.illumina.DistributionCollection;
@@ -9,6 +10,7 @@ import lc1.dp.states.HaplotypeEmissionState;
 import lc1.stats.AllelicDistribution;
 import lc1.stats.IlluminaDistribution;
 import lc1.util.Constants;
+import lc1.util.ZipFileAccess;
 import cern.jet.stat.Probability;
 
 public class SequenceAlleleDataCollection extends SequenceDataCollection {
@@ -90,7 +92,10 @@ public class SequenceAlleleDataCollection extends SequenceDataCollection {
 		}
 		
 	}
-	 //@Override
+	
+//	protected  Boolean process(String snpid, int i,ZipFileAccess zf,
+	//		List<Integer> ploidy, List<Integer> sampToInc, double[] miss, double[] lrr) throws Exception {
+	 @Override
 	 public Boolean process(String indiv, String[] header, String[] geno, int i,
 			 int ploidy,double averageDepth, int ind_indiv) {
 
