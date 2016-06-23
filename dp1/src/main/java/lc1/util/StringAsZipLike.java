@@ -13,12 +13,18 @@ import java.util.zip.GZIPInputStream;
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 
 public class StringAsZipLike implements ZipFileAccess {
- public StringAsZipLike(File in, String first, String last) throws Exception {
+ public StringAsZipLike(File in, String first, String last, int locind, int chrind) throws Exception {
 		this.f =in.getName().endsWith(".gz") ? new BufferedReader(new InputStreamReader(new GZIPInputStream(new FileInputStream(in)))): new BufferedReader(new FileReader(in)) ;
-		currentline = f.readLine();
+		String st = "";
+		while((st = f.readLine()).startsWith("#")){
+			currentline = st;
+		}
 		this.curr = currentline.split("\t");
-		locind = Arrays.asList(curr).indexOf("START");
-		chrind = Arrays.asList(curr).indexOf("#CHROM");
+		this.locind = locind;
+		this.chrind  =chrind;
+		this.formatind = Arrays.asList(curr).indexOf("FORMAT");
+		//locind = Arrays.asList(curr).indexOf("START");
+		//chrind = Arrays.asList(curr).indexOf("#CHROM");
 		List<String> currL = Arrays.asList(curr);
 		start = currL.indexOf("FORMAT")>=0 ? currL.indexOf("FORMAT")+1 : currL.indexOf("END") + 1;
 		end = curr.length;
@@ -28,7 +34,7 @@ public class StringAsZipLike implements ZipFileAccess {
 		}
 		this.last = last;
 	}
-final int locind, chrind;
+final int locind, chrind, formatind;
 final String last;
 final int start, end;
 BufferedReader f;
@@ -36,15 +42,19 @@ String currentline;
 String[] curr;
 
 double[] sum;
-
+boolean trysum = true;
 void nextLine() throws Exception{
 	currentline = f.readLine();
 	if(currentline!=null){
 	this.curr = currentline.split("\t");
-	if(Constants.allowChrom(curr[chrind])>=0){
-	for(int k=0; k<sum.length; k++){
-		sum[k] += Double.parseDouble(curr[k+start]);
-	}
+	if(Constants.allowChrom(curr[chrind])>=0  && trysum){ ///////////NOTE NEED TO CHANGE ThIS BACK
+		try{
+		for(int k=0; k<sum.length; k++){
+			sum[k] += Double.parseDouble(curr[k+start]);
+		}
+		}catch(Exception exc){
+			trysum = false;
+		}
 	}
 	}
 	
@@ -71,7 +81,13 @@ public void skip(String entryName) throws Exception{
 public  List<String> getIndiv( String entryName, Integer column, String spl) throws Exception{
 	
 	skip(entryName);
-   return Arrays.asList(curr).subList(start, end);
+	List<String> res = Arrays.asList(curr).subList(start, end);
+	for(int i=0; i<res.size(); i++){
+		res.set(i,res.get(i).replace(':', '\t'));
+	}
+		
+		
+	   return res;
 }
 /* (non-Javadoc)
  * @see lc1.util.ZipFileAccess#getIndiv(java.lang.String, java.lang.Integer, java.lang.String[])

@@ -2615,7 +2615,7 @@ public static double switchU = 1e10;
 	}
 
 	public static String inputFile(int i, int j) {
-		if(inputDir(i).endsWith(".counts") || inputDir(i).endsWith(".counts.gz")) return inputDir(i);
+		if(inputDir(i).endsWith(".counts") || inputDir(i).endsWith(".counts.gz") || inputDir(i).endsWith(".vcf")|| inputDir(i).endsWith(".vcf.gz")) return inputDir(i);
 		return inputDir(i)+"/" + Constants.chrom(j) + ".zip";
 	}
 	
@@ -5187,7 +5187,7 @@ public static boolean trainEmissions = true;
 		// TODO Auto-generated method stub
 		return scoreThresh;
 	}*/
-	public static boolean convertAvgToZip = true;
+	public static boolean convertAvgToZip =false;
 	public static boolean convertAvgToZip() {
 		// TODO Auto-generated method stub
 		return convertAvgToZip;

@@ -1290,11 +1290,17 @@ public String getInfo(String tag, String key, int i, boolean style) throws Excep
 			//Integer val = state.getFixedInteger(i);
 			
 			double[] probs = state.emissions[i].probs();
-			int i1 = Constants.getMax(probs);
+			int i1;
+			if(probs==null){
+			i1 = state.emissions[i].getMax();
+			return emstsp.get(i1)+"";//+"_"+String.format("%5.3g", probs[i1]);
+			}else{
+			i1 = Constants.getMax(probs);
 			if(probs[i1]>0.9 && emstsp.getCN(i1)==2){
 				return emstsp.get(i1)+"_"+String.format("%5.3g", probs[i1]);
 			}
 			else return "NaN";
+			}
 		}
 		else if(tag.equals("BAF")){
 			HaplotypeEmissionState state = (HaplotypeEmissionState) dataL.get(key);
@@ -2885,26 +2891,45 @@ public Comparator<PIGData> comp = new Comparator<PIGData>(){
         //String len;
         int start; int end; 
         //int[] type; 
-      StringBuffer[][] sb;
-       PrintWriter pw;
+      StringBuffer[] sb; // one for each snp
+       private PrintWriter pw;
         
+       public void close(){
+    	   for(int k=0; k<sb.length; k++){
+    		   if(loc.get(k)<start ) continue;
+               if(loc.get(k)>=end) break;
+               pw.println(sb[k]);
+    	   }
+    	   pw.close();
+       }
+       
         public void print(String key) throws Exception{
         	
-        	outer:for(int i=0; i<tags.length; i++){
-        		int len = sb[i].length;
-        		for(int j=0; j<len; j++){
-        			this.sb[i][j] = new StringBuffer();
-        			if(len==1)sb[i][j].append(key+"_"+tags[i]);
-        			else sb[i][j].append(key+"_"+tags[i]+"."+j);
-        		}
+        //	outer:for(int i=0; i<tags.length; i++){
+        	//	int len = sb[i].length;
+        	//	for(int j=0; j<len; j++){
+        	//		this.sb[i][j] = new StringBuffer();
+        	//		if(len==1)sb[i][j].append(key+"_"+tags[i]);
+        	//		else sb[i][j].append(key+"_"+tags[i]+"."+j);
+        	//	}
         		
         	  for( int pos_index =0; pos_index < loc.size(); pos_index++){
         		  if(loc.get(pos_index)<start ) continue;
                   if(loc.get(pos_index)>=end) break;
                   if(toD!=null&& toD.contains(pos_index)) continue;
+                  if(first){
+                	  sb[pos_index].append("\t");
+                	  first = false;
+                  }
+                  for(int i=0; i<tags.length; i++){
+                	  String info = getInfo(tags[0], key, pos_index, style).trim();
+                	  if(i>0) sb[pos_index].append(":");
+                	
+                      sb[pos_index].append(info);
+                  }
+                  
                  
-                  String info = getInfo(tags[i], key, pos_index, style);
-                  if(info==null) continue outer;
+              /*    if(info==null) continue outer;
                   else info = info.trim();
                   if(len==1)sb[i][0].append("\t"+info);
                   else{
@@ -2922,13 +2947,13 @@ public Comparator<PIGData> comp = new Comparator<PIGData>(){
                 	 String inf =info1[j] ;
                             sb[i][j].append("\t"+inf);
                   }
-                  }
+                  }*/
                }
-        	  for(int j=0; j<len; j++){
+        	/*  for(int j=0; j<len; j++){
                  pw.println(sb[i][j].toString());
-        	  }
+        	  }*/
                
-              }
+        	//}
         }
        
         public PrintHapMapFormat(PrintWriter pw,
@@ -2945,13 +2970,14 @@ public Comparator<PIGData> comp = new Comparator<PIGData>(){
         	this.initTags = initTags;
         	this.tags = tags;
         //	this.tags_length = new int[tags.length];
-        	sb = new StringBuffer[tags.length][];
-        	for(int i=0; i<tags.length; i++){
-        		//tags_length[i] = tags[i].equals("state")? Constants.modify0.length : 1;
-        		sb[i] = new StringBuffer[tags[i].equals("state") ? Constants.getFinalModelLength() : 1];
+        	sb = new StringBuffer[loc.size()];
+        	for(int i=0; i<loc.size(); i++){
+        		 if(loc.get(i)<start ) continue;
+                 if(loc.get(i)>=end) break;
+                 sb[i] = new StringBuffer(chrom+"\t"+loc.get(i)+"\t"+snpid.get(i));
         	}
         	this.start = start; this.end = end;  
-        	if(printHeader){
+        /*	if(printHeader){
              for(int i=0; i<initTags.length; i++){
                 pw.print(initTags[i]);
                 for(int k=0; k<loc.size(); k++){
@@ -2962,7 +2988,7 @@ public Comparator<PIGData> comp = new Comparator<PIGData>(){
                 }
                 pw.println();
              }
-        	}
+        	}*/
            
              //pw.close();
         }
@@ -2989,7 +3015,7 @@ public Comparator<PIGData> comp = new Comparator<PIGData>(){
        for(int i=0; i<indiv.size(); i++){
     	   phf.print(indiv.get(i));
        }
-       phf.pw.close();
+       phf.close();
     }
 	public void updateIndex(int i) {
 		
@@ -4579,7 +4605,7 @@ public void writeResults(String key, List<Character> allA, List<Character> allB)
 	}
 }
 public void finishedPrinting(){
-	if(phm!=null) phm.pw.close();
+	if(phm!=null) phm.close();
 	if(wp!=null) wp.close();
 	if(this.wp_states!=null)wp_states.close();
 	if(this.wp_mostlikely!=null)this.wp_mostlikely.close();
@@ -5142,14 +5168,11 @@ public  DataCollection (File f, short index, int no_copies, final int[][] mid,Fi
 	ZipFile zf  = null;  List<String> firstline = null; 
 	  BufferedReader  buildF = null; 
     if(f.getName().endsWith(".zip")){
-    zf= new ZipFile(f);
-    buildF =  bf==null ? null : getBuildReader(f.getParentFile(), bf,zf);
+    	zf= new ZipFile(f);
+    	buildF =  bf==null ? null : getBuildReader(f.getParentFile(), bf,zf);
     	String ent_name = ((ZipEntry)zf.getEntries().nextElement()).getName();
     	String f_name = f.getName().split("\\.")[0];
-    	// ent_name.startsWith(f_name) ? f_name+"/" : "";
-    	//String pref =  ent_name.startsWith(f_name) ? f_name+"/" : "";
     	pref = "";
-//   pref = "";
         this.abGenos = hasABGenos(zf);
         BufferedReader name_bf = ApacheCompressor.getBufferedReader(zf, pref+"Name");
         if(name_bf==null){
@@ -5162,7 +5185,22 @@ public  DataCollection (File f, short index, int no_copies, final int[][] mid,Fi
     	String fl = buildF.readLine();
     	firstline = Arrays.asList(fl.split("\t"));
     	headers.set(1, fl);
-    }
+    }else if(f.getName().endsWith(".vcf") || f.getName().endsWith(".vcf.gz")){
+    	headers = Arrays.asList("DP\nchr\tstart\tend\tsnpid\format\nsample".split("\n"));//#CHROM  ID      START   END     FORMAT
+    	buildF =  getBuildReader(f.getParentFile(), bf,zf);
+    	String fl1 = "";
+    	String fl = "";
+    	while((fl1 = buildF.readLine()).startsWith("#")){
+    		fl = fl1;
+    	} 
+    	fl = fl.substring(1);
+    	firstline = Arrays.asList(fl.split("\t"));
+    	int format_index = fl.indexOf("FORMAT");
+    	if(format_index<0) throw new RuntimeException("!!");
+    	headers.set(1, fl.toLowerCase().substring(0,format_index).trim());
+    	headers.set(0, "GT:AD:DP:GQ:PL".replace(':', '\t'));
+    	
+   }
          header = headers.get(0).split("\t");
          
           headsLowerCase = Arrays.asList(header);
@@ -5369,6 +5407,7 @@ public  DataCollection (File f, short index, int no_copies, final int[][] mid,Fi
          if(snpid_<0) snpid_ = header_snp.indexOf("snpID");
          int chrind = header_snp.indexOf("chr");
          if(chrind <0) chrind  = header_snp.indexOf("#CHROM");
+         if(chrind <0) chrind  = header_snp.indexOf("chrom");
         // if(snpid_ <0) throw new RuntimeException("no index of id in "+header_snp);
             String chr_ = chrom;//Constants.chrom0().split("_")[0];
             if(chr_.indexOf("chr")<0) chr_ = "chr"+chr_;
@@ -5469,7 +5508,7 @@ public  DataCollection (File f, short index, int no_copies, final int[][] mid,Fi
     int prev_i = -1;
     double prevc=0;
     double[] res = new double[2];
-    ZipFileAccess zf2 = zf ==null ? new StringAsZipLike(bf, this.snpid.get(0), this.snpid.get(snpid.size()-1)): new ZipFileLike(zf);
+    ZipFileAccess zf2 = zf ==null ? new StringAsZipLike(bf, this.snpid.get(0), this.snpid.get(snpid.size()-1), locid, chrind): new ZipFileLike(zf);
     for(int i=0; i<max; i++){
     	
     	 if(geno_id>=0 && alleleA.size()<=i && ! this.abGenos) {
@@ -6397,7 +6436,7 @@ public  void readBuildFile(ZipFile zf, String prefix, BufferedReader br, String 
     }*/
    outer: for(int i=0;(st = br.readLine())!=null; i++){
         String[] str = st.split("\t+");
-        String id = snp_index1 >= 0 ?  str[snp_index1] : str[chr_index]+"_"+str[loc_index];
+        String id = snp_index1 >= 0 && !str[snp_index1].equals(".") ?  str[snp_index1] : str[chr_index]+"_"+str[loc_index];
         if(zf==null && chrom1.equals("chrall")){
         	String str1 = Constants.recode(new String[] {str[chr_index], str[loc_index],str[loc_index+1]});
         //	str[3] = str[0]+"_"+str[1];

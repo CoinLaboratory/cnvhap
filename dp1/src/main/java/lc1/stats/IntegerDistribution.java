@@ -125,7 +125,8 @@ public double cnt =0;
     }
 
     public double[] probs() {
-        throw new RuntimeException("!!");
+    	return null;
+//        throw new RuntimeException("!!");
     }
 
     public double probs(int obj_i) {

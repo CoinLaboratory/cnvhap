@@ -474,7 +474,7 @@ public class SimpleDataCollection extends DataCollection {
     	//double[] d = new double[3];
     	for(int k=0; k<Math.min(l.size(), Constants.includeFirstInBAF()); k++){
     		String str = l.get(k).trim();//.split("\\s+")
-    		if(str.equals("./.") || str.equals(".")) continue;
+    		if(str.indexOf("./")>=0 || str.equals(".")) continue;
     		else{
     		String[] st = str.split("\\s+")[gl_ind].split(",");
     		if(st.length==1 && (st[0].equals("./.") || st[0].equals("."))) continue;
@@ -665,14 +665,20 @@ public class SimpleDataCollection extends DataCollection {
             		dataSt.emissions[i] = stsp.getHWEDist1(null);
             		return false;
             	}
-            	String st =  geno[k].replaceAll("/", ",").replaceAll("0","A").replaceAll("1", "B").replaceAll("2", "BB");;
+            	String st =  geno[k].replaceAll("/", ",").replaceAll("0","A").replaceAll("1", "B");//.replaceAll("2", "BB");;
             	if(ploidy==1 && st.length()>1  && st.indexOf("A")>=0 && st.indexOf("B")>=0){
             		dataSt.emissions[i] = stsp.getHWEDist1(null);
             		return false;
             	}else{
-            	int i1 = 	  stsp.getHapl(ploidy==1 ? st.substring(0,1): st);
-            	dataSt.emissions[i] = new IntegerDistribution( i1,stsp.getCN(i1),stsp.getBCount(i1));
-            	dataSt.emissions[i].setEmStSp(stsp);
+            		
+            	Integer i1 = 	  stsp.getHapl(ploidy==1 ? st.substring(0,1): st);
+            	if(i1==null ){
+            		dataSt.emissions[i] = stsp.getHWEDist1(null);
+            		return false;
+            	}else{
+            		dataSt.emissions[i] = new IntegerDistribution( i1,stsp.getCN(i1),stsp.getBCount(i1));
+            		dataSt.emissions[i].setEmStSp(stsp);
+            	}
             	
             	}
             }
