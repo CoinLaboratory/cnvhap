@@ -31,8 +31,6 @@ import java.util.zip.ZipFile;
 
 import javax.swing.JOptionPane;
 
-import com.sun.jmx.snmp.tasks.ThreadService;
-
 import lc1.dp.appl.CNVHap;
 import lc1.dp.core.BaumWelchTrainer;
 import lc1.dp.core.Sampler;

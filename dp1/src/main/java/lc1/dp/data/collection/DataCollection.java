@@ -2882,7 +2882,7 @@ public Comparator<PIGData> comp = new Comparator<PIGData>(){
     
     /*class for printing averages */
      class PrintHapMapFormat {
-    	
+    	boolean first = true;
         Collection<Integer> toD;boolean style;
         String[] initTags;
       //  String[] phenoTags;

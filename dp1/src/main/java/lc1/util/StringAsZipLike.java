@@ -29,7 +29,10 @@ public class StringAsZipLike implements ZipFileAccess {
 		start = currL.indexOf("FORMAT")>=0 ? currL.indexOf("FORMAT")+1 : currL.indexOf("END") + 1;
 		end = curr.length;
 		this.sum = new double[end - start];
-		while(!(curr[chrind]+"_"+curr[locind]).equals(first)){
+		//nextLine();
+		currentline = st;
+		this.curr = currentline.split("\t");
+		while(curr!=null && !(curr[chrind]+"_"+curr[locind]).equals(first)){
 			nextLine();
 		}
 		this.last = last;
@@ -56,6 +59,8 @@ void nextLine() throws Exception{
 			trysum = false;
 		}
 	}
+	}else{
+		curr = null;
 	}
 	
 }
